@@ -64,7 +64,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
   await notifyIfPermitted(applicant, 'notifications.leave_decision', {
     type: 'EXTRA_WORK_REJECTED',
-    title: 'Your extra work log was rejected',
+    title: 'Your replacement leave request was rejected',
     body: `${user.fullName} declined your log for ${log.workDate.toISOString().slice(0, 10)}. Reason: ${input.note}`,
     referenceType: 'extra_work_log',
     referenceId: id,

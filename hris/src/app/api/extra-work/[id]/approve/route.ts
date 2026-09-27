@@ -82,8 +82,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
   await notifyIfPermitted(applicant, 'notifications.leave_decision', {
     type: 'EXTRA_WORK_APPROVED',
-    title: 'Your extra work log was approved',
-    body: `${user.fullName} approved your extra work day. You've earned ${credit} replacement leave day${credit === 1 ? '' : 's'}.`,
+    title: 'Your replacement leave was approved',
+    body: `${user.fullName} approved your request. You've earned ${credit} replacement leave day${credit === 1 ? '' : 's'}.`,
     referenceType: 'extra_work_log',
     referenceId: id,
   });

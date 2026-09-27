@@ -196,16 +196,16 @@ export function extraWorkSubmittedEmail(input: {
 }, s: Skin) {
   const content = `
     ${p(`Hi ${input.reviewerName},`)}
-    ${p(`${input.employeeName} has logged an extra work day and is requesting replacement leave credit.`)}
+    ${p(`${input.employeeName} has applied for replacement leave and is requesting credit for a weekend or holiday worked.`)}
     ${kv('Employee', input.employeeName)}
     ${kv('Work date', input.workDate)}
     ${kv('Work type', input.workType)}
     ${kv('Reason', input.reason)}
   `;
   return {
-    subject: `Extra work log - ${input.employeeName} · ${input.workDate}`,
+    subject: `Replacement leave request - ${input.employeeName} · ${input.workDate}`,
     html: shell({
-      title: 'New extra work log',
+      title: 'New replacement leave request',
       senderName: s.senderName,
       content,
       ctaLabel: 'Review request',
@@ -262,9 +262,9 @@ export function extraWorkDecisionEmail(input: {
     ${input.note ? `<div style="margin-top:14px;padding:12px 14px;background:${approved ? '#f0fff4' : '#fff5f5'};border-radius:8px;border-left:3px solid ${approved ? '#38a169' : '#e53e3e'};color:#4a5568;font-size:14px;line-height:1.55;"><strong style="color:#1a202c;">Note from ${escape(input.reviewerName)}:</strong><br/>${escape(input.note)}</div>` : ''}
   `;
   return {
-    subject: `Extra work ${approved ? 'approved' : 'rejected'} - ${input.workDate}`,
+    subject: `Replacement leave ${approved ? 'approved' : 'rejected'} - ${input.workDate}`,
     html: shell({
-      title: approved ? 'Extra work approved' : 'Extra work rejected',
+      title: approved ? 'Replacement leave approved' : 'Replacement leave rejected',
       senderName: s.senderName,
       content,
       ctaLabel: 'View attendance',

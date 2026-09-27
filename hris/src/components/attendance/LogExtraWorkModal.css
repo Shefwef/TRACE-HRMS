@@ -21,6 +21,9 @@
   box-shadow: 0 4px 14px color-mix(in srgb, var(--o-color) 18%, transparent);
 }
 .lew-option-head { display: flex; justify-content: space-between; align-items: baseline; }
+/* Selected tile has a check circle in the top-right — reserve horizontal
+   space in the head so the credit text doesn't sit underneath the check. */
+.lew-option-active .lew-option-head { padding-right: 30px; }
 .lew-option-label {
   font-family: var(--font-display);
   font-weight: var(--weight-semibold);

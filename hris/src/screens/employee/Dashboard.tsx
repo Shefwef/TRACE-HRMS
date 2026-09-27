@@ -216,7 +216,7 @@ export function EmployeeDashboard() {
             </div>
             <div className="edash-tip-body">
               <strong>{balance.replacementBalance} replacement day{balance.replacementBalance === 1 ? '' : 's'} in the bank</strong>
-              <p>Log an extra work day (weekends or holidays) — a full day earns +1, a half day earns +0.5.</p>
+              <p>Apply for replacement leave for weekends or holidays you worked — a full day earns +1, a half day earns +0.5.</p>
             </div>
           </motion.div>
 

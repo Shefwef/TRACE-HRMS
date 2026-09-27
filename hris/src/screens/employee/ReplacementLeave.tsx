@@ -64,7 +64,7 @@ export function ReplacementLeavePage() {
           <p className="muted">Days you&apos;ve earned by working weekends or public holidays.</p>
         </div>
         <Button variant="primary" leadingIcon={<Plus size={16} />} onClick={() => setLogOpen(true)}>
-          Log extra work day
+          Apply for replacement leave
         </Button>
       </header>
 

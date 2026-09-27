@@ -84,7 +84,7 @@ export function LogExtraWorkModal({ open, onClose }: Props) {
     <Modal
       open={open}
       onClose={handleClose}
-      title={done ? 'Extra work logged' : 'Log an extra work day'}
+      title={done ? 'Sent for approval' : 'Apply for replacement leave'}
       size="lg"
       footer={
         done ? (
@@ -126,8 +126,8 @@ export function LogExtraWorkModal({ open, onClose }: Props) {
           </svg>
           <h3>Sent for approval</h3>
           <p>
-            HR (or an Admin) will review this log. Once approved, your replacement leave balance
-            will update automatically.
+            HR (or an Admin) will review your request. Once approved, your replacement leave
+            balance will update automatically.
           </p>
         </motion.div>
       ) : (

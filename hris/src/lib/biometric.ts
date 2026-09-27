@@ -10,7 +10,8 @@
  * We parse it in that zone and convert to UTC before any DB write.
  */
 import { prisma } from './db';
-import { localDateOnly, localDayBounds, localDayKey } from './workday';
+import { localDateOnly, localDayBounds, localDayKey, localDayOfWeek } from './workday';
+import { evaluateReplacementEligibility } from './leave';
 
 /**
  * Minutes in a scheduled workday derived from the office window.
@@ -357,6 +358,89 @@ async function rebuildAttendanceDay(
       },
     });
   }
+
+  // Auto-file a pending replacement-leave request if the employee actually
+  // worked on this non-working day. Idempotent: skipped when a log already
+  // exists for the same (employee, date). HR still approves/rejects.
+  await maybeAutoFileReplacementLeave(employeeId, date, dayKey, clockIn, totalWorkedMinutes);
+}
+
+/**
+ * Detect whether an employee's attendance on `date` qualifies for a
+ * replacement-leave credit and, if so, insert a PENDING ExtraWorkLog row so
+ * HR sees it in the Approvals queue.
+ *
+ *   Eligibility conditions (ALL must hold):
+ *     - date is a Bangladesh weekend (Fri/Sat) OR a public holiday
+ *     - the employee has a valid clock-in AND some worked time
+ *     - no ExtraWorkLog already exists for (employee, date)
+ *
+ *   Slot is picked by evaluateReplacementEligibility() — worked > 4h ->
+ *   FULL_DAY, otherwise AM/PM half based on the clock-in hour.
+ *
+ * The reason field is set to a placeholder that surfaces the source so HR
+ * knows this was auto-generated; employees can add context by cancelling
+ * and re-filing manually.
+ */
+async function maybeAutoFileReplacementLeave(
+  employeeId: string,
+  date: Date,
+  dayKey: string,
+  clockIn: Date | null,
+  totalWorkedMinutes: number,
+): Promise<void> {
+  if (!clockIn || totalWorkedMinutes <= 0) return;
+
+  const dow = localDayOfWeek(clockIn); // 0 = Sunday .. 5 = Friday, 6 = Saturday
+  const isWeekend = dow === 5 || dow === 6;
+  let isHoliday = false;
+  if (!isWeekend) {
+    const holiday = await prisma.holiday.findFirst({
+      where: { date },
+      select: { id: true },
+    });
+    isHoliday = !!holiday;
+  }
+  if (!isWeekend && !isHoliday) return;
+
+  // Idempotency: skip if the employee already has a log for this workDate,
+  // whether auto-filed or manually filed.
+  const existing = await prisma.extraWorkLog.findFirst({
+    where: { employeeId, workDate: date },
+    select: { id: true },
+  });
+  if (existing) return;
+
+  const workType = evaluateReplacementEligibility({ totalWorkedMinutes, clockIn });
+  if (!workType) return;
+
+  const label = isWeekend ? 'Weekend work' : 'Holiday work';
+  await prisma.extraWorkLog.create({
+    data: {
+      employeeId,
+      workDate: date,
+      workType,
+      reason: `${label} on ${dayKey} — auto-detected from biometric attendance`,
+      description: null,
+      status: 'PENDING',
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      actorId: null,
+      action: 'REPLACEMENT_LEAVE_AUTO_FILED',
+      targetType: 'extra_work_log',
+      targetId: employeeId,
+      metadata: {
+        employeeId,
+        workDate: dayKey,
+        workType,
+        totalWorkedMinutes,
+        reason: isWeekend ? 'weekend' : 'holiday',
+      },
+    },
+  });
 }
 
 /**
@@ -555,6 +639,21 @@ async function doRebuildAttendanceRange(
         source: 'BIOMETRIC',
       },
     });
+  }
+
+  // Auto-file pending replacement-leave logs for weekend/holiday work found
+  // during this rebuild. Uses the same helper as the single-day path so a
+  // manual Recompute retroactively surfaces logs for days ingested before the
+  // auto-detection feature shipped. Idempotent on (employee, date).
+  for (const { employeeId, date } of dayMap.values()) {
+    const key = `${employeeId}|${localDayKey(date)}`;
+    const dayPunches = punchesByKey.get(key);
+    if (!dayPunches || dayPunches.length === 0) continue;
+    const { clockIn, clockOut } = resolveInOut(dayPunches);
+    const workedMinutes = clockIn && clockOut
+      ? Math.max(0, Math.round((clockOut.getTime() - clockIn.getTime()) / 60_000))
+      : 0;
+    await maybeAutoFileReplacementLeave(employeeId, date, localDayKey(date), clockIn, workedMinutes);
   }
 
   return {

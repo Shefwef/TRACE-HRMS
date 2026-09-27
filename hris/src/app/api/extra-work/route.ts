@@ -100,7 +100,7 @@ export async function POST(req: Request) {
     [...to, ...cc].map((u) => ({
       recipientId: u.id,
       type: 'EXTRA_WORK_PENDING' as const,
-      title: `Extra work log from ${user.fullName}`,
+      title: `Replacement leave request from ${user.fullName}`,
       body: `${extraWorkTypeLabel(input.workType)} on ${input.workDate}`,
       referenceType: 'extra_work_log',
       referenceId: created.id,

@@ -69,7 +69,7 @@ export function AttendancePage() {
           <p className="muted">Your working hours, breaks and overtime this month.</p>
         </div>
         <Button variant="secondary" leadingIcon={<Plus size={16} />} onClick={() => setExtraOpen(true)}>
-          Log extra work day
+          Apply for replacement leave
         </Button>
       </div>
 
@@ -90,7 +90,7 @@ export function AttendancePage() {
               leadingIcon={<Plus size={16} />}
               onClick={() => setExtraOpen(true)}
             >
-              Log extra work day
+              Apply for replacement leave
             </Button>
             <Link href="/leaves/replacement" style={{ textDecoration: 'none' }}>
               <Button variant="secondary">View history</Button>
