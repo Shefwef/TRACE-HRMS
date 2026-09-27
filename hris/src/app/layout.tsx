@@ -4,7 +4,7 @@ import { QueryProvider } from './query-provider';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'HRMS — People, simplified.',
+  title: 'HRMS - People, simplified.',
   description: 'A clean, calm HR Information System.',
   icons: {
     icon: [

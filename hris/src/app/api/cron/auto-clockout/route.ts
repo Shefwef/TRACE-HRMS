@@ -1,9 +1,9 @@
 /**
- * Auto clock-out cron — runs once per day at 23:55 Dhaka (17:55 UTC).
+ * Auto clock-out cron - runs once per day at 23:55 Dhaka (17:55 UTC).
  *
  * If an employee clocked in but never clocked out (forgot, device missed it,
  * etc.), this sets their clock-out to 23:59 of that day so attendance records
- * are never left open. Manual corrections always win — only BIOMETRIC source
+ * are never left open. Manual corrections always win - only BIOMETRIC source
  * records without a clock-out are touched.
  *
  * Vercel invokes this with Authorization: Bearer <CRON_SECRET> automatically.

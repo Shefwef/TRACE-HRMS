@@ -3,7 +3,7 @@
  *
  * Primary source: Google Calendar's official "Holidays in Bangladesh" ICS feed.
  * Google curates all BD public holidays including moon-dependent Islamic and
- * Hindu observances, so the sync covers Eids, Puja, Ashura, etc. — not just
+ * Hindu observances, so the sync covers Eids, Puja, Ashura, etc. - not just
  * fixed Gregorian dates.
  *
  * Fallback (used only when the Google fetch fails): the hardcoded list of
@@ -15,7 +15,7 @@ const GOOGLE_BD_ICS_URL =
 
 export interface SeedHoliday {
   name: string;
-  /** MM-DD — recurring, applied to whichever year the sync call requests. */
+  /** MM-DD - recurring, applied to whichever year the sync call requests. */
   monthDay: string;
   description?: string;
 }
@@ -30,7 +30,7 @@ export const BD_FIXED_HOLIDAYS: SeedHoliday[] = [
   { name: 'Christmas Day (Bara Din)', monthDay: '12-25' },
 ];
 
-/** Gregorian moveable holidays that shift each year — currently none. */
+/** Gregorian moveable holidays that shift each year - currently none. */
 export const BD_GREGORIAN_MOVEABLE: Record<number, SeedHoliday[]> = {};
 
 export interface FetchedHoliday {
@@ -43,7 +43,7 @@ export interface FetchedHoliday {
 /**
  * Whitelist of Bangladesh government-recognized public holidays.
  * Google's ICS feed includes cultural observances and international days
- * that aren't actual gazetted public holidays — we filter to just the ones
+ * that aren't actual gazetted public holidays - we filter to just the ones
  * listed in the Ministry of Public Administration gazette.
  * Match is case-insensitive substring; the regex here is intentionally loose
  * to catch spelling variants ("Eid al-Fitr" vs "Eid ul-Fitr", etc.).
@@ -96,7 +96,7 @@ async function fetchGoogleHolidays(year: number): Promise<FetchedHoliday[]> {
 }
 
 /**
- * Minimal RFC 5545 iCal parser — just enough to pull SUMMARY + DTSTART from
+ * Minimal RFC 5545 iCal parser - just enough to pull SUMMARY + DTSTART from
  * VEVENT blocks for whole-day (VALUE=DATE) entries. Not a general iCal parser.
  */
 function parseICS(ics: string, year: number): FetchedHoliday[] {
@@ -140,7 +140,7 @@ function parseICS(ics: string, year: number): FetchedHoliday[] {
     }
   }
 
-  // De-dupe by (name, date) — Google occasionally lists the same holiday twice
+  // De-dupe by (name, date) - Google occasionally lists the same holiday twice
   // when it's observed as both a religious and public holiday.
   const seen = new Set<string>();
   const unique = events.filter((e) => {
@@ -162,7 +162,7 @@ function decodeICSValue(v: string): string {
     .replace(/\\\\/g, '\\');
 }
 
-/** Fallback builder — hardcoded fixed dates only. */
+/** Fallback builder - hardcoded fixed dates only. */
 function fallbackHolidaysForYear(year: number): FetchedHoliday[] {
   const fixed = BD_FIXED_HOLIDAYS.map((h) => ({
     name: h.name,
@@ -186,7 +186,7 @@ export async function holidaysForYear(year: number): Promise<FetchedHoliday[]> {
   try {
     const fetched = await fetchGoogleHolidays(year);
     if (fetched.length > 0) return fetched;
-    console.warn('[bdHolidays] Google returned 0 events for', year, '— using fallback');
+    console.warn('[bdHolidays] Google returned 0 events for', year, '- using fallback');
   } catch (e) {
     console.warn('[bdHolidays] Google fetch failed, using fallback:', e);
   }

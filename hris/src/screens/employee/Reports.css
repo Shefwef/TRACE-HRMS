@@ -23,7 +23,7 @@
   white-space: nowrap;
 }
 
-/* Controls row — select + optional custom date inputs */
+/* Controls row - select + optional custom date inputs */
 .rpts-period-controls {
   display: flex;
   align-items: center;

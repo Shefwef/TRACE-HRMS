@@ -7,7 +7,7 @@
  * The history in `work_location_events` is append-only. The only field ever
  * updated on an existing row is `endedAt` (plus `autoClosed`), which closes a
  * period. Corrections are appended as ADMIN_CORRECTION rows so the original
- * remains visible — see `correctEvent()`.
+ * remains visible - see `correctEvent()`.
  *
  * Rule 3 ("exactly one current location") is enforced by a partial unique index
  * on (employeeId) WHERE endedAt IS NULL, not by a check in this file. A
@@ -77,7 +77,7 @@ export class WorkLocationError extends Error {
  *
  * `'ALL'` for holders of work_location.view_all; an explicit id list for a Line
  * Manager (their direct reports plus themselves); `null` when they may only see
- * themselves. The route layer turns that into a `where` clause — the scope is
+ * themselves. The route layer turns that into a `where` clause - the scope is
  * decided once, here, rather than re-derived in each endpoint.
  */
 export async function resolveVisibleEmployeeIds(actor: {
@@ -172,7 +172,7 @@ export async function getHistory(
 /**
  * Rule 1: every successful clock-in establishes an OFFICE baseline.
  *
- * Called from inside the clock-in transaction. Idempotent — if a period is
+ * Called from inside the clock-in transaction. Idempotent - if a period is
  * already open (a re-clock-in on the same day after an aborted clock-out) it
  * leaves the existing one alone rather than tripping the unique index.
  */
@@ -252,7 +252,7 @@ export async function startOrChangeOffsite(args: {
     select: { id: true, clockInTime: true, clockOutTime: true, workLocation: true },
   });
 
-  // Rule 4 — no off-site work without a clock-in for the day.
+  // Rule 4 - no off-site work without a clock-in for the day.
   if (!attendance?.clockInTime) {
     throw new WorkLocationError(
       'NOT_CLOCKED_IN',
@@ -274,7 +274,7 @@ export async function startOrChangeOffsite(args: {
     });
 
     const previous: WorkLocationType | null = open?.newLocationType ?? attendance.workLocation;
-    // Rule 6 — already off-site means this is a destination change, not a start.
+    // Rule 6 - already off-site means this is a destination change, not a start.
     const eventType = previous === 'OFFSITE' ? 'OFFSITE_LOCATION_CHANGED' : 'OFFSITE_STARTED';
 
     if (open) {
@@ -302,7 +302,7 @@ export async function startOrChangeOffsite(args: {
       },
     });
 
-    // Rule 2 — only the location mirror is touched. Clock times are untouched.
+    // Rule 2 - only the location mirror is touched. Clock times are untouched.
     await tx.attendanceRecord.update({
       where: { id: attendance.id },
       data: { workLocation: 'OFFSITE' },
@@ -356,7 +356,7 @@ export async function returnToOffice(args: {
       orderBy: { startedAt: 'desc' },
     });
 
-    // Rule 5 — nothing to return from.
+    // Rule 5 - nothing to return from.
     if (!open || open.newLocationType !== 'OFFSITE') {
       throw new WorkLocationError(
         'ALREADY_IN_OFFICE',
@@ -412,7 +412,7 @@ export async function returnToOffice(args: {
 /**
  * HR/Admin correction. Appends an ADMIN_CORRECTION row describing the intended
  * state and closes the erroneous period if it is still open. The original row
- * keeps its original times — nothing is overwritten, so the audit trail still
+ * keeps its original times - nothing is overwritten, so the audit trail still
  * shows what was recorded before the correction and who changed it.
  */
 export async function correctEvent(args: {
@@ -494,7 +494,7 @@ export interface TeamLocationRow {
 }
 
 /**
- * Everyone's current location for one day. `employeeIds` scopes the result —
+ * Everyone's current location for one day. `employeeIds` scopes the result -
  * the route layer passes a Line Manager's team, or undefined for HR/Admin.
  */
 export async function getLocationBoard(args: {
@@ -578,7 +578,7 @@ export async function getLocationBoard(args: {
 /** What one employee's location history says about one attendance day. */
 export interface DayLocationFacts {
   /**
-   * Where the day began. Normally OFFICE — the clock-in baseline — but an
+   * Where the day began. Normally OFFICE - the clock-in baseline - but an
    * employee who went straight to a client site starts the day OFFSITE.
    */
   firstLocation: WorkLocationType;
@@ -594,7 +594,7 @@ export interface DayLocationFacts {
  *
  * There is deliberately no "final location" here: that is the denormalised
  * `attendanceRecord.workLocation` mirror, which clock-out leaves untouched and
- * corrections reset — so the attendance row already carries the authoritative
+ * corrections reset - so the attendance row already carries the authoritative
  * answer and re-deriving it from events would only disagree with it.
  *
  * Events with no `attendanceId` (admin corrections on historical days) are out
@@ -613,7 +613,7 @@ export async function dayLocationFacts(args: {
     where: {
       employeeId: { in: args.employeeIds },
       attendance: { date: { gte: args.from, lt: args.to } },
-      // Corrections are zero-length audit markers, not periods — counting one
+      // Corrections are zero-length audit markers, not periods - counting one
       // would report a phantom OFFICE period at the moment HR clicked.
       eventType: { not: 'ADMIN_CORRECTION' },
     },

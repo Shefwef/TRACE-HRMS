@@ -81,7 +81,7 @@ export const CreateLeaveBundleSchema = z.object({
     ),
   reason: z.string().min(2).max(100),
   description: z.string().max(500).optional(),
-  // Same rule as CreateLeaveSchema — allow relative paths from our uploader.
+  // Same rule as CreateLeaveSchema - allow relative paths from our uploader.
   attachmentUrl: z.string().min(1).max(500).optional(),
   channels: z.array(z.enum(['EMAIL', 'IN_APP'])).min(1),
   customMessage: z.string().max(4000).optional(),
@@ -185,7 +185,7 @@ export const InviteEmployeeSchema = z.object({
   /** ISO date string YYYY-MM-DD */
   dateOfBirth: z.iso.date().optional(),
   /**
-   * ISO date string YYYY-MM-DD. Required — the leave cycle runs from this date
+   * ISO date string YYYY-MM-DD. Required - the leave cycle runs from this date
    * to one day before its anniversary each year.
    */
   joiningDate: z.iso.date(),

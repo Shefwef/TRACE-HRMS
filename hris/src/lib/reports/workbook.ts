@@ -1,6 +1,6 @@
 /**
  * Workbook formatting layer. The only file in the reports stack that imports
- * ExcelJS — the builders describe columns and hand over plain rows, and this
+ * ExcelJS - the builders describe columns and hand over plain rows, and this
  * turns them into a formatted sheet.
  *
  * Everything here is presentation. No queries, no business rules: if a number
@@ -23,7 +23,7 @@ const TOTAL_FILL_ARGB = 'FFEDF2F7';
  * than pre-formatted strings, so the reader can sort, filter, average and chart
  * them. That is the whole point of exporting a spreadsheet instead of a PDF.
  *
- * `decimal` covers hours, leave days and balances alike — all half-step values
+ * `decimal` covers hours, leave days and balances alike - all half-step values
  * that read best to two places.
  */
 export type ColFormat = 'text' | 'date' | 'time' | 'decimal' | 'int' | 'percent';
@@ -62,7 +62,7 @@ export function createWorkbook(): Workbook {
  * Adds a sheet with a styled, frozen, filterable header row.
  *
  * `name` is truncated to Excel's 31-character sheet-name limit and stripped of
- * the characters Excel rejects — a name it refuses makes the whole file fail to
+ * the characters Excel rejects - a name it refuses makes the whole file fail to
  * open, which is a poor way to discover the rule.
  */
 export function addSheet(wb: Workbook, name: string, columns: Col[]): Worksheet {
@@ -104,7 +104,7 @@ export function addRows(sheet: Worksheet, rows: Row[]): void {
  * Appends a bold, shaded totals row summing the columns marked `total: true`.
  *
  * Written as a live `SUM()` formula rather than a computed constant so the
- * total still holds if the reader deletes or edits rows — a spreadsheet is an
+ * total still holds if the reader deletes or edits rows - a spreadsheet is an
  * editable document, and a hardcoded total silently becomes a lie.
  *
  * No-ops when there is nothing to total, so callers can pass columns through

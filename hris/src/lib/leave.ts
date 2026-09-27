@@ -9,7 +9,7 @@ import type { CreateLeaveInput } from './validation';
  *
  * - Full-day range: number of weekdays inclusive.
  * - Half-day (single day): 0.5.
- * - Time-range (single day, timeFrom–timeTo): fraction of an 8-hour day.
+ * - Time-range (single day, timeFrom-timeTo): fraction of an 8-hour day.
  */
 export function computeDurationDays(input: CreateLeaveInput): number {
   const start = new Date(input.startDate + 'T00:00:00Z');
@@ -148,9 +148,9 @@ export function leaveTypeLabel(t: 'CASUAL' | 'SICK' | 'REPLACEMENT'): string {
 export function extraWorkTypeLabel(
   t: 'FULL_DAY' | 'HALF_DAY_MORNING' | 'HALF_DAY_AFTERNOON'
 ): string {
-  if (t === 'FULL_DAY') return 'Full day (9 AM – 5 PM)';
-  if (t === 'HALF_DAY_MORNING') return 'Half day, morning (9 AM – 1 PM)';
-  return 'Half day, afternoon (1 PM – 5 PM)';
+  if (t === 'FULL_DAY') return 'Full day (9 AM - 5 PM)';
+  if (t === 'HALF_DAY_MORNING') return 'Half day, morning (9 AM - 1 PM)';
+  return 'Half day, afternoon (1 PM - 5 PM)';
 }
 
 /** Format a leave period for humans. */
@@ -169,8 +169,8 @@ export function formatLeavePeriod(
       year: 'numeric',
       timeZone: 'UTC',
     });
-  if (timeFrom && timeTo) return `${fmt(startDate)} · ${timeFrom}–${timeTo}`;
+  if (timeFrom && timeTo) return `${fmt(startDate)} · ${timeFrom}-${timeTo}`;
   if (isHalfDay) return `${fmt(startDate)} · ${halfDaySlot === 'MORNING' ? 'morning' : 'afternoon'} half`;
   if (startDate === endDate) return fmt(startDate);
-  return `${fmt(startDate)} – ${fmt(endDate)}`;
+  return `${fmt(startDate)} - ${fmt(endDate)}`;
 }

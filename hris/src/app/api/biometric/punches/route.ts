@@ -38,7 +38,7 @@ function checkBearerToken(req: Request): boolean {
   }
 }
 
-/** POST /api/biometric/punches — called by the office agent (bearer token). */
+/** POST /api/biometric/punches - called by the office agent (bearer token). */
 export async function POST(req: Request) {
   if (!checkBearerToken(req))
     return err(401, 'UNAUTHORIZED', 'Invalid or missing bearer token.');
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
   return NextResponse.json(result);
 }
 
-/** GET /api/biometric/punches — recent punches, admin-only (Clerk session). */
+/** GET /api/biometric/punches - recent punches, admin-only (Clerk session). */
 export async function GET(req: Request) {
   const [user, error] = await requireAuth(req);
   if (error) return error;

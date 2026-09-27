@@ -133,7 +133,7 @@ export function ApplyLeavePage() {
   const anyEnabled  = casual.enabled || sick.enabled || replacement.enabled;
   const totalDays   = casualDuration + sickDuration + replDuration;
 
-  // Balance validation — user cannot request more than they have.
+  // Balance validation - user cannot request more than they have.
   const overBudget = (
     (casual.enabled && casualDuration > available.casual) ||
     (sick.enabled && sickDuration > available.sick) ||
@@ -241,7 +241,7 @@ export function ApplyLeavePage() {
 
           <section className="card aply-details">
             <h3>Details</h3>
-            <Field label="Reason" required hint="Short summary — this shows up in the review inbox.">
+            <Field label="Reason" required hint="Short summary - this shows up in the review inbox.">
               <TextInput
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
@@ -249,7 +249,7 @@ export function ApplyLeavePage() {
                 maxLength={100}
               />
             </Field>
-            <Field label="Description" hint="Optional — any extra context for your manager.">
+            <Field label="Description" hint="Optional - any extra context for your manager.">
               <TextArea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -258,7 +258,7 @@ export function ApplyLeavePage() {
                 maxLength={500}
               />
             </Field>
-            <Field label="Attachment" hint="Optional — PDF, DOC, image (max 5 MB).">
+            <Field label="Attachment" hint="Optional - PDF, DOC, image (max 5 MB).">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -457,7 +457,7 @@ function TypeCard({
 
           {skippedCount > 0 && (
             <div className="aply-skip-hint">
-              {skippedCount} day{skippedCount === 1 ? '' : 's'} in the range {skippedCount === 1 ? 'is' : 'are'} a weekend or public holiday — excluded automatically.
+              {skippedCount} day{skippedCount === 1 ? '' : 's'} in the range {skippedCount === 1 ? 'is' : 'are'} a weekend or public holiday - excluded automatically.
             </div>
           )}
 
@@ -475,7 +475,7 @@ function TypeCard({
           )}
           {state.startDate && state.endDate && state.startDate <= state.endDate && days.length === 0 && (
             <div className="aply-skip-hint">
-              Every day in this range is a weekend or public holiday — pick a different range.
+              Every day in this range is a weekend or public holiday - pick a different range.
             </div>
           )}
         </>
@@ -529,7 +529,7 @@ function DayRow({ date, slot, onChange }: {
             />
             <div>
               <strong>Morning</strong>
-              <span>8:30 am – 1:00 pm</span>
+              <span>8:30 am - 1:00 pm</span>
             </div>
           </label>
           <label className={cx('aply-half-option', slot === 'HALF_AFTERNOON' && 'aply-half-option-on')}>
@@ -541,7 +541,7 @@ function DayRow({ date, slot, onChange }: {
             />
             <div>
               <strong>Afternoon</strong>
-              <span>2:00 pm – 5:30 pm</span>
+              <span>2:00 pm - 5:30 pm</span>
             </div>
           </label>
         </div>

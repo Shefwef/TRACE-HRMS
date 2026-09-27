@@ -46,7 +46,7 @@ interface TypeBalanceImpact {
   after: number;
 }
 
-/** Build the default allocation for a leave item — prefers the employee's
+/** Build the default allocation for a leave item - prefers the employee's
  *  submitted per-day breakdown, falls back to expanding the range. */
 function initialAllocFor(item: LeaveBundleItemSummary): AllocationEntry[] {
   if (item.perDayAllocation && item.perDayAllocation.length > 0) {
@@ -78,7 +78,7 @@ export function LeaveReviewDrawer({ requestId, onClose }: Props) {
   const [itemAllocs, setItemAllocs] = useState<Record<string, AllocationEntry[]>>({});
   const [itemNewDate, setItemNewDate] = useState<Record<string, string>>({});
 
-  // Build the list of items to iterate — a single-type row becomes a one-item
+  // Build the list of items to iterate - a single-type row becomes a one-item
   // list; a bundle exposes every sibling.
   const items: LeaveBundleItemSummary[] = useMemo(() => {
     if (!request) return [];
@@ -134,7 +134,7 @@ export function LeaveReviewDrawer({ requestId, onClose }: Props) {
     [items, durationFor],
   );
 
-  // Balance impact per leave type — sums every pending item's modified (or
+  // Balance impact per leave type - sums every pending item's modified (or
   // original) duration against its own balance.
   const balanceImpact: TypeBalanceImpact[] = useMemo(() => {
     if (!request || !request.balancePreview) return [];
@@ -319,7 +319,7 @@ export function LeaveReviewDrawer({ requestId, onClose }: Props) {
             )}
           </div>
 
-          {/* Modify allocation — per item */}
+          {/* Modify allocation - per item */}
           {request.status === 'PENDING' && (
             <div className="lrd-card">
               <div className="lrd-card-title">Modify allocation</div>
@@ -377,12 +377,12 @@ export function LeaveReviewDrawer({ requestId, onClose }: Props) {
           {request.status === 'PENDING' && (
             <Field
               label="Note to requester"
-              hint={anyItemModified ? 'Required — explain what you changed and why.' : 'Optional — visible to the employee alongside your decision.'}
+              hint={anyItemModified ? 'Required - explain what you changed and why.' : 'Optional - visible to the employee alongside your decision.'}
             >
               <TextArea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="e.g. Enjoy your break — coverage is confirmed."
+                placeholder="e.g. Enjoy your break - coverage is confirmed."
                 rows={3}
               />
             </Field>
@@ -521,7 +521,7 @@ export function LeaveReviewDrawer({ requestId, onClose }: Props) {
             rows={4}
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="e.g. Team release week — please pick a different range."
+            placeholder="e.g. Team release week - please pick a different range."
             autoFocus
           />
         </Field>
@@ -568,7 +568,7 @@ function ItemModifyEditor({
 
       {!modify ? (
         <p className="lrd-alloc-hint">
-          Approve as requested — <strong>{item.durationDays} day{item.durationDays === 1 ? '' : 's'}</strong>.
+          Approve as requested - <strong>{item.durationDays} day{item.durationDays === 1 ? '' : 's'}</strong>.
         </p>
       ) : (
         <div className="lrd-alloc-editor">

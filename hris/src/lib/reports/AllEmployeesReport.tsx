@@ -51,7 +51,7 @@ function truncate(s: string, n: number): string {
 export function AllEmployeesReport(input: AllEmployeesReportInput) {
   return (
     <Document
-      title={`All Employees — Cycle ${input.cycleYear}`}
+      title={`All Employees - Cycle ${input.cycleYear}`}
       author="TRACE HRMS"
       subject={`Company-wide cycle report`}
     >
@@ -96,11 +96,11 @@ export function AllEmployeesReport(input: AllEmployeesReportInput) {
                       <Text style={styles.tdMuted}>{truncate(r.email, 32)}</Text>
                     </View>
                     <Text style={[styles.td, { width: COLS[1].width }]}>{r.role}</Text>
-                    <Text style={[styles.tdMuted, { width: COLS[2].width }]}>{truncate(r.department ?? '—', 22)}</Text>
+                    <Text style={[styles.tdMuted, { width: COLS[2].width }]}>{truncate(r.department ?? '-', 22)}</Text>
                     <Text style={[styles.td, { width: COLS[3].width }]}>{r.casualUsed}/{r.casualTotal}</Text>
                     <Text style={[styles.td, { width: COLS[4].width }]}>{r.sickUsed}/{r.sickTotal}</Text>
                     <Text style={[styles.td, { width: COLS[5].width }]}>{r.replacementBalance}</Text>
-                    <Text style={[styles.td, { width: COLS[6].width }]}>{r.attendanceRate == null ? '—' : `${r.attendanceRate}%`}</Text>
+                    <Text style={[styles.td, { width: COLS[6].width }]}>{r.attendanceRate == null ? '-' : `${r.attendanceRate}%`}</Text>
                     <Text style={[styles.tdMuted, { width: COLS[7].width }]}>{fmtHours(r.overtimeMinutes)}</Text>
                     <Text style={[styles.td, { width: COLS[8].width }]}>{r.pendingLeaves}</Text>
                   </View>

@@ -13,7 +13,7 @@ import './WorkLocationModal.css';
 
 /**
  * MapLibre is ~200KB of WebGL renderer. Splitting it out here means Attendance,
- * Reports and the dashboard never download it — the chunk arrives the first time
+ * Reports and the dashboard never download it - the chunk arrives the first time
  * somebody opens this modal, and the browser caches it from then on. `ssr: false`
  * because MapLibre touches `window` on construction.
  */
@@ -45,7 +45,7 @@ export function WorkLocationModal({ open, onClose, currentPlaceName }: Props) {
   const [purpose, setPurpose] = useState('');
   const [touched, setTouched] = useState(false);
 
-  // Reset whenever the modal is reopened — a stale destination from last time
+  // Reset whenever the modal is reopened - a stale destination from last time
   // is worse than an empty form.
   useEffect(() => {
     if (open) {
@@ -163,7 +163,7 @@ export function WorkLocationModal({ open, onClose, currentPlaceName }: Props) {
                 }
               />
             </Field>
-            <Field label="Address" hint="Optional — helps HR recognise the site later.">
+            <Field label="Address" hint="Optional - helps HR recognise the site later.">
               <TextInput
                 value={selection.formattedAddress ?? ''}
                 placeholder="Area, road, city"
@@ -210,7 +210,7 @@ function PlacePicker({ selection, onSelect }: PickerProps) {
   const [error, setError] = useState<string | null>(null);
 
   // Debounced, and the previous request is aborted rather than left to land out
-  // of order — each keystroke costs a credit, and a stale response overwriting a
+  // of order - each keystroke costs a credit, and a stale response overwriting a
   // fresh one is the classic autocomplete bug.
   useEffect(() => {
     const term = query.trim();
@@ -248,7 +248,7 @@ function PlacePicker({ selection, onSelect }: PickerProps) {
 
   /**
    * Unlike Google's Places SDK, Geoapify already returns coordinates and a
-   * formatted address with each result — so choosing one needs no follow-up
+   * formatted address with each result - so choosing one needs no follow-up
    * details call, and costs no extra credit.
    */
   const choose = (h: PlaceHit) => {
@@ -286,7 +286,7 @@ function PlacePicker({ selection, onSelect }: PickerProps) {
           });
         })
         .catch(() => {
-          /* Out of credits or offline — the pin itself is already recorded. */
+          /* Out of credits or offline - the pin itself is already recorded. */
         });
     },
     [onSelect, selection],

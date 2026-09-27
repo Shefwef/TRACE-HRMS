@@ -10,7 +10,7 @@ import { dayKeyToDateOnly, localDayBounds, localDayKey } from '@/lib/workday';
  * Query params:
  *   employeeId  view someone else (requires view_all, or view_team for a report)
  *   from, to    yyyy-MM-dd history window, office-local (defaults to today only
- *               being unbounded — omit both for the last 200 events)
+ *               being unbounded - omit both for the last 200 events)
  */
 export async function GET(req: Request) {
   const [actor, error] = await requireAuth(req);

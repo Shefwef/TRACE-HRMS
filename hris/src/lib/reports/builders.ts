@@ -1,6 +1,6 @@
 /**
  * One builder per report. Each takes already-queried data from `data.ts` and
- * returns a finished workbook — the column lists live here because they are a
+ * returns a finished workbook - the column lists live here because they are a
  * presentation decision, and the numbers behind them are settled before this
  * file runs.
  *
@@ -109,7 +109,7 @@ export function buildAttendanceWorkbook(
   data: AttendanceReportData,
 ): Workbook {
   const wb = createWorkbook();
-  wb.title = `Attendance report — ${employee.fullName} — ${period.label}`;
+  wb.title = `Attendance report - ${employee.fullName} - ${period.label}`;
 
   addSummarySheet(wb, 'Summary', [
     { heading: 'Report', rows: reportMeta('Attendance report', period) },
@@ -121,7 +121,7 @@ export function buildAttendanceWorkbook(
   addRows(daily, data.daily);
   addTotalsRow(daily, DAILY_COLS);
 
-  // Only when there is something to show — an empty tab reads as a bug.
+  // Only when there is something to show - an empty tab reads as a bug.
   if (data.offsite.length > 0) addOffsiteSheet(wb, data.offsite);
 
   return wb;
@@ -133,7 +133,7 @@ export function buildLeavesWorkbook(
   data: LeaveReportData,
 ): Workbook {
   const wb = createWorkbook();
-  wb.title = `Leave history — ${employee.fullName} — ${period.label}`;
+  wb.title = `Leave history - ${employee.fullName} - ${period.label}`;
 
   const b = data.balance;
   addSummarySheet(wb, 'Summary', [
@@ -142,14 +142,14 @@ export function buildLeavesWorkbook(
     {
       heading: 'Leave balance',
       rows: [
-        ['Casual — entitled', b.casualTotal],
-        ['Casual — used', b.casualUsed],
-        ['Casual — pending approval', b.casualPending],
-        ['Casual — remaining', round2(b.casualTotal - b.casualUsed - b.casualPending)],
-        ['Sick — entitled', b.sickTotal],
-        ['Sick — used', b.sickUsed],
-        ['Sick — pending approval', b.sickPending],
-        ['Sick — remaining', round2(b.sickTotal - b.sickUsed - b.sickPending)],
+        ['Casual - entitled', b.casualTotal],
+        ['Casual - used', b.casualUsed],
+        ['Casual - pending approval', b.casualPending],
+        ['Casual - remaining', round2(b.casualTotal - b.casualUsed - b.casualPending)],
+        ['Sick - entitled', b.sickTotal],
+        ['Sick - used', b.sickUsed],
+        ['Sick - pending approval', b.sickPending],
+        ['Sick - remaining', round2(b.sickTotal - b.sickUsed - b.sickPending)],
         ['Replacement balance (earned)', b.replacementBalance],
       ],
     },
@@ -183,15 +183,15 @@ export function buildSummaryWorkbook(
   data: SummaryReportData,
 ): Workbook {
   const wb = createWorkbook();
-  wb.title = `Performance summary — ${employee.fullName} — ${period.label}`;
+  wb.title = `Performance summary - ${employee.fullName} - ${period.label}`;
 
   const b = data.balance;
   addSummarySheet(wb, 'Performance Summary', [
     { heading: 'Report', rows: reportMeta('Performance summary', period) },
     { heading: 'Employee', rows: employeeMeta(employee) },
-    { heading: `Attendance — ${period.label}`, rows: attendanceMeta(data.attendance) },
+    { heading: `Attendance - ${period.label}`, rows: attendanceMeta(data.attendance) },
     {
-      heading: `Leave — cycle ${period.year}`,
+      heading: `Leave - cycle ${period.year}`,
       rows: [
         ['Casual remaining', round2(b.casualTotal - b.casualUsed - b.casualPending)],
         ['Sick remaining', round2(b.sickTotal - b.sickUsed - b.sickPending)],
@@ -213,7 +213,7 @@ export function buildCompanyWorkbook(
   scopeLabel: string,
 ): Workbook {
   const wb = createWorkbook();
-  wb.title = `Company report — ${period.label}`;
+  wb.title = `Company report - ${period.label}`;
 
   addSummarySheet(wb, 'Summary', [
     { heading: 'Report', rows: [...reportMeta('Company cycle report', period), ['Scope', scopeLabel]] },
@@ -249,14 +249,14 @@ export function buildCompanyWorkbook(
   return wb;
 }
 
-/** §26 as a standalone report — off-site work on its own, across the team. */
+/** §26 as a standalone report - off-site work on its own, across the team. */
 export function buildOffsiteWorkbook(
   period: Period,
   rows: OffsiteEventRow[],
   scopeLabel: string,
 ): Workbook {
   const wb = createWorkbook();
-  wb.title = `Off-site work report — ${period.label}`;
+  wb.title = `Off-site work report - ${period.label}`;
 
   const offsiteRows = rows.filter((r) => r.durationHours !== null);
   const employees = new Set(rows.map((r) => r.employeeName)).size;
@@ -298,11 +298,11 @@ function reportMeta(title: string, period: Period): [string, CellValue][] {
 
 function employeeMeta(e: Identity): [string, CellValue][] {
   return [
-    ['Employee ID', e.employeeIdCode ?? '—'],
+    ['Employee ID', e.employeeIdCode ?? '-'],
     ['Name', e.fullName],
     ['Email', e.email],
-    ['Department', e.department ?? '—'],
-    ['Designation', e.designation ?? '—'],
+    ['Department', e.department ?? '-'],
+    ['Designation', e.designation ?? '-'],
   ];
 }
 

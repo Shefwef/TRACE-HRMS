@@ -1,0 +1,28 @@
+.lvtabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--color-border-default);
+  overflow-x: auto;
+}
+.lvtabs-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--weight-medium);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color var(--transition-fast), border var(--transition-fast);
+  background: transparent;
+  cursor: pointer;
+}
+.lvtabs-tab:hover { color: var(--color-text-primary); }
+.lvtabs-tab-active {
+  color: var(--color-brand-primary);
+  border-color: var(--color-brand-primary);
+  font-weight: var(--weight-semibold);
+}

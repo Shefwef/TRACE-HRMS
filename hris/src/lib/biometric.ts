@@ -16,7 +16,7 @@ import { evaluateReplacementEligibility } from './leave';
 /**
  * Minutes in a scheduled workday derived from the office window.
  * `workStartTime`/`workEndTime` are "HH:mm" strings in office-local time.
- * A 08:30 → 17:30 window yields 540 minutes (9 h) — the value used to
+ * A 08:30 → 17:30 window yields 540 minutes (9 h) - the value used to
  * split worked time into overtime vs deficit.
  */
 function standardMinutesFromWindow(workStartTime: string, workEndTime: string): number {
@@ -70,7 +70,7 @@ function resolveInOut(punches: Date[]): { clockIn: Date | null; clockOut: Date |
 export interface RawPunch {
   deviceUserId: string;
   punchedAt: string;        // "YYYY-MM-DD HH:MM:SS", wall-clock in device timezone
-  punchState: string;       // "0" = In, "1" = Out; "2"–"5" ignored
+  punchState: string;       // "0" = In, "1" = Out; "2"-"5" ignored
   verifyType?: number;
   sourceId?: string;        // vendor's transaction id, kept in rawPayload
 }
@@ -182,7 +182,7 @@ export async function ingestPunches(input: IngestInput): Promise<IngestResult> {
     return result;
   }
 
-  // 3. Upsert punches — unique index on (deviceId, deviceUserId, punchedAt)
+  // 3. Upsert punches - unique index on (deviceId, deviceUserId, punchedAt)
   //    makes duplicates a no-op via skipDuplicates.
   const toInsert = valid.map((p) => ({
     deviceId: device.id,
@@ -245,7 +245,7 @@ export async function ingestPunches(input: IngestInput): Promise<IngestResult> {
   }
 
   // 6. Recompute attendance for every affected (employee, day) from ALL stored
-  //    punches — new + prior — using the time-of-day rule. This is idempotent
+  //    punches - new + prior - using the time-of-day rule. This is idempotent
   //    and self-healing, so late-arriving punches will always produce the right
   //    clock-in / clock-out.
   for (const { employeeId, date } of affectedDays.values()) {
@@ -362,7 +362,14 @@ async function rebuildAttendanceDay(
   // Auto-file a pending replacement-leave request if the employee actually
   // worked on this non-working day. Idempotent: skipped when a log already
   // exists for the same (employee, date). HR still approves/rejects.
-  await maybeAutoFileReplacementLeave(employeeId, date, dayKey, clockIn, totalWorkedMinutes);
+  // Best-effort: a failure here (e.g. a race on the unique
+  // (employeeId, workDate) constraint) must not roll back the attendance
+  // rebuild that already succeeded.
+  try {
+    await maybeAutoFileReplacementLeave(employeeId, date, dayKey, clockIn, totalWorkedMinutes);
+  } catch (e) {
+    console.warn('[maybeAutoFileReplacementLeave] failed:', e);
+  }
 }
 
 /**
@@ -375,7 +382,7 @@ async function rebuildAttendanceDay(
  *     - the employee has a valid clock-in AND some worked time
  *     - no ExtraWorkLog already exists for (employee, date)
  *
- *   Slot is picked by evaluateReplacementEligibility() — worked > 4h ->
+ *   Slot is picked by evaluateReplacementEligibility() - worked > 4h ->
  *   FULL_DAY, otherwise AM/PM half based on the clock-in hour.
  *
  * The reason field is set to a placeholder that surfaces the source so HR
@@ -420,7 +427,7 @@ async function maybeAutoFileReplacementLeave(
       employeeId,
       workDate: date,
       workType,
-      reason: `${label} on ${dayKey} — auto-detected from biometric attendance`,
+      reason: `${label} on ${dayKey} - auto-detected from biometric attendance`,
       description: null,
       status: 'PENDING',
     },
@@ -452,16 +459,30 @@ async function maybeAutoFileReplacementLeave(
  * (not just the date range) so that employees added to the mapping after their
  * punches were first ingested get their historical attendance built correctly.
  *
- * A module-level mutex serialises concurrent calls — two admins clicking
+ * A module-level mutex serialises concurrent calls - two admins clicking
  * Recompute at once would otherwise exhaust the Prisma connection pool
  * because each pass loops over thousands of days.
  */
-let rebuildInFlight: Promise<{ rebuilt: number; employees: number; remapped: number }> | null = null;
+export interface RebuildSummary {
+  rebuilt: number;
+  employees: number;
+  remapped: number;
+  /**
+   * Punches that STILL have employeeId=null after the re-map pass. These
+   * point at device IDs (emp_code) that no user in HRMS has claimed under
+   * Mapping - the fix is to enter the missing emp_code on the Mapping tab
+   * and click Recompute again.
+   */
+  unmappedRemaining: number;
+  unmappedDeviceUserIds: string[];
+}
+
+let rebuildInFlight: Promise<RebuildSummary> | null = null;
 
 export async function rebuildAttendanceRange(
   from: Date,
   to: Date,
-): Promise<{ rebuilt: number; employees: number; remapped: number }> {
+): Promise<RebuildSummary> {
   if (rebuildInFlight) return rebuildInFlight;
   rebuildInFlight = doRebuildAttendanceRange(from, to).finally(() => { rebuildInFlight = null; });
   return rebuildInFlight;
@@ -470,7 +491,7 @@ export async function rebuildAttendanceRange(
 async function doRebuildAttendanceRange(
   from: Date,
   to: Date,
-): Promise<{ rebuilt: number; employees: number; remapped: number }> {
+): Promise<RebuildSummary> {
   // Step 1: re-map orphaned punches (employeeId=null) across all history.
   const unmapped = await prisma.biometricPunch.findMany({
     where: { employeeId: null },
@@ -503,7 +524,7 @@ async function doRebuildAttendanceRange(
       const date = localDateOnly(punch.punchedAt);
       // Key on Dhaka calendar day, not date.toISOString(). Prisma can return
       // @db.Date columns as a Date whose UTC-instant is at Dhaka-midnight
-      // instead of UTC-midnight — depending on the Node TZ and driver — so an
+      // instead of UTC-midnight - depending on the Node TZ and driver - so an
       // ISO-string key would mismatch between the write side (always UTC-mid)
       // and the read side, causing a P2002 unique-constraint violation when
       // the rebuild thought the row didn't exist and tried to createMany.
@@ -526,7 +547,14 @@ async function doRebuildAttendanceRange(
   }
 
   if (dayMap.size === 0) {
-    return { rebuilt: 0, employees: 0, remapped };
+    const stillOrphaned = await collectUnmappedDeviceUserIds(from, to);
+    return {
+      rebuilt: 0,
+      employees: 0,
+      remapped,
+      unmappedRemaining: stillOrphaned.count,
+      unmappedDeviceUserIds: stillOrphaned.samples,
+    };
   }
 
   // Step 3: bulk-fetch settings + existing records + all relevant punches.
@@ -607,14 +635,14 @@ async function doRebuildAttendanceRange(
     const overtimeMinutes = clockOut ? Math.max(0, totalWorkedMinutes - standardMinutes) : 0;
     const deficitMinutes  = clockOut ? Math.max(0, standardMinutes - totalWorkedMinutes) : 0;
 
-    // A day with only a lone late-afternoon punch has no clock-in — that row
+    // A day with only a lone late-afternoon punch has no clock-in - that row
     // is effectively a stand-alone clock-out. Prisma requires both `create`
     // and `update` payloads to include the resolved values.
     if (existing) {
       toUpdate.push({ id: existing.id, clockInTime: clockIn, clockOutTime: clockOut, totalWorkedMinutes, overtimeMinutes, deficitMinutes });
     } else if (clockIn) {
       // Skip creating a brand-new row when the resolver couldn't assign a
-      // clock-in — the schema treats clockInTime as the anchor of a session,
+      // clock-in - the schema treats clockInTime as the anchor of a session,
       // and a solo clock-out with no in doesn't warrant a fresh record.
       toCreate.push({
         employeeId, date, clockInTime: clockIn, clockOutTime: clockOut,
@@ -645,6 +673,8 @@ async function doRebuildAttendanceRange(
   // during this rebuild. Uses the same helper as the single-day path so a
   // manual Recompute retroactively surfaces logs for days ingested before the
   // auto-detection feature shipped. Idempotent on (employee, date).
+  // Best-effort: an error on one (employee, date) pair must not abort the
+  // whole rebuild - the attendance rows have already been written.
   for (const { employeeId, date } of dayMap.values()) {
     const key = `${employeeId}|${localDayKey(date)}`;
     const dayPunches = punchesByKey.get(key);
@@ -653,12 +683,39 @@ async function doRebuildAttendanceRange(
     const workedMinutes = clockIn && clockOut
       ? Math.max(0, Math.round((clockOut.getTime() - clockIn.getTime()) / 60_000))
       : 0;
-    await maybeAutoFileReplacementLeave(employeeId, date, localDayKey(date), clockIn, workedMinutes);
+    try {
+      await maybeAutoFileReplacementLeave(employeeId, date, localDayKey(date), clockIn, workedMinutes);
+    } catch (e) {
+      console.warn('[maybeAutoFileReplacementLeave] failed for', employeeId, localDayKey(date), e);
+    }
   }
+
+  const stillOrphaned = await collectUnmappedDeviceUserIds(from, to);
 
   return {
     rebuilt: toCreate.length + toUpdate.length,
     employees: allEmployeeIds.length,
     remapped,
+    unmappedRemaining: stillOrphaned.count,
+    unmappedDeviceUserIds: stillOrphaned.samples,
   };
+}
+
+/**
+ * Count and sample the distinct deviceUserIds that still have punches with
+ * employeeId=null inside [from, to). These need to be mapped under the
+ * Biometric > Mapping tab before Recompute can turn their punches into
+ * attendance rows.
+ */
+async function collectUnmappedDeviceUserIds(
+  from: Date,
+  to: Date,
+): Promise<{ count: number; samples: string[] }> {
+  const orphaned = await prisma.biometricPunch.findMany({
+    where: { employeeId: null, punchedAt: { gte: from, lt: to } },
+    select: { deviceUserId: true },
+    distinct: ['deviceUserId'],
+    take: 20,
+  });
+  return { count: orphaned.length, samples: orphaned.map((r) => r.deviceUserId) };
 }

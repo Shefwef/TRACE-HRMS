@@ -22,7 +22,7 @@ const OPTIONS: {
   {
     key: 'FULL_DAY',
     label: 'Full day',
-    window: '9:00 AM – 5:00 PM',
+    window: '9:00 AM - 5:00 PM',
     credit: '+1 day',
     color: 'var(--color-success)',
     bg: 'var(--color-success-light)',
@@ -30,7 +30,7 @@ const OPTIONS: {
   {
     key: 'HALF_DAY_MORNING',
     label: 'Half day (morning)',
-    window: '9:00 AM – 1:00 PM',
+    window: '9:00 AM - 1:00 PM',
     credit: '+0.5 day',
     color: 'var(--color-leave-replacement)',
     bg: 'var(--color-leave-replacement-light)',
@@ -38,7 +38,7 @@ const OPTIONS: {
   {
     key: 'HALF_DAY_AFTERNOON',
     label: 'Half day (afternoon)',
-    window: '1:00 PM – 5:00 PM',
+    window: '1:00 PM - 5:00 PM',
     credit: '+0.5 day',
     color: 'var(--color-leave-replacement)',
     bg: 'var(--color-leave-replacement-light)',
@@ -133,7 +133,7 @@ export function LogExtraWorkModal({ open, onClose }: Props) {
       ) : (
         <div className="lew">
           <p className="lew-hint">
-            You always work <strong>9 AM – 5 PM</strong>. Pick which slot you covered on the
+            You always work <strong>9 AM - 5 PM</strong>. Pick which slot you covered on the
             weekend or holiday you&apos;re logging.
           </p>
 

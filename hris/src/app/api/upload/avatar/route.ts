@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 const MAX_SIZE = 3 * 1024 * 1024; // 3 MB
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
-/** POST /api/upload/avatar — saves an image to /public/avatars/ and returns its URL. */
+/** POST /api/upload/avatar - saves an image to /public/avatars/ and returns its URL. */
 export async function POST(req: Request) {
   try {
     const [, authError] = await requireAuth(req);

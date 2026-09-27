@@ -7,7 +7,7 @@ export async function GET(req: Request) {
   if (error) return error;
 
   const year = new Date().getFullYear();
-  // upsert is atomic — a race between two first-load requests for the same
+  // upsert is atomic - a race between two first-load requests for the same
   // employee can't produce a P2002 unique violation.
   const balance = await prisma.leaveBalance.upsert({
     where: { employeeId_cycleYear: { employeeId: user.id, cycleYear: year } },

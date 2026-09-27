@@ -3,7 +3,7 @@
  *
  * Trace runs in Bangladesh (Asia/Dhaka, UTC+6, no DST) but the server runs in
  * UTC. Deriving a day key with `getUTCDate()` therefore files every event
- * between midnight and 06:00 local under the *previous* calendar day — a bug
+ * between midnight and 06:00 local under the *previous* calendar day - a bug
  * that is invisible during office hours and wrong every early morning.
  *
  * Everything that needs "which day is it for the employee" goes through here.
@@ -59,7 +59,7 @@ export function localDayOfWeek(at: Date = new Date()): number {
 
 /**
  * Whether `at` falls on a non-working day, per the `workDaysBitmask` setting
- * (bit N set = day N is a workday; the default 31 is Sun–Thu, so Friday and
+ * (bit N set = day N is a workday; the default 31 is Sun-Thu, so Friday and
  * Saturday are the Bangladesh weekend).
  *
  * Pass the bitmask from SystemSettings. The default is only a fallback for
@@ -92,7 +92,7 @@ export function localTimeOnDayToUtc(dayKey: string, time: string): Date {
 }
 
 /**
- * UTC instants bounding an office-local day — for querying `DateTime` columns
+ * UTC instants bounding an office-local day - for querying `DateTime` columns
  * (as opposed to `@db.Date`) such as `WorkLocationEvent.startedAt`.
  */
 export function localDayBounds(dayKey: string): { start: Date; end: Date } {

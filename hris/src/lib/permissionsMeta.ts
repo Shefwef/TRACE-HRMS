@@ -1,5 +1,5 @@
 /**
- * Static permission catalog — no server imports, safe to use in Client Components.
+ * Static permission catalog - no server imports, safe to use in Client Components.
  *
  * The runtime check functions (checkPermission, seedPermissionDefaults, …) live in
  * permissions.ts alongside the Prisma cache. Anything that only needs the catalog

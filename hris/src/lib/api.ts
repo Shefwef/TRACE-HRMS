@@ -1,5 +1,5 @@
 /**
- * API route helpers — auth wrappers, error responses, common shapes.
+ * API route helpers - auth wrappers, error responses, common shapes.
  * Every route handler should go through requireAuth() so we never trust the client.
  */
 import { NextResponse } from 'next/server';
@@ -182,7 +182,7 @@ export function handler<T extends unknown[]>(
 
 /**
  * True for a Prisma unique-constraint violation (P2002). Used where a race is
- * expected and a 409 is a better answer than a 500 — e.g. the partial unique
+ * expected and a 409 is a better answer than a 500 - e.g. the partial unique
  * index that keeps one work-location period open per employee.
  */
 export function isUniqueViolation(e: unknown): boolean {

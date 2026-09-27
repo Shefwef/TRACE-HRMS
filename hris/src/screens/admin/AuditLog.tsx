@@ -35,7 +35,7 @@ const ACTION_VARIANT: Record<string, 'success' | 'danger' | 'warning' | 'info' |
   WORK_LOCATION_CORRECTION: 'warning',
 };
 
-/** Absolute time formatter — "27 Aug 2026 · 14:32:07" — always shown, no "3 mins ago". */
+/** Absolute time formatter - "27 Aug 2026 · 14:32:07" - always shown, no "3 mins ago". */
 function fmtAbsoluteTime(iso: string): string {
   return fmtDate(iso, 'd MMM yyyy · HH:mm:ss');
 }
@@ -169,7 +169,7 @@ function AuditRow({ entry, expanded, onToggle }: {
 }) {
   const variant = ACTION_VARIANT[entry.action] ?? 'default';
   const actorName = entry.actor?.fullName ?? 'System';
-  const targetName = entry.targetUser?.fullName ?? (entry.actor?.id === entry.targetUser?.id ? '—' : '—');
+  const targetName = entry.targetUser?.fullName ?? (entry.actor?.id === entry.targetUser?.id ? '-' : '-');
   const isSelfAction = entry.targetUser && entry.actor?.id === entry.targetUser?.id;
 
   return (
@@ -221,7 +221,7 @@ function AuditRow({ entry, expanded, onToggle }: {
               </div>
             </>
           ) : (
-            <span className="audlog-dash">—</span>
+            <span className="audlog-dash">-</span>
           )}
         </div>
         <div className="audlog-cell audlog-cell-detail" data-label="Details">

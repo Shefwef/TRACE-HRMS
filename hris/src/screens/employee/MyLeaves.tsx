@@ -9,6 +9,7 @@ import { Modal } from '../../components/ui/Modal';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { cx, fmtDate, fmtRelative, leaveTypeLabel, leaveTypeShort } from '../../lib/utils';
 import type { LeaveType } from '../../lib/types';
+import { LeavesTabs } from './LeavesTabs';
 import './MyLeaves.css';
 
 const STATUS_FILTERS: { key: 'ALL' | LeaveStatus; label: string }[] = [
@@ -27,7 +28,7 @@ const leaveVariant: Record<LeaveType, 'casual' | 'sick' | 'replacement'> = {
 };
 
 /**
- * A visual list entry — either a standalone request or a bundle wrapping
+ * A visual list entry - either a standalone request or a bundle wrapping
  * the multi-type items submitted together from the new Apply page.
  */
 type Entry =
@@ -70,10 +71,10 @@ export function MyLeaves() {
     }
     for (const [bundleId, items] of byBundle) {
       if (items.length === 1) {
-        // Bundle with only one type — render it inline like a single row.
+        // Bundle with only one type - render it inline like a single row.
         out.push({ kind: 'single', row: items[0] });
       } else {
-        // Newest first — matches the API's ordering for standalone rows.
+        // Newest first - matches the API's ordering for standalone rows.
         items.sort((a, b) => a.leaveType.localeCompare(b.leaveType));
         out.push({ kind: 'bundle', bundleId, items, representative: items[0] });
       }
@@ -87,6 +88,7 @@ export function MyLeaves() {
 
   return (
     <div className="myleaves">
+      <LeavesTabs />
       <div className="myleaves-head">
         <div>
           <h1>My leave requests</h1>
@@ -187,7 +189,7 @@ export function MyLeaves() {
                   </span>
                   <span className="myleaves-period" data-label="Period">
                     <strong>{fmtDate(earliestStart)}</strong>
-                    {earliestStart !== latestEnd && <> – <strong>{fmtDate(latestEnd)}</strong></>}
+                    {earliestStart !== latestEnd && <> - <strong>{fmtDate(latestEnd)}</strong></>}
                   </span>
                   <span className="mono" data-label="Duration">
                     {totalDays} {totalDays === 1 ? 'day' : 'days'}
@@ -326,7 +328,7 @@ function BundleDetail({ items, bundleId }: { items: LeaveRequestSummary[]; bundl
                 <span className="myleaves-detail-label">Period</span>
                 <span>
                   {fmtDate(i.startDate)}
-                  {i.startDate !== i.endDate && ` — ${fmtDate(i.endDate)}`}
+                  {i.startDate !== i.endDate && ` - ${fmtDate(i.endDate)}`}
                 </span>
               </div>
               {i.perDayAllocation && i.perDayAllocation.length > 0 && (
@@ -335,7 +337,7 @@ function BundleDetail({ items, bundleId }: { items: LeaveRequestSummary[]; bundl
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {i.perDayAllocation.map((a) => (
                       <span key={a.date} className="mono" style={{ fontSize: 13 }}>
-                        {fmtDate(a.date, 'EEE, d MMM')} — {a.slot === 'FULL' ? 'Full day' : a.slot === 'HALF_MORNING' ? 'Half (morning)' : 'Half (afternoon)'}
+                        {fmtDate(a.date, 'EEE, d MMM')} - {a.slot === 'FULL' ? 'Full day' : a.slot === 'HALF_MORNING' ? 'Half (morning)' : 'Half (afternoon)'}
                       </span>
                     ))}
                   </div>
@@ -347,7 +349,7 @@ function BundleDetail({ items, bundleId }: { items: LeaveRequestSummary[]; bundl
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {i.approvedAllocation.map((a) => (
                       <span key={a.date} className="mono" style={{ fontSize: 13 }}>
-                        {fmtDate(a.date, 'EEE, d MMM')} — {a.slot === 'FULL' ? 'Full day' : a.slot === 'HALF_MORNING' ? 'Half (morning)' : 'Half (afternoon)'}
+                        {fmtDate(a.date, 'EEE, d MMM')} - {a.slot === 'FULL' ? 'Full day' : a.slot === 'HALF_MORNING' ? 'Half (morning)' : 'Half (afternoon)'}
                       </span>
                     ))}
                   </div>
@@ -369,7 +371,7 @@ function BundleDetail({ items, bundleId }: { items: LeaveRequestSummary[]; bundl
 
       {bundleId && (
         <p className="muted" style={{ marginTop: 12, fontSize: 13 }}>
-          These types were submitted together as one bundle — cancelling one cancels all.
+          These types were submitted together as one bundle - cancelling one cancels all.
         </p>
       )}
     </>

@@ -109,19 +109,19 @@ function formatRange(r: DateRange): string {
     case 'yesterday': return r.start.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
     case 'this-week':
     case 'last-week':
-      return `${fmtDay(r.start)} – ${fmtDay(r.end)} ${r.end.getFullYear()}`;
+      return `${fmtDay(r.start)} - ${fmtDay(r.end)} ${r.end.getFullYear()}`;
     case 'this-month':
     case 'last-month':
       return fmtMon(r.start);
     case 'last-3-months':
     case 'last-6-months':
-      return `${fmtDay(r.start)} – ${fmtDay(r.end)} ${r.end.getFullYear()}`;
+      return `${fmtDay(r.start)} - ${fmtDay(r.end)} ${r.end.getFullYear()}`;
     case 'this-year':
     case 'last-year':
       return `${r.start.getFullYear()}`;
     case 'custom': {
       const sameYear = r.start.getFullYear() === r.end.getFullYear();
-      return `${fmtDay(r.start)} – ${fmtDay(r.end)}${sameYear ? ` ${r.end.getFullYear()}` : ''}`;
+      return `${fmtDay(r.start)} - ${fmtDay(r.end)}${sameYear ? ` ${r.end.getFullYear()}` : ''}`;
     }
   }
 }

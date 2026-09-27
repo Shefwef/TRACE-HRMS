@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
  * GET /api/cron/clean-deleted-users
  *
  * Runs daily. Permanently deletes any user whose `deletedAt` is older than
- * 60 days — the "trash" retention window. Guarded by a bearer secret so it
+ * 60 days - the "trash" retention window. Guarded by a bearer secret so it
  * can only be triggered by Vercel Cron / an external scheduler.
  *
  * Response summarises rows removed so cron dashboards can surface anomalies.

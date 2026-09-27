@@ -1,7 +1,7 @@
 /**
  * Next 16 renamed the `middleware` file convention to `proxy`. We keep
  * clerkMiddleware() so Clerk can attach its auth context to every request,
- * but no path-based `auth.protect()` here — Clerk deprecated
+ * but no path-based `auth.protect()` here - Clerk deprecated
  * `createRouteMatcher` in favour of resource-based auth checks, which the
  * app already does:
  *

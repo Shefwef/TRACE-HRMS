@@ -127,7 +127,7 @@ export function LeaveApplicationFlow({ open, onClose }: Props) {
     const startFmt = startDate ? fmtDate(startDate) : '[start]';
     const endFmt = endDate ? fmtDate(endDate) : startFmt;
     const durLabel = useTimeRange && singleDay
-      ? `${timeFrom}–${timeTo}`
+      ? `${timeFrom}-${timeTo}`
       : duration === 0.5
       ? 'a half day'
       : `${duration} working day${duration === 1 ? '' : 's'}`;
@@ -221,7 +221,7 @@ ${user.employeeIdCode || ''} · ${user.department || ''}`;
               <header className="laf-header">
                 <div>
                   <h2>Apply for Leave</h2>
-                  <p>Fill out a few quick details — you can review everything before sending.</p>
+                  <p>Fill out a few quick details - you can review everything before sending.</p>
                 </div>
                 <button className="laf-close" onClick={handleClose} aria-label="Close">
                   <X size={20} />
@@ -403,7 +403,7 @@ function StepType({
   return (
     <div>
       <h3 className="laf-step-title">What kind of leave is this?</h3>
-      <p className="laf-step-desc">Pick a type — your available balance is shown on each card.</p>
+      <p className="laf-step-desc">Pick a type - your available balance is shown on each card.</p>
       <div className="laf-typegrid">
         {cards.map((c) => {
           const disabled = c.left <= 0;
@@ -542,7 +542,7 @@ function StepDates({
           <div className="laf-duration-value">
             {duration > 0
               ? `${duration} working day${duration === 1 ? '' : 's'}`
-              : '—'}
+              : '-'}
           </div>
         </div>
         <div>

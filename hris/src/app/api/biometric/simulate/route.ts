@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   if (!device) return err(400, 'NO_DEVICE', 'No active device registered. Register one first.');
 
   const at = input.timestamp ? new Date(input.timestamp) : new Date();
-  // Format as wall-clock in the office timezone — exactly what the device sends.
+  // Format as wall-clock in the office timezone - exactly what the device sends.
   // toISOString() gives UTC time, not local; use Intl to get the local time parts.
   const timeParts = new Intl.DateTimeFormat('en-GB', {
     timeZone: APP_TZ, hour12: false,

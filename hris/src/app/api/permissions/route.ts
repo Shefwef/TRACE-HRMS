@@ -8,7 +8,7 @@ import { Prisma, type Role } from '@prisma/client';
 export async function GET(req: Request) {
   const [actor, error] = await requireAuth(req);
   if (error) return error;
-  // View is available to anyone with audit.view — reads only. Editing (PATCH)
+  // View is available to anyone with audit.view - reads only. Editing (PATCH)
   // is still Super Admin gated below.
   const canView = await checkPermission(actor, 'audit.view');
   if (!canView) {
@@ -41,7 +41,7 @@ export async function PATCH(req: Request) {
   const [input, badReq] = await parseBody(req, PatchSchema);
   if (badReq) return badReq;
 
-  // The Super Admin row is immutable — the UI locks it, and so does the API,
+  // The Super Admin row is immutable - the UI locks it, and so does the API,
   // otherwise the owner could revoke their own access and lock the org out.
   if (input.role === 'SUPER_ADMIN') {
     return err(

@@ -32,7 +32,7 @@ export default function AppError({
           Something went wrong
         </h2>
         <p style={{ margin: 0, color: 'var(--color-text-secondary, #64748b)', fontSize: '0.875rem' }}>
-          The page failed to load. This is usually a temporary database connection issue — try refreshing.
+          The page failed to load. This is usually a temporary database connection issue - try refreshing.
         </p>
       </div>
       <button

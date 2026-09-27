@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   return NextResponse.json(holidays.map(serialize));
 }
 
-/** POST /api/holidays — create a new holiday. */
+/** POST /api/holidays - create a new holiday. */
 export async function POST(req: Request) {
   const [user, error] = await requireAuth(req);
   if (error) return error;

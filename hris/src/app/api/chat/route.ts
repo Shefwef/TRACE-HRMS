@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     if (data.promptFeedback?.blockReason) {
       return NextResponse.json({
         reply:
-          "I couldn't respond to that — the request was filtered by safety rules. Try rephrasing?",
+          "I couldn't respond to that - the request was filtered by safety rules. Try rephrasing?",
       });
     }
 

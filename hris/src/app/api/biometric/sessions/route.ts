@@ -5,8 +5,8 @@ import { checkPermission } from '@/lib/permissions';
 import { localDayKey, dayKeyToDateOnly } from '@/lib/workday';
 
 /**
- * GET /api/biometric/sessions?date=YYYY-MM-DD               — single day
- * GET /api/biometric/sessions?from=YYYY-MM-DD&to=YYYY-MM-DD — inclusive range
+ * GET /api/biometric/sessions?date=YYYY-MM-DD               - single day
+ * GET /api/biometric/sessions?from=YYYY-MM-DD&to=YYYY-MM-DD - inclusive range
  *
  * Returns one row per attendance record. `totalWorkedMinutes` falls back to
  * clockOut − clockIn when the stored value is 0 (e.g. legacy records written

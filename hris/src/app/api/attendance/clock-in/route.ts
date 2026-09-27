@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const [user, error] = await requireAuth(req);
   if (error) return error;
 
-  // Client typically POSTs with no body — the widget just wants "clock me in now."
+  // Client typically POSTs with no body - the widget just wants "clock me in now."
   // Only try to parse if the request actually carries content.
   let input: z.infer<typeof Body> = undefined;
   const contentLength = Number(req.headers.get('content-length') ?? '0');
@@ -29,12 +29,12 @@ export async function POST(req: Request) {
 
   const now = input?.timestamp ? new Date(input.timestamp) : new Date();
   // Office-local day, not the server's UTC day. A 07:30 Dhaka clock-in is
-  // 01:30 UTC on the same date, but a 05:30 one is 23:30 UTC the day before —
+  // 01:30 UTC on the same date, but a 05:30 one is 23:30 UTC the day before -
   // deriving the key from UTC components filed those under yesterday.
   const dateOnly = localDateOnly(now);
 
   // Weekend hint is exposed via GET /attendance/today (isWeekend). We do NOT
-  // block clock-in on weekends — users might work Saturdays occasionally, and
+  // block clock-in on weekends - users might work Saturdays occasionally, and
   // the compensation path is the extra-work log.
 
   const existing = await prisma.attendanceRecord.findUnique({
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     return err(409, 'ALREADY_CLOCKED_OUT', "You've already completed today's session.");
 
   // One transaction: the attendance row, the OFFICE work-location baseline
-  // (Rule 1 — every session starts in the office until the employee says
+  // (Rule 1 - every session starts in the office until the employee says
   // otherwise) and the audit entry either all land or none do.
   const record = await prisma.$transaction(async (tx) => {
     const saved = existing

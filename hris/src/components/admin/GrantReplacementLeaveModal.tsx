@@ -187,7 +187,7 @@ export function GrantReplacementLeaveModal({ open, onClose, employee }: Props) {
                 onClick={() => setHalfDaySlot('MORNING')}
               >
                 <span className="grl-slot-label">Morning</span>
-                <span className="grl-slot-window">9:00 AM – 1:00 PM</span>
+                <span className="grl-slot-window">9:00 AM - 1:00 PM</span>
               </button>
               <button
                 type="button"
@@ -195,7 +195,7 @@ export function GrantReplacementLeaveModal({ open, onClose, employee }: Props) {
                 onClick={() => setHalfDaySlot('AFTERNOON')}
               >
                 <span className="grl-slot-label">Afternoon</span>
-                <span className="grl-slot-window">1:00 PM – 5:00 PM</span>
+                <span className="grl-slot-window">1:00 PM - 5:00 PM</span>
               </button>
             </div>
           )}

@@ -516,7 +516,7 @@ export const useStore = create<Store>((set, get) => ({
         id: 'n-' + uid(),
         recipientId: u.id,
         type: 'HOLIDAY_NOTICE',
-        title: `Upcoming holiday — ${h.name}`,
+        title: `Upcoming holiday - ${h.name}`,
         body: `${h.name} is on ${h.date}. The office will be closed.`,
         isRead: false,
         createdAt: now,
@@ -539,7 +539,7 @@ export const useStore = create<Store>((set, get) => ({
     }),
 }));
 
-// Helper hooks — delegate to the real Clerk session, adapting to the legacy
+// Helper hooks - delegate to the real Clerk session, adapting to the legacy
 // `User` shape used by page components.
 import { useSession, initials, avatarColorFor } from './session';
 

@@ -6,7 +6,7 @@ import { PrismaClient } from '@prisma/client';
  * Neon's free/hobby tier auto-pauses the compute after ~5 minutes of
  * inactivity. The first query after the pause fails with P1001
  * ("Can't reach database server") while Neon spins the compute back up
- * (usually 1–3 seconds). We transparently retry those failures so users
+ * (usually 1-3 seconds). We transparently retry those failures so users
  * never see the cold-start error.
  *
  * Non-connection errors bubble up immediately.

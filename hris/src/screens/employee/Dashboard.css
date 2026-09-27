@@ -89,7 +89,7 @@
   min-height: 200px;
 }
 
-/* Card container that fills the section — items stack at the top, card grows. */
+/* Card container that fills the section - items stack at the top, card grows. */
 .edash-activity-panel {
   flex: 1;
   min-height: 0;

@@ -303,7 +303,7 @@ export function welcomeInviteEmail(input: {
     ${p(`Hi ${input.employeeName},`)}
     ${p(`Welcome to Trace! ${input.inviterName} has created an account for you on the TRACE HRMS${input.designation ? ` as ${input.designation}` : ''}. You can now sign in and access your leaves, attendance, and profile.`)}
     ${credsBlock}
-    ${p(`For your security, please change this password the first time you sign in — head to your profile from the top-right avatar menu after logging in.`)}
+    ${p(`For your security, please change this password the first time you sign in - head to your profile from the top-right avatar menu after logging in.`)}
     ${p(`If you weren't expecting this invitation, please let us know by replying to this email.`)}
   `;
 
@@ -324,7 +324,7 @@ export function welcomeInviteEmail(input: {
   ].join('\n');
 
   return {
-    subject: `Welcome to TRACE HRMS — your account is ready`,
+    subject: `Welcome to TRACE HRMS - your account is ready`,
     html: shell({
       title: 'Welcome to TRACE HRMS',
       senderName: s.senderName,

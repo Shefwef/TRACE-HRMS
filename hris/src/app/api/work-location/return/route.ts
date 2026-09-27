@@ -6,7 +6,7 @@ import { returnToOffice, WorkLocationError } from '@/lib/workLocation';
 /**
  * POST /api/work-location/return
  *   Mark the employee back in the office, closing the open off-site period.
- *   No body — the destination they are returning *from* is whatever is open.
+ *   No body - the destination they are returning *from* is whatever is open.
  */
 export async function POST(req: Request) {
   const [actor, error] = await requireAuth(req);

@@ -28,7 +28,7 @@ function splitName(full: string): { firstName: string; lastName: string } {
 
 /**
  * Self-service profile edit. Uses the same form as Invite / admin Edit
- * Profile — the shared form disables admin-only fields (employee ID,
+ * Profile - the shared form disables admin-only fields (employee ID,
  * designation, department, joining date) so they render as read-only
  * context but can't be changed.
  */

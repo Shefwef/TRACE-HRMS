@@ -118,7 +118,7 @@ export function EmployeesPage() {
                       {u.designation ?? <em className="muted">No designation</em>}
                     </div>
                     <div className="emp-card-id mono">
-                      ID: {u.employeeIdCode ?? '—'}
+                      ID: {u.employeeIdCode ?? '-'}
                       {u.department && <span className="emp-dot"> · {u.department}</span>}
                     </div>
                   </div>

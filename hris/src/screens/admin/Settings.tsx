@@ -158,7 +158,7 @@ export function AdminSettings() {
             <h3>Biometric integration <Badge variant="info">Ready</Badge></h3>
             <p>
               Attendance accepts biometric input via the same API endpoints (POST /api/attendance/clock-in and /clock-out).
-              When a scanner is enrolled it posts <span className="mono">{`{ source: "BIOMETRIC", biometricDeviceId, timestamp }`}</span> — no logic changes required.
+              When a scanner is enrolled it posts <span className="mono">{`{ source: "BIOMETRIC", biometricDeviceId, timestamp }`}</span> - no logic changes required.
             </p>
           </section>
         </div>

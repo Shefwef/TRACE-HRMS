@@ -185,7 +185,7 @@ export function EmployeeProfilePage({ id }: { id: string }) {
         <div className={cx('ep-banner', status === 'DELETED' ? 'ep-banner-danger' : 'ep-banner-warn')}>
           <AlertTriangle size={16} />
           {status === 'DELETED'
-            ? <>This account is in the Deleted bin{profile.deletedAt && ` — scheduled for permanent removal on ${fmtDate(new Date(new Date(profile.deletedAt).getTime() + 60 * 86_400_000).toISOString(), 'd MMM yyyy')}`}. Restore it to bring it back to Deactivated, or delete permanently.</>
+            ? <>This account is in the Deleted bin{profile.deletedAt && ` - scheduled for permanent removal on ${fmtDate(new Date(new Date(profile.deletedAt).getTime() + 60 * 86_400_000).toISOString(), 'd MMM yyyy')}`}. Restore it to bring it back to Deactivated, or delete permanently.</>
             : <>This account is deactivated. The employee cannot sign in.</>
           }
         </div>
@@ -261,40 +261,40 @@ export function EmployeeProfilePage({ id }: { id: string }) {
             <ProfileField
               label="Employee ID"
               editing={editing && isFullReviewer}
-              value={editing && isFullReviewer ? draft.employeeIdCode : (profile.employeeIdCode ?? '—')}
+              value={editing && isFullReviewer ? draft.employeeIdCode : (profile.employeeIdCode ?? '-')}
               onChange={(v) => setDraft({ ...draft, employeeIdCode: v })}
               readOnly={!isFullReviewer}
             />
             <ProfileField
               label="Designation"
               editing={editing}
-              value={editing ? draft.designation : (profile.designation ?? '—')}
+              value={editing ? draft.designation : (profile.designation ?? '-')}
               onChange={(v) => setDraft({ ...draft, designation: v })}
             />
             <ProfileField
               label="Department"
               editing={editing}
-              value={editing ? draft.department : (profile.department ?? '—')}
+              value={editing ? draft.department : (profile.department ?? '-')}
               onChange={(v) => setDraft({ ...draft, department: v })}
             />
             <ProfileField
               label="Phone"
               editing={editing}
-              value={editing ? draft.phone : (profile.phone ?? '—')}
+              value={editing ? draft.phone : (profile.phone ?? '-')}
               onChange={(v) => setDraft({ ...draft, phone: v })}
             />
             <ProfileField
               label="Date of birth"
               type="date"
               editing={editing}
-              value={editing ? draft.dateOfBirth : (profile.dateOfBirth ? fmtDate(profile.dateOfBirth) : '—')}
+              value={editing ? draft.dateOfBirth : (profile.dateOfBirth ? fmtDate(profile.dateOfBirth) : '-')}
               onChange={(v) => setDraft({ ...draft, dateOfBirth: v })}
             />
             <ProfileField
               label="Joining date"
               type="date"
               editing={editing && isFullReviewer}
-              value={editing && isFullReviewer ? draft.joiningDate : (profile.joiningDate ? fmtDate(profile.joiningDate) : '—')}
+              value={editing && isFullReviewer ? draft.joiningDate : (profile.joiningDate ? fmtDate(profile.joiningDate) : '-')}
               onChange={(v) => setDraft({ ...draft, joiningDate: v })}
               readOnly={!isFullReviewer}
             />
@@ -307,7 +307,7 @@ export function EmployeeProfilePage({ id }: { id: string }) {
             <h2>Roles</h2>
           {editing && canEditRoles ? (
             <div className="ep-roles-editor">
-              {/* SUPER_ADMIN is intentionally omitted from the picker — that role
+              {/* SUPER_ADMIN is intentionally omitted from the picker - that role
                   is provisioned through infrastructure only, never granted from
                   the UI. */}
               {(['ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE'] as AppRole[]).map((r) => {
@@ -326,7 +326,7 @@ export function EmployeeProfilePage({ id }: { id: string }) {
                 );
               })}
               <p className="muted ep-hint">
-                You can grant: {assignableRoles(currentUser ?? { role: 'EMPLOYEE' }).filter((r) => r !== 'SUPER_ADMIN').map((r) => ROLE_LABEL[r]).join(', ') || '—'}.
+                You can grant: {assignableRoles(currentUser ?? { role: 'EMPLOYEE' }).filter((r) => r !== 'SUPER_ADMIN').map((r) => ROLE_LABEL[r]).join(', ') || '-'}.
               </p>
             </div>
           ) : (
@@ -342,7 +342,7 @@ export function EmployeeProfilePage({ id }: { id: string }) {
           )}
         </section>
 
-          {/* Line manager — editable by HR/Admin only, read-only for
+          {/* Line manager - editable by HR/Admin only, read-only for
               everyone else including the employee themselves. */}
           <section className="card ep-section">
             <h2>Line manager</h2>
@@ -352,7 +352,7 @@ export function EmployeeProfilePage({ id }: { id: string }) {
                 value={draft.lineManagerId ?? ''}
                 onChange={(e) => setDraft({ ...draft, lineManagerId: e.target.value || null })}
               >
-                <option value="">— None —</option>
+                <option value="">- None -</option>
                 {lmCandidates.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.fullName}{u.designation ? ` (${u.designation})` : ''}
@@ -415,9 +415,9 @@ export function EmployeeProfilePage({ id }: { id: string }) {
                   <td>
                     <Badge variant="replacement">Replacement</Badge>
                   </td>
-                  <td className="ep-num muted">—</td>
-                  <td className="ep-num muted">—</td>
-                  <td className="ep-num muted">—</td>
+                  <td className="ep-num muted">-</td>
+                  <td className="ep-num muted">-</td>
+                  <td className="ep-num muted">-</td>
                   <td className="ep-num mono">
                     <strong>{profile.balance.replacementBalance}</strong>
                   </td>
@@ -602,7 +602,7 @@ function ProfileField({
       {editing && !readOnly ? (
         <TextInput type={type} value={value} onChange={(e) => onChange?.(e.target.value)} />
       ) : (
-        <span className="ep-field-value">{value || <em className="muted">—</em>}</span>
+        <span className="ep-field-value">{value || <em className="muted">-</em>}</span>
       )}
     </div>
   );

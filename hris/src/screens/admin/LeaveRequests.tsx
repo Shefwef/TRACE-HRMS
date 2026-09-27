@@ -77,7 +77,7 @@ export function LeaveRequestsPage() {
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [reviewExtraId, setReviewExtraId] = useState<string | null>(null);
 
-  // Count bundles as one "request" — a multi-type submission collapses into
+  // Count bundles as one "request" - a multi-type submission collapses into
   // a single entry both in the queue and in the pending badge.
   function countEntries(status: LeaveStatus): number {
     const seenBundles = new Set<string>();
@@ -116,7 +116,7 @@ export function LeaveRequestsPage() {
       return matches(r);
     });
     const grouped = groupEntries(filteredRows);
-    // Then filter by status — bundles use their aggregate status.
+    // Then filter by status - bundles use their aggregate status.
     return grouped.filter((e) => {
       if (status === 'ALL') return true;
       if (e.kind === 'single') return e.row.status === status;
@@ -227,7 +227,7 @@ export function LeaveRequestsPage() {
                       </span>
                       <span data-label="Period">
                         <strong>{fmtDate(earliestStart)}</strong>
-                        {earliestStart !== latestEnd && <> – <strong>{fmtDate(latestEnd)}</strong></>}
+                        {earliestStart !== latestEnd && <> - <strong>{fmtDate(latestEnd)}</strong></>}
                       </span>
                       <span className="mono" data-label="Duration">{totalDays}d</span>
                       <span className="muted" data-label="Applied">{fmtRelative(rep.createdAt)}</span>

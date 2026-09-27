@@ -52,8 +52,8 @@ export function EmployeeProfileForm({ mode, values, onChange, allowedRoles = [] 
   const showCycle = mode === 'invite';
 
   // On self-service edit, only joining date stays locked (HR-managed, and it
-  // drives the leave cycle). Everything else — including employee ID,
-  // designation, department — is editable by the individual.
+  // drives the leave cycle). Everything else - including employee ID,
+  // designation, department - is editable by the individual.
   const joiningLocked = isSelf;
 
   function set<K extends keyof ProfileFormValues>(key: K, value: ProfileFormValues[K]) {
@@ -71,7 +71,7 @@ export function EmployeeProfileForm({ mode, values, onChange, allowedRoles = [] 
 
   return (
     <div className="inv-form">
-      {/* Avatar first — at the very top, followed by all the info */}
+      {/* Avatar first - at the very top, followed by all the info */}
       <Field label="Profile picture">
         <AvatarUpload
           value={values.avatarUrl}
@@ -102,7 +102,7 @@ export function EmployeeProfileForm({ mode, values, onChange, allowedRoles = [] 
         <Field
           label="Official email"
           required={isInvite}
-          hint={isInvite ? "They'll use this to sign in." : isSelf ? 'Ask HR if this needs to change.' : 'Email is managed via Clerk — cannot be changed here.'}
+          hint={isInvite ? "They'll use this to sign in." : isSelf ? 'Ask HR if this needs to change.' : 'Email is managed via Clerk - cannot be changed here.'}
         >
           <TextInput
             type="email"
@@ -143,7 +143,7 @@ export function EmployeeProfileForm({ mode, values, onChange, allowedRoles = [] 
         <Field
           label="Joining date"
           required={isInvite}
-          hint={joiningLocked ? 'Managed by HR — drives the annual leave cycle.' : 'Drives the annual leave cycle.'}
+          hint={joiningLocked ? 'Managed by HR - drives the annual leave cycle.' : 'Drives the annual leave cycle.'}
         >
           <input
             type="date"

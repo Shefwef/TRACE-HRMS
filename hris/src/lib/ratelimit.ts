@@ -14,7 +14,7 @@ import { prisma } from './db';
  *   - Uses a UNIQUE (subject, key, windowStart) constraint + upsert with
  *     increment, so concurrent requests are safe (Postgres handles the merge).
  *   - Windows expire naturally; a periodic prune keeps the table small
- *     (see prune() below — call from a cron or once on cold start).
+ *     (see prune() below - call from a cron or once on cold start).
  */
 export interface RateLimitOptions {
   windowMs?: number;

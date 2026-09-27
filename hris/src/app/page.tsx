@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { ArrowRight, LogIn, ShieldCheck, Users, Calendar, Timer } from 'lucide-react';
+import { ArrowRight, LogIn, Users, Calendar, Timer } from 'lucide-react';
 import './landing.css';
 
 export default async function LandingPage() {
@@ -27,12 +27,11 @@ export default async function LandingPage() {
       <main className="landing-hero">
         <div className="landing-hero-inner">
           <div className="landing-hero-text">
-            <div className="landing-eyebrow">TRACE Consulting · Internal</div>
             <h1>Every leave. Every hour. Everyone.</h1>
             <p>
-              A calmer way to run your people operations — with balances that always
+              A calmer way to run your people operations, with balances that always
               add up, dashboards you can actually read, and approvals that take
-              seconds, not screens.
+              seconds.
             </p>
             <div className="landing-actions">
               <Link href="/sign-in" className="landing-btn landing-btn-primary">
@@ -42,10 +41,6 @@ export default async function LandingPage() {
                 Need access?
               </a>
             </div>
-            <div className="landing-note">
-              <ShieldCheck size={14} />
-              This is an invite-only system for TRACE Consulting staff.
-            </div>
           </div>
           <div className="landing-hero-cards">
             <div className="landing-card">
@@ -53,7 +48,7 @@ export default async function LandingPage() {
                 <Calendar size={20} />
               </div>
               <h3>Leave management</h3>
-              <p>Apply, approve, and track casual, sick and replacement leaves — with time-range partial leave support.</p>
+              <p>Apply, approve, and track casual, sick and replacement leaves with time-range partial leave support.</p>
             </div>
             <div className="landing-card">
               <div className="landing-card-icon" style={{ background: 'var(--color-leave-replacement-light)', color: 'var(--color-leave-replacement)' }}>
@@ -67,7 +62,7 @@ export default async function LandingPage() {
                 <Users size={20} />
               </div>
               <h3>Team overview</h3>
-              <p>HR and leadership see the whole team at a glance — who's in, who's out, what's coming up.</p>
+              <p>HR and leadership see the whole team at a glance - who's in, who's out, what's coming up.</p>
             </div>
           </div>
         </div>

@@ -9,7 +9,7 @@ export const metadata = {
 
 export default async function Page() {
   const user = await requireUser();
-  // Line Managers reach this page too — the board API narrows the rows to their
+  // Line Managers reach this page too - the board API narrows the rows to their
   // direct reports, so the gate here only asks "may you see anyone at all".
   const canView =
     (await checkPermission(user, 'work_location.view_all')) ||

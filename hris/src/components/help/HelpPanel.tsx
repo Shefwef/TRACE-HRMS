@@ -40,7 +40,7 @@ const SUGGESTED_PROMPTS = [
 const GREETING: ChatMsg = {
   role: 'assistant',
   content:
-    "Hi! I'm the TRACE HRMS assistant. Ask me anything about this app — how to apply for a leave, approve one, log extra work, invite employees, or general HR-information-system concepts.",
+    "Hi! I'm the TRACE HRMS assistant. Ask me anything about this app - how to apply for a leave, approve one, log extra work, invite employees, or general HR-information-system concepts.",
 };
 
 export function HelpPanel() {
@@ -52,7 +52,7 @@ export function HelpPanel() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Floating widget — do NOT lock body scroll; the app underneath stays usable.
+  // Floating widget - do NOT lock body scroll; the app underneath stays usable.
 
   useEffect(() => {
     if (scrollRef.current) {

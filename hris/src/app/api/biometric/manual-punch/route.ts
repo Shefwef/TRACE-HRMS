@@ -95,7 +95,7 @@ export async function POST(req: Request) {
     where: { employeeId_date: { employeeId: employee.id, date: dateOnly } },
   });
 
-  // Manual entry only FILLS missing slots — it never overwrites an existing
+  // Manual entry only FILLS missing slots - it never overwrites an existing
   // clock-in or clock-out (biometric or otherwise). If the day already has
   // a value on the same side that's being submitted, reject.
   if (clockInUtc && existing?.clockInTime && clockInUtc.getTime() !== existing.clockInTime.getTime()) {

@@ -68,7 +68,7 @@ function pdfResponse(buf: Buffer, filename: string): Response {
  *
  * `?format=xlsx` (the default) returns a formatted workbook; `?format=pdf`
  * returns the print-ready PDF. Excel leads because these reports get filtered,
- * pivoted and pasted into payroll sheets — a PDF is the exception, not the norm.
+ * pivoted and pasted into payroll sheets - a PDF is the exception, not the norm.
  */
 export async function GET(
   req: Request,
@@ -116,7 +116,7 @@ export async function GET(
       case 'offsite':
         return err(
           400, 'PDF_UNAVAILABLE',
-          'The off-site work report is Excel-only — 14 columns of coordinates do not fit a page.',
+          'The off-site work report is Excel-only - 14 columns of coordinates do not fit a page.',
         );
       default:
         return err(404, 'UNKNOWN_REPORT', `Unknown report type "${type}".`);

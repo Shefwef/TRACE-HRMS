@@ -10,8 +10,8 @@ import { extraWorkSubmittedEmail } from '@/emails/templates';
 
 /**
  * GET /api/extra-work
- *   ?scope=mine (default) — own extra work logs
- *   ?scope=all / pending  — reviewers only
+ *   ?scope=mine (default) - own extra work logs
+ *   ?scope=all / pending  - reviewers only
  *
  * Admin / HR / Super Admin see every log. A Line Manager sees only their
  * assigned direct reports' logs, matching canApproveRequest() on the
@@ -57,7 +57,7 @@ export async function GET(req: Request) {
 }
 
 /**
- * POST /api/extra-work — log an extra work day for approval.
+ * POST /api/extra-work - log an extra work day for approval.
  */
 export async function POST(req: Request) {
   const [user, error] = await requireAuth(req);

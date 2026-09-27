@@ -7,9 +7,9 @@ import { holidaysForYear } from '@/lib/bdHolidays';
 /**
  * POST /api/holidays/sync-bd?year=YYYY
  * Seeds Bangladesh public holidays for the given year from Google's official
- * "Holidays in Bangladesh" ICS feed — includes fixed dates AND moon-dependent
+ * "Holidays in Bangladesh" ICS feed - includes fixed dates AND moon-dependent
  * Islamic/Hindu observances (Eids, Puja, Ashura, etc.). Falls back to a
- * hardcoded fixed-date list if the Google fetch fails. Idempotent — a holiday
+ * hardcoded fixed-date list if the Google fetch fails. Idempotent - a holiday
  * with the same (name, date) is skipped rather than duplicated.
  */
 export async function POST(req: Request) {

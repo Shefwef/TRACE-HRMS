@@ -6,8 +6,8 @@ import { requireAuth } from '@/lib/api';
  * User directory used by @mentions, avatar rendering, admin lists.
  *
  * Filters:
- *   ?includeDeactivated=true   — include isActive=false users (Deactivated tab)
- *   ?deleted=true              — return ONLY soft-deleted users (Deleted tab)
+ *   ?includeDeactivated=true   - include isActive=false users (Deactivated tab)
+ *   ?deleted=true              - return ONLY soft-deleted users (Deleted tab)
  * By default the response excludes deactivated + deleted users.
  */
 export async function GET(req: Request) {

@@ -202,7 +202,7 @@
 }
 .empg-card-extra-actions .btn { width: 100%; justify-content: center; }
 
-/* Main 2×2 action grid — always rendered so all cards in a row share the
+/* Main 2×2 action grid - always rendered so all cards in a row share the
    same footer height and buttons align perfectly across columns. */
 .empg-card-main-actions {
   display: grid;
@@ -212,7 +212,7 @@
 .empg-card-main-actions > div { display: flex; }
 .empg-card-main-actions .btn { width: 100%; justify-content: center; }
 
-/* Invisible placeholder — takes up grid space but shows nothing */
+/* Invisible placeholder - takes up grid space but shows nothing */
 .empg-btn-invisible {
   visibility: hidden;
   pointer-events: none;
@@ -329,7 +329,7 @@
   color: var(--color-text-muted);
 }
 
-/* Roles modal — same checkbox chip style as before, just lives in a
+/* Roles modal - same checkbox chip style as before, just lives in a
    dialog now instead of on every card. */
 .empg-modal-desc {
   font-size: var(--text-sm);

@@ -617,7 +617,7 @@ function invalidateAttendance(qc: ReturnType<typeof useQueryClient>) {
 const TODAY_KEY = ['attendance', 'today'] as const;
 
 /**
- * Optimistic clock-in — flips the UI to "clocked in" the instant the button
+ * Optimistic clock-in - flips the UI to "clocked in" the instant the button
  * is clicked, then reconciles with the server in the background. If the
  * server rejects (e.g. already clocked in from another device), we roll back.
  */
@@ -868,7 +868,7 @@ export interface LocationBoardRow {
 export interface LocationBoardResponse {
   date: string;
   scope: 'ALL' | 'TEAM';
-  /** Whether the viewer holds work_location.correct — drives the UI only. */
+  /** Whether the viewer holds work_location.correct - drives the UI only. */
   canCorrect: boolean;
   totals: {
     employees: number;
@@ -1082,7 +1082,7 @@ export interface InviteEmployeePayload {
   password?: string;
   phone?: string;
   dateOfBirth?: string;
-  /** Required — the leave cycle runs from this date to one day before its anniversary. */
+  /** Required - the leave cycle runs from this date to one day before its anniversary. */
   joiningDate: string;
   avatarUrl?: string;
 }

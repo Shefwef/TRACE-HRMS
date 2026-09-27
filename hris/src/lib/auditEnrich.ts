@@ -3,7 +3,7 @@
  * action was performed on/against) from the raw AuditLog rows.
  *
  * The AuditLog table stores `targetType` + `targetId`. To get the target user
- * we join back to the underlying entity — a leave_request has an employeeId,
+ * we join back to the underlying entity - a leave_request has an employeeId,
  * a user targetType stores the user id directly, etc. Batching keeps this to
  * one query per targetType.
  */
@@ -137,9 +137,9 @@ function formatDetail(r: RawAuditRow): string {
     case 'BREAK_ENDED':        return `Ended break${num(m.durationMinutes) ? ` (${num(m.durationMinutes)}m)` : ''}`;
 
     case 'LEAVE_APPROVED':
-      return `Approved leave${num(m.finalDuration) ? ` (${num(m.finalDuration)} day${num(m.finalDuration) === 1 ? '' : 's'})` : ''}${m.modified ? ' — adjusted' : ''}`;
+      return `Approved leave${num(m.finalDuration) ? ` (${num(m.finalDuration)} day${num(m.finalDuration) === 1 ? '' : 's'})` : ''}${m.modified ? ' - adjusted' : ''}`;
     case 'LEAVE_REJECTED':
-      return `Rejected leave${str(m.note) ? ` — "${truncate(str(m.note)!, 80)}"` : ''}`;
+      return `Rejected leave${str(m.note) ? ` - "${truncate(str(m.note)!, 80)}"` : ''}`;
     case 'LEAVE_CANCELLED':
       return `Cancelled leave${num(m.duration) ? ` (${num(m.duration)} day${num(m.duration) === 1 ? '' : 's'})` : ''}`;
     case 'LEAVE_SUBMITTED':
@@ -148,12 +148,12 @@ function formatDetail(r: RawAuditRow): string {
     case 'EXTRA_WORK_APPROVED':
       return `Approved extra work${num(m.credit) ? ` (+${num(m.credit)} day)` : ''}`;
     case 'EXTRA_WORK_REJECTED':
-      return `Rejected extra work${str(m.note) ? ` — "${truncate(str(m.note)!, 80)}"` : ''}`;
+      return `Rejected extra work${str(m.note) ? ` - "${truncate(str(m.note)!, 80)}"` : ''}`;
     case 'EXTRA_WORK_SUBMITTED':
       return `Logged extra work${str(m.workType) ? ` (${str(m.workType)})` : ''}`;
 
     case 'REPLACEMENT_LEAVE_GRANTED':
-      return `Granted replacement leave${num(m.durationDays) ? ` (${num(m.durationDays)} day${num(m.durationDays) === 1 ? '' : 's'})` : ''}${str(m.startDate) ? ` on ${str(m.startDate)}${str(m.endDate) && str(m.endDate) !== str(m.startDate) ? `–${str(m.endDate)}` : ''}` : ''}`;
+      return `Granted replacement leave${num(m.durationDays) ? ` (${num(m.durationDays)} day${num(m.durationDays) === 1 ? '' : 's'})` : ''}${str(m.startDate) ? ` on ${str(m.startDate)}${str(m.endDate) && str(m.endDate) !== str(m.startDate) ? `-${str(m.endDate)}` : ''}` : ''}`;
 
     case 'HOLIDAY_CREATED':
     case 'HOLIDAY_UPDATED':
@@ -165,26 +165,26 @@ function formatDetail(r: RawAuditRow): string {
     case 'USER_INVITED':
       return `Invited new employee${str(m.email) ? ` (${str(m.email)})` : ''}`;
     case 'USER_UPDATED':
-      return `Updated user${strArr(m.changed) ? ` — changed ${strArr(m.changed)!.join(', ')}` : ''}`;
+      return `Updated user${strArr(m.changed) ? ` - changed ${strArr(m.changed)!.join(', ')}` : ''}`;
     case 'USER_DEACTIVATED':
       return 'Deactivated user account';
     case 'USER_REACTIVATED':
       return 'Reactivated user account';
 
     case 'SETTINGS_UPDATED':
-      return `Updated system settings${strArr(m.changed) ? ` — ${strArr(m.changed)!.join(', ')}` : ''}`;
+      return `Updated system settings${strArr(m.changed) ? ` - ${strArr(m.changed)!.join(', ')}` : ''}`;
 
     case 'PERMISSION_UPDATED':
       return `${str(m.enabled) === 'true' || m.enabled === true ? 'Enabled' : 'Disabled'} permission ${r.targetId ?? ''}`;
 
     case 'WORK_LOCATION_OFFSITE_STARTED':
-      return `Went off-site${str(m.placeName) ? ` — ${str(m.placeName)}` : ''}${str(m.purpose) ? ` (${str(m.purpose)})` : ''}`;
+      return `Went off-site${str(m.placeName) ? ` - ${str(m.placeName)}` : ''}${str(m.purpose) ? ` (${str(m.purpose)})` : ''}`;
     case 'WORK_LOCATION_RETURNED':
       return `Returned to office${num(m.offsiteMinutes) ? ` after ${num(m.offsiteMinutes)}m` : ''}`;
     case 'WORK_LOCATION_CHANGED':
       return `Moved to ${str(m.placeName) ?? 'new location'}`;
     case 'WORK_LOCATION_CORRECTION':
-      return `Corrected work location${str(m.note) ? ` — "${truncate(str(m.note)!, 80)}"` : ''}`;
+      return `Corrected work location${str(m.note) ? ` - "${truncate(str(m.note)!, 80)}"` : ''}`;
 
     default:
       return prettyAction(r.action);

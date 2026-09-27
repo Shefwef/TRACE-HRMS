@@ -4,11 +4,11 @@
  *
  * OSM tile usage policy: max 2 parallel requests per user, cache enabled by
  * default in MapLibre, attribution required (included in OSM_MAP_STYLE).
- * Nominatim usage policy: max 1 req/sec — the 350 ms debounce in the picker
+ * Nominatim usage policy: max 1 req/sec - the 350 ms debounce in the picker
  * keeps us well within that limit for a single-company HRMS.
  */
 
-/** Maps are always available — neither tiles nor geocoding require a paid key. */
+/** Maps are always available - neither tiles nor geocoding require a paid key. */
 export const MAPS_ENABLED = true;
 
 /**
@@ -98,7 +98,7 @@ export async function searchPlaces(
   near: { lat: number; lng: number },
   signal?: AbortSignal,
 ): Promise<PlaceHit[]> {
-  const pad = 0.5; // ~55 km viewbox — covers greater Dhaka
+  const pad = 0.5; // ~55 km viewbox - covers greater Dhaka
   const viewbox = `${near.lng - pad},${near.lat + pad},${near.lng + pad},${near.lat - pad}`;
   const res = await nominatimGet(
     'search',

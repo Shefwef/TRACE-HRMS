@@ -1,5 +1,5 @@
 /* Off-site accent. Deliberately the warm orange rather than --color-warning
-   (a yellow that reads as "something is wrong") — being off-site is normal,
+   (a yellow that reads as "something is wrong") - being off-site is normal,
    it just needs to be visually distinct from being at a desk. */
 .wlc {
   --wlc-offsite-accent: #dd6b20;

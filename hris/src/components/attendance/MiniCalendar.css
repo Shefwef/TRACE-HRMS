@@ -74,7 +74,7 @@
 }
 .mcal-cell-num { font-size: var(--text-sm); }
 
-/* status-tinted cells — soft background, colored border on the left edge */
+/* status-tinted cells - soft background, colored border on the left edge */
 .mcal-cell-present {
   background: color-mix(in srgb, var(--color-success) 14%, transparent);
   color: var(--color-text-primary);
@@ -111,7 +111,7 @@
 .mcal-cell-absent:hover {
   background: color-mix(in srgb, var(--color-danger) 22%, transparent);
 }
-/* Bangladesh weekend cells (Fri + Sat) — subtle red tint + red date number. */
+/* Bangladesh weekend cells (Fri + Sat) - subtle red tint + red date number. */
 .mcal-cell-weekend-day {
   background: color-mix(in srgb, var(--color-danger) 6%, transparent);
   color: var(--color-danger);

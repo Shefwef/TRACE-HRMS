@@ -50,6 +50,6 @@ export async function ensureUserInDb() {
   const existing = await prisma.user.findUnique({ where: { id: userId } });
   if (existing) return existing;
 
-  // Signed into Clerk but not in our allowlist — hard block.
+  // Signed into Clerk but not in our allowlist - hard block.
   redirect('/not-authorized');
 }

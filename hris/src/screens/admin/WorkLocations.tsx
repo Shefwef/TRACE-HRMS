@@ -42,7 +42,7 @@ const EVENT_LABEL: Record<WorkLocationEventItem['eventType'], string> = {
  * Who is where, today. Read-only for Line Managers (scoped to their reports by
  * the API) and correctable by HR/Admin.
  *
- * Corrections never rewrite history — they append an ADMIN_CORRECTION row and
+ * Corrections never rewrite history - they append an ADMIN_CORRECTION row and
  * close the offending period, so the drawer keeps showing what was originally
  * recorded alongside the fix.
  */
@@ -98,26 +98,26 @@ export function WorkLocations() {
       <div className="wloc-stats">
         <StatCard
           label="On the board"
-          value={data?.totals.employees ?? '—'}
+          value={data?.totals.employees ?? '-'}
           icon={<Users size={15} />}
           accent="muted"
         />
         <StatCard
           label="In office"
-          value={data?.totals.inOffice ?? '—'}
+          value={data?.totals.inOffice ?? '-'}
           icon={<Building2 size={15} />}
           accent="success"
         />
         <StatCard
           label="Off-site"
-          value={data?.totals.offsite ?? '—'}
+          value={data?.totals.offsite ?? '-'}
           icon={<Navigation size={15} />}
           accent="warning"
           hint={isToday ? 'Working away from the office right now' : undefined}
         />
         <StatCard
           label="Not clocked in"
-          value={data?.totals.notClockedIn ?? '—'}
+          value={data?.totals.notClockedIn ?? '-'}
           icon={<UserX size={15} />}
           accent="muted"
         />
@@ -197,7 +197,7 @@ export function WorkLocations() {
                 <span className="wloc-emp-text">
                   <strong>{r.fullName}</strong>
                   <em>
-                    {[r.employeeIdCode, r.department].filter(Boolean).join(' · ') || '—'}
+                    {[r.employeeIdCode, r.department].filter(Boolean).join(' · ') || '-'}
                   </em>
                 </span>
               </span>
@@ -220,7 +220,7 @@ export function WorkLocations() {
                   </>
                 ) : (
                   <span className="muted">
-                    {r.clockInTime ? 'Trace office, Dhaka' : '—'}
+                    {r.clockInTime ? 'Trace office, Dhaka' : '-'}
                   </span>
                 )}
               </span>
@@ -234,12 +234,12 @@ export function WorkLocations() {
                     )}
                   </>
                 ) : (
-                  <span className="muted">—</span>
+                  <span className="muted">-</span>
                 )}
               </span>
 
               <span className="wloc-clock mono">
-                {r.clockInTime ? fmtTime(r.clockInTime) : '—'}
+                {r.clockInTime ? fmtTime(r.clockInTime) : '-'}
                 {' → '}
                 {r.clockOutTime ? fmtTime(r.clockOutTime) : '…'}
               </span>

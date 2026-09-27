@@ -83,7 +83,7 @@ export function Topbar() {
       </div>
 
       <div className="topbar-right">
-        {/* Notifications — TODO: wire to /api/notifications */}
+        {/* Notifications - TODO: wire to /api/notifications */}
         <div className="topbar-notif" ref={notifRef}>
           <button
             className="topbar-icon-btn"

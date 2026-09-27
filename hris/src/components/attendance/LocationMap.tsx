@@ -8,7 +8,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 const PIN_COLOR = '#2c5282';
 
 interface Props {
-  /** Where to open. Read once — later changes must not yank the user's view. */
+  /** Where to open. Read once - later changes must not yank the user's view. */
   center: { lat: number; lng: number };
   marker: { lat: number; lng: number } | null;
   onPick: (lat: number, lng: number) => void;
@@ -18,7 +18,7 @@ interface Props {
  * A deliberately plain vector map: pan, zoom, drop a pin. Nothing else.
  *
  * Loaded through `next/dynamic` so none of MapLibre reaches the browser until
- * somebody actually opens the location modal — Attendance, Reports and the
+ * somebody actually opens the location modal - Attendance, Reports and the
  * dashboard all render without a byte of it.
  *
  * Everything switched off below is switched off on purpose. Rotation and pitch
@@ -70,7 +70,7 @@ export default function LocationMap({ center, marker, onPick }: Props) {
     };
   }, []);
 
-  // One Marker, moved — not destroyed and rebuilt. Recreating it would drop and
+  // One Marker, moved - not destroyed and rebuilt. Recreating it would drop and
   // re-add a DOM node on every selection for no visible benefit.
   useEffect(() => {
     const m = map.current;

@@ -6,14 +6,14 @@ import { resolveAuditRows, type ActorLike, type EnrichedRow } from '@/lib/auditE
 
 /**
  * GET /api/audit-log
- *   ?action=LEAVE_APPROVED          — exact action match
- *   ?actorId=user_xxx               — who performed the action
- *   ?targetUserId=user_yyy          — who was affected (derived from targetType/Id)
- *   ?from=YYYY-MM-DDTHH:mm          — inclusive lower bound (ISO)
- *   ?to=YYYY-MM-DDTHH:mm            — inclusive upper bound (ISO)
- *   ?limit=200                      — max rows returned (default 200, max 1000)
+ *   ?action=LEAVE_APPROVED          - exact action match
+ *   ?actorId=user_xxx               - who performed the action
+ *   ?targetUserId=user_yyy          - who was affected (derived from targetType/Id)
+ *   ?from=YYYY-MM-DDTHH:mm          - inclusive lower bound (ISO)
+ *   ?to=YYYY-MM-DDTHH:mm            - inclusive upper bound (ISO)
+ *   ?limit=200                      - max rows returned (default 200, max 1000)
  *
- * Gated on the runtime `audit.view` permission — HR, Admin, Line Manager and
+ * Gated on the runtime `audit.view` permission - HR, Admin, Line Manager and
  * Super Admin see it by default.
  */
 export async function GET(req: Request) {
@@ -59,7 +59,7 @@ export async function GET(req: Request) {
     : enriched;
   const finalRows = filtered.slice(0, limit);
 
-  // Filter options — distinct actions ever recorded + all users seen as actor
+  // Filter options - distinct actions ever recorded + all users seen as actor
   // or target so the UI dropdowns are populated correctly.
   const [distinctActionsRaw, distinctUsersRaw] = await Promise.all([
     prisma.auditLog.findMany({

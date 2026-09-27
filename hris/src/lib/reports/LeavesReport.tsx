@@ -54,7 +54,7 @@ function fmtDate(iso: string): string {
 
 function fmtRange(r: LeaveRecord): string {
   if (r.startDate === r.endDate) {
-    if (r.timeFrom && r.timeTo) return `${fmtDate(r.startDate)} ${r.timeFrom}–${r.timeTo}`;
+    if (r.timeFrom && r.timeTo) return `${fmtDate(r.startDate)} ${r.timeFrom}-${r.timeTo}`;
     if (r.isHalfDay) return `${fmtDate(r.startDate)} (½ ${r.halfDaySlot?.replace('_', ' ').toLowerCase()})`;
     return fmtDate(r.startDate);
   }
@@ -80,7 +80,7 @@ export function LeavesReport(input: LeavesReportInput) {
 
   return (
     <Document
-      title={`Leave History — ${input.employeeName} — Cycle ${input.cycleYear}`}
+      title={`Leave History - ${input.employeeName} - Cycle ${input.cycleYear}`}
       author="TRACE HRMS"
       subject={`Cycle leave history for ${input.employeeName}`}
     >
@@ -152,7 +152,7 @@ export function LeavesReport(input: LeavesReportInput) {
                         <Text style={[styles.td, { width: COLS[1].width }]}>{fmtRange(r)}</Text>
                         <Text style={[styles.td, { width: COLS[2].width }]}>{r.durationDays}</Text>
                         <Text style={[styles.tdMuted, { width: COLS[3].width }]}>{truncate(r.reason, 40)}</Text>
-                        <Text style={[styles.tdMuted, { width: COLS[4].width }]}>{r.reviewerName ?? '—'}</Text>
+                        <Text style={[styles.tdMuted, { width: COLS[4].width }]}>{r.reviewerName ?? '-'}</Text>
                         <View style={{ width: COLS[5].width }}>
                           <Text style={[styles.badge, badge]}>{r.status}</Text>
                         </View>

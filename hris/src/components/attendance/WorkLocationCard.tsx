@@ -33,7 +33,7 @@ export function WorkLocationCard() {
   const [showHistory, setShowHistory] = useState(false);
 
   // Re-render every 30s so the "off-site for 1h 20m" line stays honest without
-  // refetching — the query itself refreshes on its own minute interval.
+  // refetching - the query itself refreshes on its own minute interval.
   const [, setTick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 30_000);
@@ -101,7 +101,7 @@ export function WorkLocationCard() {
             </div>
           </>
         ) : isClockedIn ? (
-          // Mirrors the off-site branch above — name then address — so switching
+          // Mirrors the off-site branch above - name then address - so switching
           // location changes what the card says, not how it is laid out.
           <>
             <div className="wlc-place">{OFFICE.name}</div>

@@ -12,9 +12,9 @@ import type { LeaveType, User } from '@prisma/client';
 
 /**
  * GET /api/leaves/requests
- *   ?scope=mine (default) — own leave requests
- *   ?scope=all           — reviewers only: all requests, newest first
- *   ?scope=pending       — reviewers only: PENDING requests
+ *   ?scope=mine (default) - own leave requests
+ *   ?scope=all           - reviewers only: all requests, newest first
+ *   ?scope=pending       - reviewers only: PENDING requests
  *
  * Admin / HR / Super Admin see every request. A Line Manager sees only the
  * requests of their assigned direct reports, which mirrors the authorization
@@ -64,7 +64,7 @@ export async function GET(req: Request) {
 }
 
 /**
- * POST /api/leaves/requests — submit one leave request or a multi-type bundle.
+ * POST /api/leaves/requests - submit one leave request or a multi-type bundle.
  *
  * Payload shape is detected at parse time:
  *   • Legacy: { leaveType, startDate, endDate, isHalfDay, ..., reason, channels }
@@ -166,7 +166,7 @@ export async function POST(req: Request) {
         data: { sickPending: { increment: duration } },
       });
     }
-    // REPLACEMENT balance holds no pending — it's a direct debit on approval
+    // REPLACEMENT balance holds no pending - it's a direct debit on approval
 
     return request;
   });
@@ -240,7 +240,7 @@ export async function POST(req: Request) {
  * row; all rows share a bundleId so approve/reject/cancel can cascade
  * atomically (see [id]/approve, [id]/reject routes).
  *
- * Balance is checked against the SUM of same-typed items in the payload — a
+ * Balance is checked against the SUM of same-typed items in the payload - a
  * user cannot request 3 casual days across two items when only 2 are left.
  * Overlap is checked against the union of the days across all items in the
  * bundle: no single day may already sit on an active leave.
@@ -267,20 +267,20 @@ async function handleBundle(
   }
 
   // Reject any day that falls on the BD weekend (Fri/Sat) or on a
-  // public holiday — leave can only be spent on days the employee would
+  // public holiday - leave can only be spent on days the employee would
   // otherwise be working.
   const bundleDaysList = [...seenDays];
   const dow = (iso: string) => new Date(iso + 'T00:00:00Z').getUTCDay();
   const wknd = bundleDaysList.find((d) => dow(d) === 5 || dow(d) === 6);
   if (wknd)
-    return err(400, 'NON_WORKING_DAY', `${wknd} is a weekend — leave can't be requested on non-working days.`);
+    return err(400, 'NON_WORKING_DAY', `${wknd} is a weekend - leave can't be requested on non-working days.`);
   const holidayRows = await prisma.holiday.findMany({
     where: { date: { in: bundleDaysList.map((d) => new Date(d + 'T00:00:00Z')) } },
     select: { date: true, name: true },
   });
   if (holidayRows.length > 0) {
     const h = holidayRows[0];
-    return err(400, 'HOLIDAY_CLASH', `${h.date.toISOString().slice(0, 10)} is a public holiday (${h.name}) — already off.`);
+    return err(400, 'HOLIDAY_CLASH', `${h.date.toISOString().slice(0, 10)} is a public holiday (${h.name}) - already off.`);
   }
 
   // Validate against existing pending/approved requests. Any day in the
@@ -307,7 +307,7 @@ async function handleBundle(
     }
   }
 
-  // Balance check per type — duration = count(FULL) + 0.5 * count(HALF_*)
+  // Balance check per type - duration = count(FULL) + 0.5 * count(HALF_*)
   const year = new Date().getFullYear();
   const balance = await prisma.leaveBalance.findUnique({
     where: { employeeId_cycleYear: { employeeId: user.id, cycleYear: year } },
@@ -384,7 +384,7 @@ async function handleBundle(
     return rows;
   });
 
-  // Notifications + email — one per created row, matching the legacy path.
+  // Notifications + email - one per created row, matching the legacy path.
   // Admin review UI is untouched this iteration; bundling for the reviewer's
   // inbox is a follow-up.
   const allUsers = await prisma.user.findMany({ where: { isActive: true } });

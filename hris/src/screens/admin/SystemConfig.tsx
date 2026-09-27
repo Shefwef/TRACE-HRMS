@@ -56,7 +56,7 @@ export function SystemConfig() {
                   {data.db.ok ? 'Online' : 'Down'}
                 </span>
               </div>
-              <div className="sysc-row"><span>Host</span><strong className="mono">{data.env.databaseUrlHost ?? '—'}</strong></div>
+              <div className="sysc-row"><span>Host</span><strong className="mono">{data.env.databaseUrlHost ?? '-'}</strong></div>
               <div className="sysc-row"><span>Round-trip latency</span><strong>{data.db.latencyMs} ms</strong></div>
               {data.db.error && (
                 <div className="sysc-error">Error: {data.db.error}</div>

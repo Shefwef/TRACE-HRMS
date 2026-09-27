@@ -101,7 +101,7 @@ export function AnalyticsPage() {
       <div className="anpg-head">
         <h1>Your analytics</h1>
         <p className="muted">
-          A calm view of your leave usage, attendance rate and overtime — no jargon.
+          A calm view of your leave usage, attendance rate and overtime - no jargon.
         </p>
       </div>
 

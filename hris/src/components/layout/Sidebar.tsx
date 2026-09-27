@@ -18,7 +18,6 @@ import {
   Shield,
   MapPin,
   Fingerprint,
-  Gift,
   X,
 } from 'lucide-react';
 import { useCurrentUser } from '@/lib/session';
@@ -29,7 +28,6 @@ import './Sidebar.css';
 const employeeNav = [
   { to: '/', label: 'Home', icon: <Home size={18} /> },
   { to: '/leaves', label: 'My Leaves', icon: <ClipboardList size={18} /> },
-  { to: '/leaves/replacement', label: 'Replacement Leave', icon: <Gift size={18} /> },
   { to: '/attendance', label: 'Attendance', icon: <Clock size={18} /> },
   { to: '/calendar', label: 'Calendar', icon: <Calendar size={18} /> },
   { to: '/reports', label: 'Reports', icon: <FileText size={18} /> },

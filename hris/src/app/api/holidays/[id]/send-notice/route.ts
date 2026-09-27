@@ -32,7 +32,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     recipients = allUsers.filter((u) => u.role === 'EMPLOYEE');
   else if (holiday.recipients === 'CUSTOM')
     recipients = allUsers.filter((u) => holiday.customRecipientIds.includes(u.id));
-  // ALL — everyone (excluding SUPER_ADMIN if you'd like; keeping inclusive for now)
+  // ALL - everyone (excluding SUPER_ADMIN if you'd like; keeping inclusive for now)
 
   // Filter recipients by the notification permission
   const finalRecipients = [];
@@ -60,7 +60,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     recipients.map((r) => ({
       recipientId: r.id,
       type: 'HOLIDAY_NOTICE' as const,
-      title: `Holiday — ${holiday.name}`,
+      title: `Holiday - ${holiday.name}`,
       body: `${holiday.name} on ${dateLabel}. The office will be closed.`,
       referenceType: 'holiday',
       referenceId: holiday.id,

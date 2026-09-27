@@ -10,7 +10,7 @@ import { welcomeInviteEmail } from '@/emails/templates';
 
 const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
 
-/** POST /api/users/invite — HR/Admin/Super Admin invites a new user. */
+/** POST /api/users/invite - HR/Admin/Super Admin invites a new user. */
 export async function POST(req: Request) {
   const [actor, error] = await requireAuth(req);
   if (error) return error;
@@ -145,7 +145,7 @@ export async function POST(req: Request) {
   });
 
   // Send welcome email with sign-in credentials. Fire-and-forget so a mail
-  // provider hiccup never blocks the invite response — the credentials are
+  // provider hiccup never blocks the invite response - the credentials are
   // still returned in the API response for the inviter to hand off manually
   // if needed, and every attempt is captured in emailLog for audit.
   const settings = await prisma.systemSettings.upsert({

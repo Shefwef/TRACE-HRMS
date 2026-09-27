@@ -90,7 +90,7 @@
   box-shadow: 0 0 0 1px var(--color-brand-secondary) inset;
 }
 
-/* status-tinted full backgrounds — visible but never loud */
+/* status-tinted full backgrounds - visible but never loud */
 .calpg-cell-present {
   background: color-mix(in srgb, var(--color-success) 12%, transparent);
   border-color: color-mix(in srgb, var(--color-success) 30%, var(--color-border-default));
@@ -108,7 +108,7 @@
 .calpg-cell-holiday:hover { background: color-mix(in srgb, var(--color-danger) 22%, transparent); }
 .calpg-cell-holiday .calpg-cell-head { color: var(--color-danger); }
 
-/* Holiday label: no separate pill background — inherit the red-tinted cell
+/* Holiday label: no separate pill background - inherit the red-tinted cell
    so the badge blends into the box. Long names clamp to 2 lines with an
    ellipsis so a cell never overflows. */
 .calpg-cell-holiday .badge {

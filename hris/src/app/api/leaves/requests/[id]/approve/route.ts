@@ -201,7 +201,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
   if (!updated) return err(500, 'MISSING_AFTER_UPDATE', 'Approve returned no row.');
 
-  // In-app notification only — email is no longer sent for approve/reject
+  // In-app notification only - email is no longer sent for approve/reject
   // decisions per the updated design.
   const period = formatLeavePeriod(
     updated.startDate.toISOString().slice(0, 10),

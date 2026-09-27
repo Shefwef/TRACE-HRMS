@@ -6,7 +6,7 @@ import { correctEvent, WorkLocationError } from '@/lib/workLocation';
 
 /**
  * POST /api/work-location/correct
- *   HR/Admin fix for a bad record — usually an off-site period someone forgot
+ *   HR/Admin fix for a bad record - usually an off-site period someone forgot
  *   to close. Appends an ADMIN_CORRECTION row; the original keeps its times, so
  *   the trail shows both what was recorded and who changed it.
  */

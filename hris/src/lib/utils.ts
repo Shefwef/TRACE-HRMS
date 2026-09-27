@@ -77,7 +77,7 @@ export function uid(): string {
 
 /**
  * Today as `yyyy-MM-dd` in the office timezone. Not `toISOString().slice(0, 10)`
- * — that is the UTC day, which is yesterday for anyone in Dhaka before 06:00.
+ * - that is the UTC day, which is yesterday for anyone in Dhaka before 06:00.
  */
 export function todayISO(): string {
   return localDayKey();

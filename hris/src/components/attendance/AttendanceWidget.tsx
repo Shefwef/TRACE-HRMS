@@ -87,7 +87,7 @@ export function AttendanceWidget() {
       </div>
 
       <div className={`atw-timer ${activeBreak ? 'atw-timer-paused' : ''}`}>
-        {isWeekend && !record ? '—' : fmtSeconds(workedMs)}
+        {isWeekend && !record ? '-' : fmtSeconds(workedMs)}
       </div>
 
       {activeBreak && (

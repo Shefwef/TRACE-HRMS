@@ -138,7 +138,7 @@
 .lreq-thead, .lreq-row {
   display: grid;
   /* # · Employee · Period · Duration · Applied · Status · Details.
-     Period gets enough width to hold "24 Sep 2026 – 26 Sep 2026" on one line. */
+     Period gets enough width to hold "24 Sep 2026 - 26 Sep 2026" on one line. */
   grid-template-columns: 48px minmax(220px, 1.6fr) minmax(240px, 1fr) 90px 110px 110px 110px;
   gap: 16px;
   padding: 14px 20px;
@@ -157,7 +157,7 @@
   color: var(--color-text-muted);
   font-weight: var(--weight-semibold);
 }
-/* Elevated button — hairline gray border, no filled tint. */
+/* Elevated button - hairline gray border, no filled tint. */
 .lreq-details-btn {
   display: inline-flex;
   align-items: center;

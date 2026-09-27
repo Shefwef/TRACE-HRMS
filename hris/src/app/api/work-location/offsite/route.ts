@@ -10,7 +10,7 @@ import { notifyMany } from '@/lib/notifications';
 /**
  * POST /api/work-location/offsite
  *   Start an off-site work period, or move to a different destination if one is
- *   already open. Self-service only — HR does not set someone else's location
+ *   already open. Self-service only - HR does not set someone else's location
  *   here; corrections go through /api/work-location/correct.
  */
 export async function POST(req: Request) {
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
             select: { id: true },
           });
           if (hrUsers.length > 0) {
-            const purposePart = input.purpose ? ` — ${input.purpose}` : '';
+            const purposePart = input.purpose ? ` - ${input.purpose}` : '';
             await notifyMany(
               hrUsers.map((u) => ({
                 recipientId: u.id,

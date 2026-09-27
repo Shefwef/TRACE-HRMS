@@ -30,7 +30,7 @@ const REPORTS: ReportDef[] = [
   {
     id: 'summary',
     title: 'Performance summary',
-    body: 'A one-page snapshot — leave balance, attendance rate, overtime and leave activity for this cycle. Great for reviews.',
+    body: 'A one-page snapshot - leave balance, attendance rate, overtime and leave activity for this cycle. Great for reviews.',
     icon: <TrendingUp size={20} />,
     accent: 'var(--color-leave-replacement)',
     bg: 'var(--color-leave-replacement-light)',
@@ -50,7 +50,7 @@ const REPORTS: ReportDef[] = [
   {
     id: 'leaves',
     title: 'Leave history',
-    body: 'Every leave request in the selected cycle — dates, reason, reviewer and decision — with the balance it was drawn against.',
+    body: 'Every leave request in the selected cycle - dates, reason, reviewer and decision - with the balance it was drawn against.',
     icon: <FileText size={20} />,
     accent: 'var(--color-leave-casual)',
     bg: 'var(--color-leave-casual-light)',
@@ -60,7 +60,7 @@ const REPORTS: ReportDef[] = [
   {
     id: 'offsite',
     title: 'Off-site work',
-    body: 'Every location period in the month — place, address, coordinates, purpose, duration, and who recorded it. Covers whoever you can see on the location board.',
+    body: 'Every location period in the month - place, address, coordinates, purpose, duration, and who recorded it. Covers whoever you can see on the location board.',
     icon: <Navigation size={20} />,
     accent: 'var(--color-warning)',
     bg: 'var(--color-warning-light)',
@@ -69,7 +69,7 @@ const REPORTS: ReportDef[] = [
   {
     id: 'all-employees',
     title: 'Company cycle report',
-    body: 'HR / Admin only. Five sheets — headline figures, per-employee summary, every daily attendance row, off-site periods and leave requests.',
+    body: 'HR / Admin only. Five sheets - headline figures, per-employee summary, every daily attendance row, off-site periods and leave requests.',
     icon: <Users size={20} />,
     accent: 'var(--color-danger)',
     bg: 'var(--color-danger-light)',
@@ -134,7 +134,7 @@ export function ReportsPage() {
       const startMon = MONTH_NAMES[dateRange.start.getMonth()];
       const endMon   = MONTH_NAMES[dateRange.end.getMonth()];
       const endYear  = dateRange.end.getFullYear();
-      return `${startMon} – ${endMon} ${endYear} (start month exported)`;
+      return `${startMon} - ${endMon} ${endYear} (start month exported)`;
     }
     return `${MONTH_NAMES[month - 1]} ${year}`;
   }
@@ -201,12 +201,12 @@ export function ReportsPage() {
       <div className="rpts-head">
         <h1>Reports</h1>
         <p className="muted">
-          Formatted Excel workbooks — filter, pivot and paste straight into payroll or audit
+          Formatted Excel workbooks - filter, pivot and paste straight into payroll or audit
           sheets. Pick a period, then export. A print-ready PDF is available where it makes sense.
         </p>
       </div>
 
-      {/* Period picker — select dropdown + inline custom date inputs */}
+      {/* Period picker - select dropdown + inline custom date inputs */}
       <div className="rpts-period card">
         <div className="rpts-period-label">
           <CalendarClock size={15} />
@@ -233,7 +233,7 @@ export function ReportsPage() {
             disabled={dateRange.preset !== 'custom'}
             onChange={(e) => setCustomStart(e.target.value)}
           />
-          <span className="rpts-period-custom-sep">—</span>
+          <span className="rpts-period-custom-sep">-</span>
           <span className="rpts-period-custom-label">To</span>
           <input
             type="date"

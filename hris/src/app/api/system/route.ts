@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth, err } from '@/lib/api';
 
-/** GET /api/system — Super Admin only. Returns a health snapshot. */
+/** GET /api/system - Super Admin only. Returns a health snapshot. */
 export async function GET(req: Request) {
   const [user, error] = await requireAuth(req);
   if (error) return error;

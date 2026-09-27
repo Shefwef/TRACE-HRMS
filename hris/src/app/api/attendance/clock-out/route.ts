@@ -75,7 +75,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // Rule 7 — clock-out closes whatever work-location period is open. If the
+    // Rule 7 - clock-out closes whatever work-location period is open. If the
     // employee was still off-site, the period is flagged autoClosed rather than
     // rewritten to pretend they came back.
     const closed = await closeOpenPeriodOnClockOut(tx, { employeeId: user.id, at: now });

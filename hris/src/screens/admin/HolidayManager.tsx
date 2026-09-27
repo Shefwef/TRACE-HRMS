@@ -236,7 +236,7 @@ export function HolidayManager() {
           </Field>
           <label className="hmgr-check">
             <input type="checkbox" checked={recurring} onChange={(e) => setRecurring(e.target.checked)} />
-            Recurring holiday (indicative — actual repeat requires re-adding for the next year)
+            Recurring holiday (indicative - actual repeat requires re-adding for the next year)
           </label>
           {error && (
             <div style={{ padding: 10, background: 'var(--color-danger-light)', color: 'var(--color-danger)', borderRadius: 8, fontSize: 13 }}>

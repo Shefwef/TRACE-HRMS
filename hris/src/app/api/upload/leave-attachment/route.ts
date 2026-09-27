@@ -6,7 +6,7 @@ import { requireAuth } from '@/lib/api';
 // Runs in Node so fs is available (same pattern as /api/upload/avatar).
 export const runtime = 'nodejs';
 
-const MAX_SIZE = 5 * 1024 * 1024; // 5 MB — covers a scanned medical certificate
+const MAX_SIZE = 5 * 1024 * 1024; // 5 MB - covers a scanned medical certificate
 const ALLOWED = new Set([
   'application/pdf',
   'image/jpeg', 'image/png', 'image/webp',
@@ -15,7 +15,7 @@ const ALLOWED = new Set([
 ]);
 
 /**
- * POST /api/upload/leave-attachment — saves a supporting document to
+ * POST /api/upload/leave-attachment - saves a supporting document to
  * /public/attachments/ and returns its public URL. The URL is then persisted
  * on the LeaveRequest as attachmentUrl.
  */

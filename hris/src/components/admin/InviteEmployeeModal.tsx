@@ -56,7 +56,7 @@ export function InviteEmployeeModal({ open, onClose }: Props) {
   function submit() {
     if (!values.email || !values.firstName || !values.designation || !values.employeeIdCode) return;
     if (!values.joiningDate) {
-      setError('Joining date is required — it drives the annual leave cycle.');
+      setError('Joining date is required - it drives the annual leave cycle.');
       return;
     }
     if (values.roles.length === 0) {
@@ -170,7 +170,7 @@ export function InviteEmployeeModal({ open, onClose }: Props) {
             <strong>Tell them to sign in with email + password.</strong> Their
             email is pre-verified in the system, so no verification code is
             needed. If Clerk offers &quot;Email code&quot; on the sign-in page, they
-            should skip it and use the password field instead — a code email
+            should skip it and use the password field instead - a code email
             may be delayed or filtered by their corporate spam rules.
           </div>
         </motion.div>

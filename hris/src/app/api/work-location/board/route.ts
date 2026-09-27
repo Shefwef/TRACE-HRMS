@@ -7,7 +7,7 @@ import { dayKeyToDateOnly, localDayKey } from '@/lib/workday';
 /**
  * GET /api/work-location/board?date=yyyy-MM-dd
  *   Everyone's location for one day. HR/Admin see the whole company; a Line
- *   Manager sees their direct reports plus themselves. Anyone else gets 403 —
+ *   Manager sees their direct reports plus themselves. Anyone else gets 403 -
  *   this is the only endpoint that reveals other people's whereabouts.
  */
 export async function GET(req: Request) {
@@ -38,7 +38,7 @@ export async function GET(req: Request) {
     date: dayKey,
     scope: scope === 'ALL' ? 'ALL' : 'TEAM',
     // The screen hides its correction affordances when false. The correct route
-    // re-checks this anyway — this is for the UI, not for security.
+    // re-checks this anyway - this is for the UI, not for security.
     canCorrect: await checkPermission(actor, 'work_location.correct'),
     totals: {
       employees: rows.length,

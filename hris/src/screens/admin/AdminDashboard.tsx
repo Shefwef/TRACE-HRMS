@@ -114,7 +114,7 @@ export function AdminDashboard() {
         />
         <StatCard
           label="Next holiday"
-          value={upcomingHolidays[0] ? upcomingHolidays[0].name : '—'}
+          value={upcomingHolidays[0] ? upcomingHolidays[0].name : '-'}
           hint={upcomingHolidays[0] ? fmtDate(upcomingHolidays[0].date) : 'No upcoming holidays'}
           icon={<CalendarClock size={16} />}
           accent="primary"
@@ -154,7 +154,7 @@ export function AdminDashboard() {
                           <Badge variant={leaveVariant[r.leaveType]}>{leaveTypeShort(r.leaveType)}</Badge>
                         </div>
                         <div className="adash-inbox-meta">
-                          {fmtDate(r.startDate, 'd MMM')} – {fmtDate(r.endDate, 'd MMM')} · {r.durationDays} {r.durationDays === 1 ? 'day' : 'days'} · {fmtRelative(r.createdAt)}
+                          {fmtDate(r.startDate, 'd MMM')} - {fmtDate(r.endDate, 'd MMM')} · {r.durationDays} {r.durationDays === 1 ? 'day' : 'days'} · {fmtRelative(r.createdAt)}
                         </div>
                       </div>
                       <span className="adash-inbox-cta">Review <ArrowRight size={12} /></span>

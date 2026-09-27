@@ -1,15 +1,5 @@
 .rlp { display: flex; flex-direction: column; gap: var(--space-5); }
 
-.rlp-topbar { display: flex; align-items: center; }
-.rlp-back {
-  display: inline-flex; align-items: center; gap: 6px;
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm);
-  text-decoration: none;
-  transition: color var(--transition-fast);
-}
-.rlp-back:hover { color: var(--color-text-primary); }
-
 .rlp-head {
   display: flex; justify-content: space-between; align-items: flex-end;
   flex-wrap: wrap; gap: 12px;
@@ -100,117 +90,25 @@
 }
 .rlp-banner-close:hover { background: color-mix(in srgb, var(--color-brand-secondary) 15%, transparent); color: var(--color-text-primary); }
 
-/* History + calculation grid */
-.rlp-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
-  gap: var(--space-5);
-  align-items: start;
+/* History table - reuses .myleaves-table shell, overrides the column grid
+   to fit our seven columns (#, Work date, Day, Slot, Credit, Status, Reason). */
+.rlp-hist .rlp-hist-row {
+  grid-template-columns: 44px 130px 110px 130px 90px 110px minmax(160px, 1fr);
 }
-@media (max-width: 1000px) { .rlp-grid { grid-template-columns: 1fr; } }
-
-.rlp-history {
-  padding: 0;
-  display: flex; flex-direction: column;
-  overflow: hidden;
-}
-.rlp-history-head {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid var(--color-border-default);
-}
-.rlp-history-head h2 {
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: var(--weight-semibold);
-  margin: 0;
-}
-
-.rlp-loading { padding: 40px; text-align: center; color: var(--color-text-muted); }
-
-.rlp-table-wrap { overflow-x: auto; }
-.rlp-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-sm);
-}
-.rlp-table thead th {
-  text-align: left;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: var(--weight-semibold);
-  color: var(--color-text-muted);
-  padding: 12px var(--space-5);
-  background: var(--color-bg-subtle);
-  border-bottom: 1px solid var(--color-border-default);
-}
-.rlp-table tbody td {
-  padding: 12px var(--space-5);
-  border-bottom: 1px solid var(--color-border-default);
-  vertical-align: middle;
-}
-.rlp-table tbody tr:last-child td { border-bottom: none; }
-.rlp-table .rlp-num { text-align: right; font-variant-numeric: tabular-nums; }
-.rlp-reason {
-  max-width: 240px;
+.rlp-hist-reason {
+  color: var(--color-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--color-text-secondary);
 }
-
-/* Calculation panel */
-.rlp-calc {
-  padding: var(--space-5);
-  display: flex; flex-direction: column;
-  gap: 10px;
+@media (max-width: 900px) {
+  .rlp-hist .rlp-hist-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .rlp-hist .rlp-hist-reason { grid-column: 1 / -1; white-space: normal; }
 }
-.rlp-calc h2 {
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: var(--weight-semibold);
-  margin: 0 0 6px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--color-border-default);
-}
-.rlp-calc-row {
-  display: flex; justify-content: space-between; align-items: baseline;
-  padding: 6px 0;
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-}
-.rlp-calc-row strong {
-  font-family: var(--font-mono);
-  color: var(--color-text-primary);
-  font-weight: var(--weight-semibold);
-}
-.rlp-calc-row-plus { color: var(--color-success); }
-.rlp-calc-row-plus strong { color: var(--color-success); }
-.rlp-calc-total {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 16px;
-  margin-top: 10px;
-  background: var(--color-info-light);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  color: var(--color-brand-primary);
-  font-weight: var(--weight-semibold);
-}
-.rlp-calc-total strong {
-  font-family: var(--font-display);
-  font-size: var(--text-2xl);
-  font-weight: var(--weight-bold);
-}
-.rlp-calc-unit { font-size: var(--text-sm); font-weight: var(--weight-medium); }
-
-.rlp-info-note {
-  display: flex; align-items: flex-start; gap: 6px;
-  padding: 10px 12px;
-  background: var(--color-bg-subtle);
-  border-radius: var(--radius-md);
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  line-height: 1.55;
-  margin-top: 10px;
+@media (max-width: 480px) {
+  .rlp-hist .rlp-hist-row {
+    grid-template-columns: 1fr;
+  }
 }

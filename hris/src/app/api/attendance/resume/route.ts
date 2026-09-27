@@ -7,7 +7,7 @@ import { localDateOnly } from '@/lib/workday';
  * POST /api/attendance/resume
  *
  * Undoes an accidental clock-out on today's session. Clears clockOutTime and
- * resets the derived totals — they'll be re-populated when the employee
+ * resets the derived totals - they'll be re-populated when the employee
  * clocks out again for real. Break sessions and clockInTime are preserved.
  *
  * Only the employee themselves can call this on their own record; and only
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   });
   if (!record) return err(404, 'NO_RECORD', 'No attendance record for today.');
   if (!record.clockInTime) return err(400, 'NOT_CLOCKED_IN', 'You have not clocked in today.');
-  if (!record.clockOutTime) return err(400, 'NOT_CLOCKED_OUT', 'You are still clocked in — nothing to resume.');
+  if (!record.clockOutTime) return err(400, 'NOT_CLOCKED_OUT', 'You are still clocked in - nothing to resume.');
 
   const priorClockOut = record.clockOutTime;
 

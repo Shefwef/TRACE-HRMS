@@ -94,7 +94,7 @@
 .aply-day-label { font-size: var(--text-sm); color: var(--color-text-primary); }
 .aply-day-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
-/* Expanded morning/afternoon picker — sits below the main row when Half day is on. */
+/* Expanded morning/afternoon picker - sits below the main row when Half day is on. */
 .aply-half-panel {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -139,7 +139,7 @@
 }
 
 /* Chips (Full day / Half day). Minimal: just a border. Selected adds a soft
-   blue border + a small elevation shadow — no filled tint. */
+   blue border + a small elevation shadow - no filled tint. */
 .aply-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 12px;

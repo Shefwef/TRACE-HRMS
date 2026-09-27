@@ -9,7 +9,7 @@ import { primaryRole, validateRoleAssignment } from '@/lib/roles';
 const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
 
 /**
- * GET /api/users/[id] — everything the profile page needs in one call:
+ * GET /api/users/[id] - everything the profile page needs in one call:
  *   • full user row (incl. lineManager + deletedAt)
  *   • current-year leave balance
  *
@@ -80,8 +80,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
 
 /**
  * DELETE /api/users/[id]
- *   ?permanent=true  — hard delete (only if already soft-deleted)
- *   default          — soft delete (sets deletedAt, hides from most views).
+ *   ?permanent=true  - hard delete (only if already soft-deleted)
+ *   default          - soft delete (sets deletedAt, hides from most views).
  *
  * Requires `employee.deactivate` permission. Cannot delete yourself. A
  * SUPER_ADMIN account can only be deleted by another SUPER_ADMIN.
@@ -111,7 +111,7 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
       return err(400, 'NOT_SOFT_DELETED', 'Soft-delete this employee first before permanent deletion.');
     // Hard delete cascades to AttendanceRecord / LeaveBalance / LeaveRequest
     // via each model's onDelete: Cascade. BiometricPunch keeps the reference
-    // (no relation) so historical audit is not lost — punches become orphaned
+    // (no relation) so historical audit is not lost - punches become orphaned
     // and won't attach to anyone new.
     await prisma.user.delete({ where: { id } });
     await prisma.auditLog.create({
@@ -178,10 +178,10 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
   // Anyone can edit their own personal + employment details. The only fields
   // an employee cannot self-edit are joiningDate (drives the leave cycle),
-  // roles, isActive, and lineManagerId — all of which have their own perm
+  // roles, isActive, and lineManagerId - all of which have their own perm
   // checks above.
   // Fields an employee may edit on their OWN profile. Deliberately excludes
-  // employeeIdCode / joiningDate / lineManagerId — those are HR-managed and
+  // employeeIdCode / joiningDate / lineManagerId - those are HR-managed and
   // drive downstream logic (leave cycle, org chart) that shouldn't be
   // rewritable by the individual.
   const SELF_EDITABLE = new Set([

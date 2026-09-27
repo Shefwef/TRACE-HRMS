@@ -126,7 +126,7 @@ export function EmployeeDashboard() {
             <div className="edash-section-head">
               <h3>Your leave balances</h3>
               <span className="edash-section-hint">
-                Cycle: {fmtDateShort(balance.cycleStartDate)} –{' '}
+                Cycle: {fmtDateShort(balance.cycleStartDate)} -{' '}
                 {fmtDateShort(balance.cycleEndDate)}
               </span>
             </div>
@@ -163,7 +163,7 @@ export function EmployeeDashboard() {
                       <div className="edash-activity-body">
                         <div className="edash-activity-title">
                           {leaveTypeLabel(r.leaveType)} · {fmtDateShort(r.startDate)}
-                          {r.startDate !== r.endDate && ` – ${fmtDateShort(r.endDate)}`}
+                          {r.startDate !== r.endDate && ` - ${fmtDateShort(r.endDate)}`}
                         </div>
                         <div className="edash-activity-meta">
                           {r.durationDays} {r.durationDays === 1 ? 'day' : 'days'} ·{' '}
@@ -216,7 +216,7 @@ export function EmployeeDashboard() {
             </div>
             <div className="edash-tip-body">
               <strong>{balance.replacementBalance} replacement day{balance.replacementBalance === 1 ? '' : 's'} in the bank</strong>
-              <p>Apply for replacement leave for weekends or holidays you worked — a full day earns +1, a half day earns +0.5.</p>
+              <p>Apply for replacement leave for weekends or holidays you worked - a full day earns +1, a half day earns +0.5.</p>
             </div>
           </motion.div>
 

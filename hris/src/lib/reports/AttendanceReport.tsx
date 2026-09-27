@@ -29,7 +29,7 @@ const MONTH_NAMES = [
 ];
 
 function fmtTime(iso: string | null): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
   return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 }
@@ -65,7 +65,7 @@ export function AttendanceReport(input: AttendanceReportInput) {
 
   return (
     <Document
-      title={`Attendance Report — ${input.employeeName} — ${period}`}
+      title={`Attendance Report - ${input.employeeName} - ${period}`}
       author="TRACE HRMS"
       subject={`Monthly attendance for ${input.employeeName}`}
     >

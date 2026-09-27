@@ -33,7 +33,7 @@ export async function GET(req: Request) {
       roles.includes('HR') ||
       roles.includes('SUPER_ADMIN');
     if (!isFullReviewer) {
-      // Line Managers see attendance for their DIRECT reports only —
+      // Line Managers see attendance for their DIRECT reports only -
       // non-transitive, matching how leave/extra-work approvals are scoped.
       if (!roles.includes('LINE_MANAGER'))
         return err(403, 'FORBIDDEN', 'You do not have permission to view another user\'s attendance.');

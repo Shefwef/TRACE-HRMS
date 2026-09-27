@@ -53,7 +53,7 @@ export async function POST(req: Request) {
   if (!employee) return err(404, 'EMPLOYEE_NOT_FOUND', 'Employee not found.');
   if (!employee.isActive) return err(400, 'EMPLOYEE_INACTIVE', 'Employee is deactivated.');
 
-  // Self-grant guard — same principle as self-approval
+  // Self-grant guard - same principle as self-approval
   if (employee.id === user.id)
     return err(403, 'SELF_GRANT', 'You cannot grant replacement leave to yourself.');
 
@@ -196,7 +196,7 @@ export async function POST(req: Request) {
         type: 'LEAVE_APPROVED' as const,
         title: `Replacement leave granted to ${employee.fullName}`,
         body: `${user.fullName} granted ${durationLabel} on ${period}.`,
-        // Audit copies for managers/HR — click through to the admin queue,
+        // Audit copies for managers/HR - click through to the admin queue,
         // not the individual employee's leave list.
         referenceType: 'admin_requests',
         referenceId: created.id,

@@ -42,7 +42,7 @@ export function AttendancePage() {
     const entries: DayEntry[] = [];
     for (let d = todayDate; d >= 1; d--) {
       const ds = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      // Skip days before the employee joined — they weren't employed yet.
+      // Skip days before the employee joined - they weren't employed yet.
       if (joiningDate && ds < joiningDate) continue;
       const rec = byDate.get(ds);
       if (rec) {
@@ -81,8 +81,8 @@ export function AttendancePage() {
             <span className="mono">{balance?.replacementBalance ?? 0} days</span>
           </div>
           <p className="muted" style={{ fontSize: 14, lineHeight: 1.55 }}>
-            Worked on a weekend or holiday? Log it here to earn replacement leave — a full day = +1,
-            a half day (9–1 or 1–5) = +0.5. HR or Admin approves.
+            Worked on a weekend or holiday? Log it here to earn replacement leave - a full day = +1,
+            a half day (9-1 or 1-5) = +0.5. HR or Admin approves.
           </p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Button
@@ -212,7 +212,7 @@ function AttendanceRow({ record: a }: { record: AttendanceRecordData }) {
   const canExpand = isActive && subEvents.length > 0;
 
   const summary = !isActive
-    ? '—'
+    ? '-'
     : !hasOffsite
       ? 'Office'
       : 'Office +';
@@ -221,14 +221,14 @@ function AttendanceRow({ record: a }: { record: AttendanceRecordData }) {
     <>
       <div className="atpg-row">
         <span data-label="Date">{fmtDate(a.date, 'd MMM yyyy')} <span className="muted">({fmtDate(a.date, 'EEE')})</span></span>
-        <span className="mono" data-label="Clock in">{a.clockInTime ? fmtTime(a.clockInTime) : '—'}</span>
-        <span className="mono" data-label="Clock out">{a.clockOutTime ? fmtTime(a.clockOutTime) : '—'}</span>
-        <span className="mono" data-label="Worked">{a.totalWorkedMinutes ? fmtDuration(a.totalWorkedMinutes) : '—'}</span>
+        <span className="mono" data-label="Clock in">{a.clockInTime ? fmtTime(a.clockInTime) : '-'}</span>
+        <span className="mono" data-label="Clock out">{a.clockOutTime ? fmtTime(a.clockOutTime) : '-'}</span>
+        <span className="mono" data-label="Worked">{a.totalWorkedMinutes ? fmtDuration(a.totalWorkedMinutes) : '-'}</span>
         <span className="mono" data-label="Overtime" style={{ color: a.overtimeMinutes ? 'var(--color-success)' : undefined }}>
-          {a.overtimeMinutes ? fmtDuration(a.overtimeMinutes) : '—'}
+          {a.overtimeMinutes ? fmtDuration(a.overtimeMinutes) : '-'}
         </span>
         <span className="mono" data-label="Deficit" style={{ color: a.deficitMinutes ? 'var(--color-danger)' : undefined }}>
-          {a.deficitMinutes ? fmtDuration(a.deficitMinutes) : '—'}
+          {a.deficitMinutes ? fmtDuration(a.deficitMinutes) : '-'}
         </span>
         <span data-label="Location">
           {canExpand ? (
@@ -244,7 +244,7 @@ function AttendanceRow({ record: a }: { record: AttendanceRecordData }) {
           ) : isActive ? (
             <LocationTag record={a} label="Office" />
           ) : (
-            <span style={{ color: 'var(--color-text-muted)' }}>—</span>
+            <span style={{ color: 'var(--color-text-muted)' }}>-</span>
           )}
         </span>
       </div>
@@ -300,12 +300,12 @@ function EmptyDayRow({ date, isWeekend }: { date: string; isWeekend: boolean }) 
   return (
     <div className="atpg-row" style={{ opacity: isWeekend ? 0.45 : 0.65 }}>
       <span data-label="Date">{fmtDate(date, 'd MMM yyyy')} <span className="muted">({fmtDate(date, 'EEE')})</span>{isWeekend && <em style={{ marginLeft: 6, fontStyle: 'normal', color: 'var(--color-text-muted)', fontSize: 12 }}>· weekend</em>}</span>
-      <span className="mono" data-label="Clock in" style={{ color: 'var(--color-text-muted)' }}>—</span>
-      <span className="mono" data-label="Clock out" style={{ color: 'var(--color-text-muted)' }}>—</span>
-      <span className="mono" data-label="Worked" style={{ color: 'var(--color-text-muted)' }}>—</span>
-      <span className="mono" data-label="Overtime" style={{ color: 'var(--color-text-muted)' }}>—</span>
-      <span className="mono" data-label="Deficit" style={{ color: 'var(--color-text-muted)' }}>—</span>
-      <span data-label="Location" style={{ color: 'var(--color-text-muted)', justifyContent: 'center', display: 'flex' }}>—</span>
+      <span className="mono" data-label="Clock in" style={{ color: 'var(--color-text-muted)' }}>-</span>
+      <span className="mono" data-label="Clock out" style={{ color: 'var(--color-text-muted)' }}>-</span>
+      <span className="mono" data-label="Worked" style={{ color: 'var(--color-text-muted)' }}>-</span>
+      <span className="mono" data-label="Overtime" style={{ color: 'var(--color-text-muted)' }}>-</span>
+      <span className="mono" data-label="Deficit" style={{ color: 'var(--color-text-muted)' }}>-</span>
+      <span data-label="Location" style={{ color: 'var(--color-text-muted)', justifyContent: 'center', display: 'flex' }}>-</span>
     </div>
   );
 }

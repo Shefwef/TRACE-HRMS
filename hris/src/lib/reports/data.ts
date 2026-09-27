@@ -1,12 +1,12 @@
 /**
  * Report data layer: every query and every derived figure the Excel reports
- * need. Deliberately free of ExcelJS — formatting lives in `workbook.ts`, so
+ * need. Deliberately free of ExcelJS - formatting lives in `workbook.ts`, so
  * a column reorder never touches a query and a query fix never touches a style.
  *
  * ## Dates in Excel
  *
  * ExcelJS converts a `Date` to an Excel serial with
- * `25569 + d.getTime() / 86400000` — pure UTC arithmetic. Handed a raw
+ * `25569 + d.getTime() / 86400000` - pure UTC arithmetic. Handed a raw
  * `clockInTime`, Excel would display 08:58 Dhaka as 02:58, which is the same
  * UTC-vs-office bug that has bitten the calendar and the heatmap. Instant
  * columns therefore go through `excelInstant()`, which shifts by the office
@@ -213,7 +213,7 @@ export async function getAttendanceReportData(
 
 /**
  * §26. `employeeIds` is resolved by the caller from
- * `resolveVisibleEmployeeIds` — this function trusts it as already authorised
+ * `resolveVisibleEmployeeIds` - this function trusts it as already authorised
  * and never widens the scope.
  *
  * Corrections are included: the point of an off-site report is to show what was
@@ -231,7 +231,7 @@ export async function getOffsiteRows(
     where: {
       employeeId: { in: employeeIds },
       // Off-site periods and the corrections that closed them. OFFICE_CLOCK_IN
-      // baselines are noise here — every clocked-in day has one.
+      // baselines are noise here - every clocked-in day has one.
       OR: [
         { newLocationType: 'OFFSITE' },
         { eventType: 'ADMIN_CORRECTION' },
@@ -248,7 +248,7 @@ export async function getOffsiteRows(
   });
 
   return events.map((e) => ({
-    employeeIdCode: e.employee.employeeIdCode ?? '—',
+    employeeIdCode: e.employee.employeeIdCode ?? '-',
     employeeName: e.employee.fullName,
     date: e.attendance ? excelDateOnly(e.attendance.date) : null,
     event: EVENT_LABEL[e.eventType],
@@ -304,7 +304,7 @@ export async function getLeaveReportData(
   ]);
 
   const rows: LeaveRequestRow[] = requests.map((r) => ({
-    employeeIdCode: employee.employeeIdCode ?? '—',
+    employeeIdCode: employee.employeeIdCode ?? '-',
     employeeName: employee.fullName,
     leaveType: titleCase(r.leaveType),
     startDate: excelDateOnly(r.startDate),
@@ -355,7 +355,7 @@ export interface CompanyReportData {
 }
 
 /**
- * The company workbook. `employeeIds` narrows the population — 'ALL' for
+ * The company workbook. `employeeIds` narrows the population - 'ALL' for
  * HR/Admin, an explicit list for a Line Manager's team. Resolved and authorised
  * by the caller.
  */
@@ -410,7 +410,7 @@ export async function getCompanyReportData(
 
     for (const r of e.leaveRequests) {
       leaves.push({
-        employeeIdCode: e.employeeIdCode ?? '—',
+        employeeIdCode: e.employeeIdCode ?? '-',
         employeeName: e.fullName,
         leaveType: titleCase(r.leaveType),
         startDate: excelDateOnly(r.startDate),
@@ -431,7 +431,7 @@ export async function getCompanyReportData(
     const t = sumAttendance(rows);
     const bal = e.leaveBalances[0];
     summaries.push({
-      employeeIdCode: e.employeeIdCode ?? '—',
+      employeeIdCode: e.employeeIdCode ?? '-',
       employeeName: e.fullName,
       email: e.email,
       department: e.department ?? '',
@@ -564,12 +564,12 @@ function toDailyRow(
   facts: Map<string, DayFacts>,
 ): DailyAttendanceRow {
   // `@db.Date` round-trips as UTC midnight carrying the office-local Y/M/D, so
-  // this slice is the local day key — the same key dayLocationFacts builds.
+  // this slice is the local day key - the same key dayLocationFacts builds.
   const dayKey = r.date.toISOString().slice(0, 10);
   const fact = facts.get(`${who.id}|${dayKey}`);
 
   return {
-    employeeIdCode: who.employeeIdCode ?? '—',
+    employeeIdCode: who.employeeIdCode ?? '-',
     employeeName: who.fullName,
     department: who.department ?? '',
     date: excelDateOnly(r.date),
@@ -582,7 +582,7 @@ function toDailyRow(
     status: titleCase(r.status),
     // Every clock-in since the location feature shipped writes an OFFICE_CLOCK_IN
     // baseline (`openOfficePeriodOnClockIn`), so a clocked-in day with no events
-    // is a pre-feature record — its own `workLocation` is the best answer we
+    // is a pre-feature record - its own `workLocation` is the best answer we
     // have, and leaving the cell blank next to a filled "Final Location" would
     // read as a bug. A day never clocked into stays blank, because there really
     // is no location to report.
@@ -598,7 +598,7 @@ function toDailyRow(
 function sumAttendance(rows: DailyAttendanceRow[]): AttendanceTotals {
   const count = (s: string) => rows.filter((r) => r.status === s).length;
   const present = count('Present');
-  // "Work days" excludes weekends and holidays — days nobody was expected in.
+  // "Work days" excludes weekends and holidays - days nobody was expected in.
   const workDays = rows.filter((r) => r.status !== 'Weekend' && r.status !== 'Holiday').length;
   return {
     presentDays: present,

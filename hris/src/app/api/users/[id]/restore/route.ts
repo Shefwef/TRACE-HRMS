@@ -7,7 +7,7 @@ import { checkPermission } from '@/lib/permissions';
  * POST /api/users/[id]/restore
  * Reverses a soft-delete. The user stays deactivated (isActive=false) so
  * an admin still needs to re-activate them explicitly before they can log
- * in again — undo shouldn't accidentally re-grant access.
+ * in again - undo shouldn't accidentally re-grant access.
  */
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const [actor, error] = await requireAuth(req);

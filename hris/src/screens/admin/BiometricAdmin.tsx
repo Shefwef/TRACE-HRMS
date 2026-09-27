@@ -72,7 +72,7 @@ export function BiometricAdmin() {
       <div className="pg-head">
         <div>
           <h1><Fingerprint size={24} style={{ verticalAlign: 'middle', marginRight: 8 }} />Biometric</h1>
-          <p className="muted">ZKTeco M2-LR integration — punch ingest, device management, and employee mapping.</p>
+          <p className="muted">ZKTeco M2-LR integration - punch ingest, device management, and employee mapping.</p>
         </div>
       </div>
 
@@ -92,7 +92,7 @@ export function BiometricAdmin() {
         >
           <AlertCircle size={18} color="var(--color-info, #3182CE)" style={{ marginTop: 2, flexShrink: 0 }} />
           <div style={{ fontSize: 'var(--text-sm)', lineHeight: 1.55, color: 'var(--color-text-primary)' }}>
-            <strong>No biometric device connected yet.</strong> This page is ready to receive punches from the office ZKTeco M2-LR — you can register the device serial in the <em>Devices</em> tab, map each employee&apos;s <code>emp_code</code> under <em>Mapping</em>, then either wait for the office agent to POST to <code>/api/biometric/punches</code> or use the <em>Simulate</em> tab to test the full pipeline end-to-end. Once the real device is set up, everything you configure here will start filling in automatically.
+            <strong>No biometric device connected yet.</strong> This page is ready to receive punches from the office ZKTeco M2-LR - you can register the device serial in the <em>Devices</em> tab, map each employee&apos;s <code>emp_code</code> under <em>Mapping</em>, then either wait for the office agent to POST to <code>/api/biometric/punches</code> or use the <em>Simulate</em> tab to test the full pipeline end-to-end. Once the real device is set up, everything you configure here will start filling in automatically.
           </div>
         </div>
       )}
@@ -196,7 +196,7 @@ function DevicesTab({ canManage }: { canManage: boolean }) {
                 <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{d.serial}</td>
                 <td style={{ padding: '12px 16px' }}>{d.alias}</td>
                 <td style={{ padding: '12px 16px', color: 'var(--color-text-secondary)' }}>
-                  {d.lastSeenAt ? `${fmtDate(d.lastSeenAt, 'EEE d MMM')} ${fmtTime(d.lastSeenAt)}` : '—'}
+                  {d.lastSeenAt ? `${fmtDate(d.lastSeenAt, 'EEE d MMM')} ${fmtTime(d.lastSeenAt)}` : '-'}
                 </td>
                 <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{d.punchCount.toLocaleString()}</td>
                 {canManage && (
@@ -261,7 +261,7 @@ function MappingTab({ canManage }: { canManage: boolean }) {
                   <div style={{ fontWeight: 500 }}>{e.fullName}</div>
                   {e.employeeIdCode && <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{e.employeeIdCode}</div>}
                 </td>
-                <td style={{ padding: '10px 16px', color: 'var(--color-text-secondary)' }}>{e.department ?? '—'}</td>
+                <td style={{ padding: '10px 16px', color: 'var(--color-text-secondary)' }}>{e.department ?? '-'}</td>
                 <td style={{ padding: '10px 16px' }}>
                   {canManage ? (
                     <input
@@ -272,7 +272,7 @@ function MappingTab({ canManage }: { canManage: boolean }) {
                       style={{ width: 120, fontFamily: 'var(--font-mono)' }}
                     />
                   ) : (
-                    <span style={{ fontFamily: 'var(--font-mono)' }}>{e.biometricUserId ?? <span style={{ color: 'var(--color-text-muted)' }}>—</span>}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)' }}>{e.biometricUserId ?? <span style={{ color: 'var(--color-text-muted)' }}>-</span>}</span>
                   )}
                 </td>
                 {canManage && (
@@ -406,7 +406,13 @@ function PunchesTab() {
 
   const rebuild = useMutation({
     mutationFn: () =>
-      api<{ rebuilt: number; employees: number; remapped: number }>('/api/biometric/rebuild', {
+      api<{
+        rebuilt: number;
+        employees: number;
+        remapped: number;
+        unmappedRemaining: number;
+        unmappedDeviceUserIds: string[];
+      }>('/api/biometric/rebuild', {
         method: 'POST',
         body: JSON.stringify({ from, to }),
       }),
@@ -423,7 +429,7 @@ function PunchesTab() {
 
   const headerLabel = from === to
     ? fmtDate(`${from}T12:00:00`, 'EEEE · d MMM yyyy')
-    : `${fmtDate(`${from}T12:00:00`, 'd MMM yyyy')} – ${fmtDate(`${to}T12:00:00`, 'd MMM yyyy')}`;
+    : `${fmtDate(`${from}T12:00:00`, 'd MMM yyyy')} - ${fmtDate(`${to}T12:00:00`, 'd MMM yyyy')}`;
 
   const dateInputStyle: React.CSSProperties = {
     width: 150,
@@ -471,7 +477,7 @@ function PunchesTab() {
             style={dateInputStyle}
             aria-label="From date"
           />
-          <span style={{ color: 'var(--color-text-muted)' }}>–</span>
+          <span style={{ color: 'var(--color-text-muted)' }}>-</span>
           <input
             type="date"
             className="form-input"
@@ -491,7 +497,7 @@ function PunchesTab() {
                 size="sm"
                 leadingIcon={<ClipboardEdit size={14} />}
                 onClick={() => setManualOpen(true)}
-                title="Fill in a missed clock-in or clock-out. Cannot edit an already-registered value — only blank sides can be filled."
+                title="Fill in a missed clock-in or clock-out. Cannot edit an already-registered value - only blank sides can be filled."
               >
                 Manual entry
               </Button>
@@ -500,7 +506,7 @@ function PunchesTab() {
                 size="sm"
                 loading={rebuild.isPending}
                 onClick={() => rebuild.mutate()}
-                title="Recompute attendance from stored biometric punches (safe — never overwrites manual records)"
+                title="Recompute attendance from stored biometric punches (safe - never overwrites manual records)"
               >
                 Recompute
               </Button>
@@ -517,6 +523,24 @@ function PunchesTab() {
         <div style={{ padding: '8px 20px', background: 'var(--color-bg-subtle)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
           Recomputed {rebuild.data.rebuilt} attendance record{rebuild.data.rebuilt === 1 ? '' : 's'} across {rebuild.data.employees} employee{rebuild.data.employees === 1 ? '' : 's'}.
           {rebuild.data.remapped > 0 && ` Also linked ${rebuild.data.remapped} previously-unmapped punch${rebuild.data.remapped === 1 ? '' : 'es'} to employees.`}
+        </div>
+      )}
+      {rebuild.data && rebuild.data.unmappedRemaining > 0 && (
+        <div style={{
+          padding: '10px 20px',
+          background: 'var(--color-warning-light, #FEF3C7)',
+          borderTop: '1px solid var(--color-border-default)',
+          fontSize: 'var(--text-xs)',
+          color: 'var(--color-text-primary)',
+          lineHeight: 1.55,
+        }}>
+          <strong>{rebuild.data.unmappedRemaining} device ID{rebuild.data.unmappedRemaining === 1 ? '' : 's'}</strong> in this range still have no matching employee, so their punches were skipped:
+          {' '}
+          <span style={{ fontFamily: 'var(--font-mono)' }}>
+            {rebuild.data.unmappedDeviceUserIds.slice(0, 10).join(', ')}
+            {rebuild.data.unmappedDeviceUserIds.length > 10 ? ', ...' : ''}
+          </span>.
+          {' '}Set each employee&apos;s <code>emp_code</code> on the <strong>Mapping</strong> tab, then click Recompute again.
         </div>
       )}
       {rebuild.error && (
@@ -549,25 +573,25 @@ function PunchesTab() {
               )}
               <td style={{ padding: '10px 16px', fontWeight: 500 }}>{s.employeeName}</td>
               <td style={{ padding: '10px 16px', fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)' }}>
-                {s.employeeIdCode ?? <span style={{ color: 'var(--color-text-muted)' }}>—</span>}
+                {s.employeeIdCode ?? <span style={{ color: 'var(--color-text-muted)' }}>-</span>}
               </td>
               <td style={{ padding: '10px 16px', color: 'var(--color-text-secondary)' }}>
-                {s.department ?? <span style={{ color: 'var(--color-text-muted)' }}>—</span>}
+                {s.department ?? <span style={{ color: 'var(--color-text-muted)' }}>-</span>}
               </td>
               <td style={{ padding: '10px 16px', fontFamily: 'var(--font-mono)', color: s.clockInTime ? 'var(--color-success)' : 'var(--color-text-muted)' }}>
-                {s.clockInTime ? fmtTime(s.clockInTime) : '—'}
+                {s.clockInTime ? fmtTime(s.clockInTime) : '-'}
               </td>
               <td style={{ padding: '10px 16px', fontFamily: 'var(--font-mono)', color: s.clockOutTime ? 'var(--color-danger)' : 'var(--color-text-muted)' }}>
-                {s.clockOutTime ? fmtTime(s.clockOutTime) : '—'}
+                {s.clockOutTime ? fmtTime(s.clockOutTime) : '-'}
               </td>
               <td style={{ padding: '10px 16px', fontFamily: 'var(--font-mono)', fontWeight: s.totalWorkedMinutes > 0 ? 500 : undefined, color: s.totalWorkedMinutes > 0 ? undefined : 'var(--color-text-muted)' }}>
-                {s.totalWorkedMinutes > 0 ? fmtDuration(s.totalWorkedMinutes) : '—'}
+                {s.totalWorkedMinutes > 0 ? fmtDuration(s.totalWorkedMinutes) : '-'}
               </td>
               <td style={{ padding: '10px 16px', fontFamily: 'var(--font-mono)', color: s.overtimeMinutes > 0 ? STATUS_COLOR.PRESENT : 'var(--color-text-muted)' }}>
-                {s.overtimeMinutes > 0 ? fmtDuration(s.overtimeMinutes) : '—'}
+                {s.overtimeMinutes > 0 ? fmtDuration(s.overtimeMinutes) : '-'}
               </td>
               <td style={{ padding: '10px 16px', fontFamily: 'var(--font-mono)', color: s.deficitMinutes > 0 ? STATUS_COLOR.ABSENT : 'var(--color-text-muted)' }}>
-                {s.deficitMinutes > 0 ? fmtDuration(s.deficitMinutes) : '—'}
+                {s.deficitMinutes > 0 ? fmtDuration(s.deficitMinutes) : '-'}
               </td>
             </tr>
           ))}
@@ -614,7 +638,7 @@ function SimulateTab() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <label style={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Employee</label>
           <select className="form-input" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)}>
-            <option value="">— Select employee —</option>
+            <option value="">- Select employee -</option>
             {mapped.map((e) => (
               <option key={e.id} value={e.id}>{e.fullName} (ID: {e.biometricUserId})</option>
             ))}
@@ -732,7 +756,7 @@ function ManualPunchModal({
 
   // Look up whichever fields are already filled on this (employee, date) so
   // the modal can lock the corresponding inputs. Manual entry only fills
-  // blanks — an existing clock-in or clock-out can never be edited here.
+  // blanks - an existing clock-in or clock-out can never be edited here.
   const existing = useQuery({
     queryKey: ['biometric', 'manual-punch', employeeId, date],
     enabled: !!employeeId && !!date,
@@ -762,7 +786,7 @@ function ManualPunchModal({
         body: JSON.stringify({
           employeeId,
           date,
-          // Never resubmit a locked side — the server rejects it anyway.
+          // Never resubmit a locked side - the server rejects it anyway.
           clockIn:  clockInLocked  ? undefined : (clockIn  || undefined),
           clockOut: clockOutLocked ? undefined : (clockOut || undefined),
           reason,
@@ -810,7 +834,7 @@ function ManualPunchModal({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <p className="muted" style={{ margin: 0, fontSize: 'var(--text-sm)' }}>
           Use this when someone forgot to tap or the device missed a punch. Only
-          missing sides can be filled — if the day already has a clock-in or
+          missing sides can be filled - if the day already has a clock-in or
           clock-out, that side is locked. The record is saved with source
           <code>MANUAL</code> and will not be overwritten by later biometric
           recomputes.
@@ -823,7 +847,7 @@ function ManualPunchModal({
             value={employeeId}
             onChange={(e) => setEmployeeId(e.target.value)}
           >
-            <option value="">— Select employee —</option>
+            <option value="">- Select employee -</option>
             {employees?.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.fullName}{e.employeeIdCode ? ` (${e.employeeIdCode})` : ''}
@@ -893,7 +917,7 @@ function ManualPunchModal({
         </div>
         <p className="muted" style={{ margin: '-4px 0 0', fontSize: 'var(--text-xs)' }}>
           Manual entry only fills missing sides. An already-registered clock-in
-          or clock-out cannot be edited — pick the blank field to fill in.
+          or clock-out cannot be edited - pick the blank field to fill in.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

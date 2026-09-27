@@ -23,7 +23,7 @@ export function ReplacementLeavesModal({ open, onClose, employee }: Props) {
   const { data, isLoading } = useUserReplacementLeaves(employee?.id ?? null, open);
 
   const title = employee
-    ? `Replacement leaves — ${employee.fullName}`
+    ? `Replacement leaves - ${employee.fullName}`
     : 'Replacement leaves';
 
   return (
