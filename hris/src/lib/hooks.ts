@@ -113,6 +113,13 @@ export interface ExtraWorkSummary {
   createdAt: string;
   employee?: { id: string; fullName: string; email: string; role: string; department: string | null; avatarUrl: string | null };
   reviewer?: { id: string; fullName: string } | null;
+  /** Clock-in/out from the matching AttendanceRecord (present for
+   *  auto-detected requests; may be null for manually-filed ones). */
+  attendance?: {
+    clockInTime: string | null;
+    clockOutTime: string | null;
+    totalWorkedMinutes: number;
+  } | null;
 }
 
 export interface UserSummary {
@@ -438,10 +445,21 @@ export function useSubmitExtraWork() {
 export function useApproveExtraWork() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, note }: { id: string; note?: string }) =>
+    mutationFn: ({
+      id,
+      note,
+      workType,
+    }: {
+      id: string;
+      note?: string;
+      /** Optional HR override of the recorded workType. Used on the auto-
+       *  detected review drawer so HR can pick Full / Half AM / Half PM
+       *  before crediting the balance. */
+      workType?: 'FULL_DAY' | 'HALF_DAY_MORNING' | 'HALF_DAY_AFTERNOON';
+    }) =>
       api(`/api/extra-work/${id}/approve`, {
         method: 'POST',
-        body: JSON.stringify({ note }),
+        body: JSON.stringify({ note, workType }),
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['extra-work'] });

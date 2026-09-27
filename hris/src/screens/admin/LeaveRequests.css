@@ -232,10 +232,14 @@
   font-size: var(--text-xs);
 }
 .lreq-reason {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
   color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: help;
 }
 @media (max-width: 1050px) {
   .lreq-thead { display: none; }

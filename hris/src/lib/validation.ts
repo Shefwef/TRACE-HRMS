@@ -100,6 +100,10 @@ export const ApproveLeaveSchema = z.object({
     z.string().min(1),
     z.array(AllocationEntrySchema).min(1).max(60),
   ).optional(),
+  /** Optional workType override, used only by the extra-work approve
+   *  endpoint so HR can pick the slot on auto-detected requests before
+   *  crediting the balance. Ignored by the leave-request approve path. */
+  workType: z.enum(['FULL_DAY', 'HALF_DAY_MORNING', 'HALF_DAY_AFTERNOON']).optional(),
 });
 export type AllocationEntry = z.infer<typeof AllocationEntrySchema>;
 

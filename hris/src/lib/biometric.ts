@@ -11,7 +11,6 @@
  */
 import { prisma } from './db';
 import { localDateOnly, localDayBounds, localDayKey, localDayOfWeek } from './workday';
-import { evaluateReplacementEligibility } from './leave';
 
 /**
  * Minutes in a scheduled workday derived from the office window.
@@ -391,15 +390,16 @@ async function rebuildAttendanceDay(
  *
  *   Eligibility conditions (ALL must hold):
  *     - date is a Bangladesh weekend (Fri/Sat) OR a public holiday
- *     - the employee has a valid clock-in AND some worked time
+ *     - the employee has BOTH a clock-in AND a clock-out (workedMinutes > 0)
  *     - no ExtraWorkLog already exists for (employee, date)
  *
- *   Slot is picked by evaluateReplacementEligibility() - worked > 4h ->
- *   FULL_DAY, otherwise AM/PM half based on the clock-in hour.
+ * The slot is NOT classified here anymore. Auto-filed logs go to HR as a
+ * default (FULL_DAY, tentatively) alongside the clock-in / clock-out times;
+ * HR picks Full / Half AM / Half PM in the review drawer before crediting
+ * the balance. Manually-filed logs still keep the workType the employee
+ * chose in the Apply form.
  *
- * The reason field is set to a placeholder that surfaces the source so HR
- * knows this was auto-generated; employees can add context by cancelling
- * and re-filing manually.
+ * The reason field surfaces the source so HR knows this was auto-generated.
  */
 async function maybeAutoFileReplacementLeave(
   employeeId: string,
@@ -408,6 +408,9 @@ async function maybeAutoFileReplacementLeave(
   clockIn: Date | null,
   totalWorkedMinutes: number,
 ): Promise<void> {
+  // Both clock-in AND clock-out required. totalWorkedMinutes > 0 implies
+  // both exist (rebuildAttendanceDay only computes worked minutes when the
+  // pair is complete).
   if (!clockIn || totalWorkedMinutes <= 0) return;
 
   const dow = localDayOfWeek(clockIn); // 0 = Sunday .. 5 = Friday, 6 = Saturday
@@ -430,8 +433,10 @@ async function maybeAutoFileReplacementLeave(
   });
   if (existing) return;
 
-  const workType = evaluateReplacementEligibility({ totalWorkedMinutes, clockIn });
-  if (!workType) return;
+  // Default the stored workType to FULL_DAY. HR overrides via the review
+  // drawer using the actual clock-in/out times, which are joined onto the
+  // log on the /api/extra-work list endpoint.
+  const workType: 'FULL_DAY' | 'HALF_DAY_MORNING' | 'HALF_DAY_AFTERNOON' = 'FULL_DAY';
 
   const label = isWeekend ? 'Weekend work' : 'Holiday work';
   await prisma.extraWorkLog.create({

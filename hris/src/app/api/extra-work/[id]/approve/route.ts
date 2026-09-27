@@ -34,7 +34,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const hierarchyError = canApproveRequest(user, applicant);
   if (hierarchyError) return err(403, 'HIERARCHY_VIOLATION', hierarchyError);
 
-  const credit = extraWorkCredit(log.workType);
+  // HR can override the workType at approval time - used on auto-detected
+  // requests where the slot was picked by the system and the reviewer wants
+  // Full vs Half based on the actual clock-in/out. Falls back to whatever
+  // was stored on submission.
+  const finalWorkType = input.workType ?? log.workType;
+  const credit = extraWorkCredit(finalWorkType);
   const year = new Date().getFullYear();
 
   await prisma.$transaction(async (tx) => {
@@ -42,6 +47,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       where: { id },
       data: {
         status: 'APPROVED',
+        workType: finalWorkType,
         adminNote: input.note,
         reviewedById: user.id,
         reviewedAt: new Date(),
@@ -68,7 +74,13 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         action: 'EXTRA_WORK_APPROVED',
         targetType: 'extra_work_log',
         targetId: id,
-        metadata: { credit, note: input.note ?? null },
+        metadata: {
+          credit,
+          note: input.note ?? null,
+          originalWorkType: log.workType,
+          finalWorkType,
+          workTypeOverridden: finalWorkType !== log.workType,
+        },
       },
     });
   });
@@ -94,7 +106,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       {
         employeeName: employee.fullName,
         workDate: log.workDate.toISOString().slice(0, 10),
-        workType: extraWorkTypeLabel(log.workType),
+        workType: extraWorkTypeLabel(finalWorkType),
         decision: 'APPROVED',
         reviewerName: user.fullName,
         note: input.note,

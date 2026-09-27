@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
-import { useSubmitExtraWork } from '@/lib/hooks';
+import { useSubmitExtraWork, useHolidays } from '@/lib/hooks';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Field, TextArea, TextInput } from '../ui/Field';
@@ -47,12 +47,44 @@ const OPTIONS: {
 
 export function LogExtraWorkModal({ open, onClose }: Props) {
   const submit = useSubmitExtraWork();
+  const { data: holidays = [] } = useHolidays();
   const [workDate, setWorkDate] = useState('');
   const [workType, setWorkType] = useState<WorkType | null>(null);
   const [reason, setReason] = useState('');
   const [description, setDescription] = useState('');
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dateError, setDateError] = useState<string | null>(null);
+
+  // O(1) lookup for "is this a public holiday?".
+  const holidayDates = useMemo(
+    () => new Set(holidays.map((h) => h.date.slice(0, 10))),
+    [holidays],
+  );
+
+  /** Only Bangladesh weekend days (Fri = 5, Sat = 6) or public holidays are
+   *  eligible for replacement leave. Anything else is a normal workday. */
+  function isEligibleWorkDate(dateStr: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+    const dow = new Date(dateStr + 'T00:00:00Z').getUTCDay(); // 0 Sun .. 6 Sat
+    if (dow === 5 || dow === 6) return true;
+    return holidayDates.has(dateStr);
+  }
+
+  function handleDateChange(next: string) {
+    if (!next) {
+      setWorkDate('');
+      setDateError(null);
+      return;
+    }
+    if (!isEligibleWorkDate(next)) {
+      setDateError('Only weekends (Fri/Sat) or public holidays can be logged.');
+      setWorkDate('');
+      return;
+    }
+    setDateError(null);
+    setWorkDate(next);
+  }
 
   function reset() {
     setWorkDate('');
@@ -61,6 +93,7 @@ export function LogExtraWorkModal({ open, onClose }: Props) {
     setDescription('');
     setDone(false);
     setError(null);
+    setDateError(null);
   }
   function handleClose() {
     onClose();
@@ -133,17 +166,21 @@ export function LogExtraWorkModal({ open, onClose }: Props) {
       ) : (
         <div className="lew">
           <p className="lew-hint">
-            You always work <strong>9 AM - 5 PM</strong>. Pick which slot you covered on the
-            weekend or holiday you&apos;re logging.
+            Approved leave here is credited to your <strong>replacement balance</strong>.
           </p>
 
-          <Field label="Date you worked" required>
+          <Field
+            label="Date you worked"
+            required
+            hint="Only weekends (Fri/Sat) or public holidays can be logged."
+          >
             <TextInput
               type="date"
               value={workDate}
               max={today}
-              onChange={(e) => setWorkDate(e.target.value)}
+              onChange={(e) => handleDateChange(e.target.value)}
             />
+            {dateError && <p className="lew-field-error">{dateError}</p>}
           </Field>
 
           <div className="lew-options">

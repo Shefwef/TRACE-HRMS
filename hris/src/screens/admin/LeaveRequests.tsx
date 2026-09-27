@@ -300,7 +300,7 @@ export function LeaveRequestsPage() {
                       <span data-label="Date">{fmtDate(x.workDate, 'd MMM yyyy')}</span>
                       <span data-label="Slot">{extraWorkTypeLabel(x.workType).replace(/\s*\(.*\)/, '')}</span>
                       <span className="mono" data-label="Credit">+{credit}d</span>
-                      <span className="lreq-reason" data-label="Reason">{x.reason}</span>
+                      <span className="lreq-reason" data-label="Reason" title={x.reason}>{x.reason}</span>
                       <span className="muted" data-label="Submitted">{fmtRelative(x.createdAt)}</span>
                       <span data-label="Status"><Badge variant={statusVar}>{x.status.toLowerCase()}</Badge></span>
                     </motion.button>

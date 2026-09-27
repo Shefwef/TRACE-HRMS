@@ -177,10 +177,7 @@ export function EmployeeProfileForm({ mode, values, onChange, allowedRoles = [] 
         </Field>
       </div>
       {isSelf && (
-        <Field
-          label="Line manager"
-          hint="Assigned by HR. Reach out to HR if you need this changed."
-        >
+        <Field label="Line manager">
           <TextInput
             value={values.lineManagerName ?? ''}
             onChange={() => {}}

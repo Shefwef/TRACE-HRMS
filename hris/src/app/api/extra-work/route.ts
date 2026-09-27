@@ -45,7 +45,8 @@ export async function GET(req: Request) {
         reviewer: { select: { id: true, fullName: true } },
       },
     });
-    return NextResponse.json(logs.map(serialize));
+    const attendance = await attendanceMapFor(logs);
+    return NextResponse.json(logs.map((l) => serialize(l, attendance.get(attendanceKey(l.employeeId, l.workDate)))));
   }
 
   const logs = await prisma.extraWorkLog.findMany({
@@ -53,7 +54,37 @@ export async function GET(req: Request) {
     orderBy: { createdAt: 'desc' },
     include: { reviewer: { select: { id: true, fullName: true } } },
   });
-  return NextResponse.json(logs.map(serialize));
+  const attendance = await attendanceMapFor(logs);
+  return NextResponse.json(logs.map((l) => serialize(l, attendance.get(attendanceKey(l.employeeId, l.workDate)))));
+}
+
+/**
+ * Bulk-load attendance rows for every (employeeId, workDate) pair on the
+ * given logs so the HR drawer can show the actual clock-in/out times for
+ * auto-detected requests. Returns a lookup keyed by `${employeeId}|${dayKey}`.
+ */
+async function attendanceMapFor(
+  logs: Array<{ employeeId: string; workDate: Date }>,
+): Promise<Map<string, { clockInTime: Date | null; clockOutTime: Date | null; totalWorkedMinutes: number }>> {
+  if (logs.length === 0) return new Map();
+  const employeeIds = [...new Set(logs.map((l) => l.employeeId))];
+  const dates = [...new Set(logs.map((l) => l.workDate.toISOString()))].map((s) => new Date(s));
+  const rows = await prisma.attendanceRecord.findMany({
+    where: { employeeId: { in: employeeIds }, date: { in: dates } },
+    select: { employeeId: true, date: true, clockInTime: true, clockOutTime: true, totalWorkedMinutes: true },
+  });
+  const map = new Map<string, { clockInTime: Date | null; clockOutTime: Date | null; totalWorkedMinutes: number }>();
+  for (const r of rows) {
+    map.set(attendanceKey(r.employeeId, r.date), {
+      clockInTime: r.clockInTime,
+      clockOutTime: r.clockOutTime,
+      totalWorkedMinutes: r.totalWorkedMinutes,
+    });
+  }
+  return map;
+}
+function attendanceKey(employeeId: string, workDate: Date): string {
+  return `${employeeId}|${workDate.toISOString().slice(0, 10)}`;
 }
 
 /**
@@ -159,7 +190,10 @@ interface RawLog {
   reviewer?: { id: string; fullName: string } | null;
 }
 
-function serialize(l: RawLog) {
+function serialize(
+  l: RawLog,
+  attendance?: { clockInTime: Date | null; clockOutTime: Date | null; totalWorkedMinutes: number },
+) {
   return {
     id: l.id,
     employeeId: l.employeeId,
@@ -175,5 +209,15 @@ function serialize(l: RawLog) {
     updatedAt: l.updatedAt.toISOString(),
     employee: l.employee,
     reviewer: l.reviewer,
+    // Attendance context for the reviewer drawer. Present only when a
+    // matching AttendanceRecord exists for the (employee, workDate) pair -
+    // which will be the case for every auto-detected log by construction.
+    attendance: attendance
+      ? {
+          clockInTime: attendance.clockInTime?.toISOString() ?? null,
+          clockOutTime: attendance.clockOutTime?.toISOString() ?? null,
+          totalWorkedMinutes: attendance.totalWorkedMinutes,
+        }
+      : null,
   };
 }

@@ -1,6 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Check, X } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Check, X, Clock } from 'lucide-react';
 import { useAllExtraWork, useApproveExtraWork, useRejectExtraWork } from '@/lib/hooks';
 import { initials, avatarColorFor } from '@/lib/session';
 import { extraWorkTypeLabel, extraWorkCredit } from '@/lib/leave';
@@ -13,9 +13,33 @@ import { Modal } from '../ui/Modal';
 import { fmtDate, cx } from '../../lib/utils';
 import './LeaveReviewDrawer.css';
 
+type WorkType = 'FULL_DAY' | 'HALF_DAY_MORNING' | 'HALF_DAY_AFTERNOON';
+
+const SLOT_OPTIONS: { key: WorkType; label: string; hint: string }[] = [
+  { key: 'FULL_DAY',           label: 'Full day',       hint: '+1 day' },
+  { key: 'HALF_DAY_MORNING',   label: 'Half day (AM)',  hint: '+0.5 day' },
+  { key: 'HALF_DAY_AFTERNOON', label: 'Half day (PM)',  hint: '+0.5 day' },
+];
+
 interface Props {
   logId: string | null;
   onClose: () => void;
+}
+
+/** Format a UTC-instant ISO timestamp as "hh:mm AM/PM" in Dhaka local time. */
+function fmtDhakaTime(iso: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Dhaka',
+    hour: 'numeric', minute: '2-digit', hour12: true,
+  }).format(new Date(iso));
+}
+
+/** Human-readable "5h 30m" from a minutes count. */
+function fmtDuration(mins: number): string {
+  if (mins <= 0) return '0m';
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
 export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
@@ -28,18 +52,36 @@ export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
   const [showApprove, setShowApprove] = useState(false);
   const [showReject, setShowReject] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [slotOverride, setSlotOverride] = useState<WorkType | null>(null);
+
+  // Reason includes the "auto-detected" marker for logs the biometric
+  // pipeline filed on the employee's behalf. Only those get the slot picker;
+  // manually-filed logs keep the workType the employee submitted.
+  const isAutoDetected = useMemo(
+    () => (log?.reason ?? '').toLowerCase().includes('auto-detected'),
+    [log?.reason],
+  );
 
   useEffect(() => {
     if (!logId) {
       setNote(''); setRejectReason(''); setShowApprove(false); setShowReject(false);
+      setSlotOverride(null);
     }
   }, [logId]);
+
+  // Seed slot picker with the currently-recorded workType so HR can just
+  // click Approve if the default is already right.
+  useEffect(() => {
+    if (log && isAutoDetected) setSlotOverride(log.workType);
+    else setSlotOverride(null);
+  }, [log?.id, isAutoDetected, log]);
 
   if (!logId || !log || !log.employee) {
     return <Drawer open={!!logId} onClose={onClose}>{null}</Drawer>;
   }
 
-  const credit = extraWorkCredit(log.workType);
+  const effectiveWorkType: WorkType = slotOverride ?? log.workType;
+  const credit = extraWorkCredit(effectiveWorkType);
   const empInitials = initials(log.employee.fullName);
   const empColor = avatarColorFor(log.employee.id);
 
@@ -74,7 +116,7 @@ export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
             </div>
             <div className="lrd-fact">
               <span className="lrd-fact-label">Slot</span>
-              <span className="lrd-fact-value">{extraWorkTypeLabel(log.workType)}</span>
+              <span className="lrd-fact-value">{extraWorkTypeLabel(effectiveWorkType)}</span>
             </div>
             <div className="lrd-fact">
               <span className="lrd-fact-label">Reason</span>
@@ -88,12 +130,65 @@ export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
             )}
           </div>
 
+          {/* Clock-in/out block. Present for auto-detected requests (always)
+              and for any manual request whose date has an attendance row. */}
+          {log.attendance && (log.attendance.clockInTime || log.attendance.clockOutTime) && (
+            <div className="lrd-card">
+              <div className="lrd-card-title">
+                <Clock size={14} style={{ marginRight: 6, verticalAlign: -2 }} />
+                Attendance for this day
+              </div>
+              <div className="lrd-calc-rows">
+                <div className="lrd-calc-row">
+                  <span className="lrd-calc-name">Clock in</span>
+                  <span className="lrd-calc-days mono">
+                    {log.attendance.clockInTime ? fmtDhakaTime(log.attendance.clockInTime) : '-'}
+                  </span>
+                </div>
+                <div className="lrd-calc-row">
+                  <span className="lrd-calc-name">Clock out</span>
+                  <span className="lrd-calc-days mono">
+                    {log.attendance.clockOutTime ? fmtDhakaTime(log.attendance.clockOutTime) : '-'}
+                  </span>
+                </div>
+                <div className="lrd-calc-row">
+                  <span className="lrd-calc-name">Worked</span>
+                  <span className="lrd-calc-days mono">{fmtDuration(log.attendance.totalWorkedMinutes)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Slot picker - only for auto-detected requests. Manually-filed
+              logs keep the workType the employee explicitly selected. */}
+          {log.status === 'PENDING' && isAutoDetected && (
+            <div className="lrd-card">
+              <div className="lrd-card-title">Credit as</div>
+              <div className="lrd-slot-picker">
+                {SLOT_OPTIONS.map((opt) => {
+                  const on = effectiveWorkType === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      className={cx('lrd-slot-btn', on && 'lrd-slot-btn-on')}
+                      onClick={() => setSlotOverride(opt.key)}
+                    >
+                      <span className="lrd-slot-label">{opt.label}</span>
+                      <span className="lrd-slot-hint">{opt.hint}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="lrd-card">
             <div className="lrd-card-title">Leave calculation</div>
             <div className="lrd-calc-rows">
               <div className="lrd-calc-row">
                 <span className="lrd-calc-name">
-                  {log.workType === 'FULL_DAY' ? 'Full day worked' : log.workType === 'HALF_DAY_MORNING' ? 'Morning half worked' : 'Afternoon half worked'}
+                  {effectiveWorkType === 'FULL_DAY' ? 'Full day worked' : effectiveWorkType === 'HALF_DAY_MORNING' ? 'Morning half worked' : 'Afternoon half worked'}
                 </span>
                 <span className="lrd-calc-days">= {credit} {credit === 1 ? 'day' : 'days'}</span>
               </div>
@@ -154,7 +249,7 @@ export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
       <Modal
         open={showApprove}
         onClose={() => setShowApprove(false)}
-        title="Approve this extra work log?"
+        title="Approve this replacement leave?"
         footer={
           <>
             <Button variant="ghost" onClick={() => setShowApprove(false)}>Cancel</Button>
@@ -162,9 +257,18 @@ export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
               variant="success"
               loading={approve.isPending}
               onClick={() => {
-                approve.mutate({ id: log.id, note: note || undefined }, {
-                  onSuccess: () => { setShowApprove(false); onClose(); },
-                });
+                approve.mutate(
+                  {
+                    id: log.id,
+                    note: note || undefined,
+                    // Only send an override when HR actually changed it - avoids
+                    // clobbering a manual submission with the picker default.
+                    workType: isAutoDetected ? effectiveWorkType : undefined,
+                  },
+                  {
+                    onSuccess: () => { setShowApprove(false); onClose(); },
+                  },
+                );
               }}
             >
               Yes, approve
@@ -181,7 +285,7 @@ export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
       <Modal
         open={showReject}
         onClose={() => setShowReject(false)}
-        title="Reject this extra work log"
+        title="Reject this replacement leave"
         footer={
           <>
             <Button variant="ghost" onClick={() => setShowReject(false)}>Cancel</Button>
