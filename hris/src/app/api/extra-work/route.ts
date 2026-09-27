@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth, parseBody, err } from '@/lib/api';
 import { CreateExtraWorkSchema } from '@/lib/validation';
-import { extraWorkTypeLabel } from '@/lib/leave';
+import { extraWorkTypeLabel, workWindowSlots } from '@/lib/leave';
 import { approvalRecipients } from '@/lib/routing';
 import { notifyMany } from '@/lib/notifications';
 import { sendEmail } from '@/lib/email';
@@ -127,22 +127,24 @@ export async function POST(req: Request) {
   const allUsers = await prisma.user.findMany({ where: { isActive: true } });
   const { to, cc } = await approvalRecipients(user, allUsers, 'notifications.extra_work_pending');
 
-  await notifyMany(
-    [...to, ...cc].map((u) => ({
-      recipientId: u.id,
-      type: 'EXTRA_WORK_PENDING' as const,
-      title: `Replacement leave request from ${user.fullName}`,
-      body: `${extraWorkTypeLabel(input.workType)} on ${input.workDate}`,
-      referenceType: 'extra_work_log',
-      referenceId: created.id,
-    }))
-  );
-
   const settings = await prisma.systemSettings.upsert({
     where: { id: 'singleton' },
     update: {},
     create: { id: 'singleton' },
   });
+  const windows = workWindowSlots(settings.workStartTime, settings.workEndTime);
+
+  await notifyMany(
+    [...to, ...cc].map((u) => ({
+      recipientId: u.id,
+      type: 'EXTRA_WORK_PENDING' as const,
+      title: `Replacement leave request from ${user.fullName}`,
+      body: `${extraWorkTypeLabel(input.workType, windows)} on ${input.workDate}`,
+      referenceType: 'extra_work_log',
+      referenceId: created.id,
+    }))
+  );
+
   const reviewUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/admin/requests`;
   if (to.length > 0) {
     const reviewerName = to.length === 1 ? to[0].fullName : 'team';
@@ -151,7 +153,7 @@ export async function POST(req: Request) {
         employeeName: user.fullName,
         reviewerName,
         workDate: input.workDate,
-        workType: extraWorkTypeLabel(input.workType),
+        workType: extraWorkTypeLabel(input.workType, windows),
         reason: input.reason,
         reviewUrl,
       },

@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { Check, X, Clock } from 'lucide-react';
-import { useAllExtraWork, useApproveExtraWork, useRejectExtraWork } from '@/lib/hooks';
+import { useAllExtraWork, useApproveExtraWork, useRejectExtraWork, useSettings } from '@/lib/hooks';
 import { initials, avatarColorFor } from '@/lib/session';
-import { extraWorkTypeLabel, extraWorkCredit } from '@/lib/leave';
+import { extraWorkTypeLabel, extraWorkCredit, workWindowSlots } from '@/lib/leave';
 import { Drawer } from '../ui/Drawer';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -14,12 +14,6 @@ import { fmtDate, cx } from '../../lib/utils';
 import './LeaveReviewDrawer.css';
 
 type WorkType = 'FULL_DAY' | 'HALF_DAY_MORNING' | 'HALF_DAY_AFTERNOON';
-
-const SLOT_OPTIONS: { key: WorkType; label: string; hint: string }[] = [
-  { key: 'FULL_DAY',           label: 'Full day',       hint: '+1 day' },
-  { key: 'HALF_DAY_MORNING',   label: 'Half day (AM)',  hint: '+0.5 day' },
-  { key: 'HALF_DAY_AFTERNOON', label: 'Half day (PM)',  hint: '+0.5 day' },
-];
 
 interface Props {
   logId: string | null;
@@ -44,9 +38,20 @@ function fmtDuration(mins: number): string {
 
 export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
   const { data: allLogs } = useAllExtraWork();
+  const { data: settings } = useSettings();
   const log = allLogs?.find((l) => l.id === logId);
   const approve = useApproveExtraWork();
   const reject = useRejectExtraWork();
+
+  const windows = useMemo(
+    () => workWindowSlots(settings?.workStartTime ?? '09:00', settings?.workEndTime ?? '17:00'),
+    [settings?.workStartTime, settings?.workEndTime],
+  );
+  const slotOptions: { key: WorkType; label: string; hint: string }[] = useMemo(() => [
+    { key: 'FULL_DAY',           label: `Full day (${windows.fullDay})`,           hint: '+1 day' },
+    { key: 'HALF_DAY_MORNING',   label: `Half day AM (${windows.morningHalf})`,    hint: '+0.5 day' },
+    { key: 'HALF_DAY_AFTERNOON', label: `Half day PM (${windows.afternoonHalf})`,  hint: '+0.5 day' },
+  ], [windows]);
 
   const [note, setNote] = useState('');
   const [showApprove, setShowApprove] = useState(false);
@@ -116,7 +121,7 @@ export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
             </div>
             <div className="lrd-fact">
               <span className="lrd-fact-label">Slot</span>
-              <span className="lrd-fact-value">{extraWorkTypeLabel(effectiveWorkType)}</span>
+              <span className="lrd-fact-value">{extraWorkTypeLabel(effectiveWorkType, windows)}</span>
             </div>
             <div className="lrd-fact">
               <span className="lrd-fact-label">Reason</span>
@@ -165,7 +170,7 @@ export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
             <div className="lrd-card">
               <div className="lrd-card-title">Credit as</div>
               <div className="lrd-slot-picker">
-                {SLOT_OPTIONS.map((opt) => {
+                {slotOptions.map((opt) => {
                   const on = effectiveWorkType === opt.key;
                   return (
                     <button

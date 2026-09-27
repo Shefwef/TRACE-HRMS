@@ -145,12 +145,61 @@ export function leaveTypeLabel(t: 'CASUAL' | 'SICK' | 'REPLACEMENT'): string {
   return t === 'CASUAL' ? 'Casual Leave' : t === 'SICK' ? 'Sick Leave' : 'Replacement Leave';
 }
 
+/**
+ * Format an "HH:mm" wall-clock string as "h:mm AM" / "h AM" for display.
+ * Drops the ":00" so "09:00" reads "9 AM" and "13:30" reads "1:30 PM".
+ */
+export function formatWorkTime(hhmm: string): string {
+  const [h = 0, m = 0] = hhmm.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const displayHour = h % 12 === 0 ? 12 : h % 12;
+  return m === 0 ? `${displayHour} ${period}` : `${displayHour}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+/**
+ * Derive the Full / Half-morning / Half-afternoon windows from the admin's
+ * configured workStartTime and workEndTime. The half-day split is the exact
+ * midpoint of the window - so a 8:30-17:30 window splits at 13:00 and a
+ * 9:00-18:00 window splits at 13:30.
+ */
+export interface WorkWindowSlots {
+  fullDay: string;      // e.g. "9 AM - 5 PM"
+  morningHalf: string;  // e.g. "9 AM - 1 PM"
+  afternoonHalf: string;// e.g. "1 PM - 5 PM"
+  /** Midpoint as "HH:mm" - exposed so callers can render it in text if needed. */
+  midpoint: string;
+}
+export function workWindowSlots(workStartTime: string, workEndTime: string): WorkWindowSlots {
+  const [sh = 9, sm = 0] = workStartTime.split(':').map(Number);
+  const [eh = 17, em = 0] = workEndTime.split(':').map(Number);
+  const startMin = sh * 60 + sm;
+  const endMin   = eh * 60 + em;
+  const midMin   = Math.round((startMin + endMin) / 2);
+  const midH = Math.floor(midMin / 60) % 24;
+  const midM = midMin % 60;
+  const midStr = `${String(midH).padStart(2, '0')}:${String(midM).padStart(2, '0')}`;
+  return {
+    fullDay:       `${formatWorkTime(workStartTime)} - ${formatWorkTime(workEndTime)}`,
+    morningHalf:   `${formatWorkTime(workStartTime)} - ${formatWorkTime(midStr)}`,
+    afternoonHalf: `${formatWorkTime(midStr)} - ${formatWorkTime(workEndTime)}`,
+    midpoint:      midStr,
+  };
+}
+
+/**
+ * Human-readable label for an extra-work slot. When `windows` is provided
+ * (e.g. from SystemSettings.workStartTime/workEndTime) the label reflects
+ * the configured office hours; otherwise it falls back to a fixed 9-5
+ * default so pre-existing emails / server code still render sensibly.
+ */
 export function extraWorkTypeLabel(
-  t: 'FULL_DAY' | 'HALF_DAY_MORNING' | 'HALF_DAY_AFTERNOON'
+  t: 'FULL_DAY' | 'HALF_DAY_MORNING' | 'HALF_DAY_AFTERNOON',
+  windows?: WorkWindowSlots,
 ): string {
-  if (t === 'FULL_DAY') return 'Full day (9 AM - 5 PM)';
-  if (t === 'HALF_DAY_MORNING') return 'Half day, morning (9 AM - 1 PM)';
-  return 'Half day, afternoon (1 PM - 5 PM)';
+  const w = windows ?? workWindowSlots('09:00', '17:00');
+  if (t === 'FULL_DAY') return `Full day (${w.fullDay})`;
+  if (t === 'HALF_DAY_MORNING') return `Half day, morning (${w.morningHalf})`;
+  return `Half day, afternoon (${w.afternoonHalf})`;
 }
 
 /** Format a leave period for humans. */

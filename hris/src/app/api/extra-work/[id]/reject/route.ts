@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { requireAuth, canApproveRequest, err, parseBody } from '@/lib/api';
 import { checkPermission } from '@/lib/permissions';
 import { RejectLeaveSchema } from '@/lib/validation';
-import { extraWorkTypeLabel } from '@/lib/leave';
+import { extraWorkTypeLabel, workWindowSlots } from '@/lib/leave';
 import { notifyIfPermitted } from '@/lib/notifications';
 import { sendEmail } from '@/lib/email';
 import { extraWorkDecisionEmail } from '@/emails/templates';
@@ -72,11 +72,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
   if (employee) {
     const historyUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/attendance`;
+    const windows = workWindowSlots(settings.workStartTime, settings.workEndTime);
     const { subject, html } = extraWorkDecisionEmail(
       {
         employeeName: employee.fullName,
         workDate: log.workDate.toISOString().slice(0, 10),
-        workType: extraWorkTypeLabel(log.workType),
+        workType: extraWorkTypeLabel(log.workType, windows),
         decision: 'REJECTED',
         reviewerName: user.fullName,
         note: input.note,

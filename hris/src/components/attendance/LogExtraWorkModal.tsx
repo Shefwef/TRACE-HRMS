@@ -2,7 +2,8 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
-import { useSubmitExtraWork, useHolidays } from '@/lib/hooks';
+import { useSubmitExtraWork, useHolidays, useSettings } from '@/lib/hooks';
+import { workWindowSlots } from '@/lib/leave';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Field, TextArea, TextInput } from '../ui/Field';
@@ -16,38 +17,52 @@ interface Props {
 
 type WorkType = 'FULL_DAY' | 'HALF_DAY_MORNING' | 'HALF_DAY_AFTERNOON';
 
-const OPTIONS: {
+interface WorkOption {
   key: WorkType; label: string; window: string; credit: string; color: string; bg: string;
-}[] = [
-  {
-    key: 'FULL_DAY',
-    label: 'Full day',
-    window: '9:00 AM - 5:00 PM',
-    credit: '+1 day',
-    color: 'var(--color-success)',
-    bg: 'var(--color-success-light)',
-  },
-  {
-    key: 'HALF_DAY_MORNING',
-    label: 'Half day (morning)',
-    window: '9:00 AM - 1:00 PM',
-    credit: '+0.5 day',
-    color: 'var(--color-leave-replacement)',
-    bg: 'var(--color-leave-replacement-light)',
-  },
-  {
-    key: 'HALF_DAY_AFTERNOON',
-    label: 'Half day (afternoon)',
-    window: '1:00 PM - 5:00 PM',
-    credit: '+0.5 day',
-    color: 'var(--color-leave-replacement)',
-    bg: 'var(--color-leave-replacement-light)',
-  },
-];
+}
+
+/**
+ * Build the slot picker options from the admin's configured office hours.
+ * Full day = start-end; halves split at the exact midpoint of the window.
+ */
+function buildOptions(workStartTime: string, workEndTime: string): WorkOption[] {
+  const w = workWindowSlots(workStartTime, workEndTime);
+  return [
+    {
+      key: 'FULL_DAY',
+      label: 'Full day',
+      window: w.fullDay,
+      credit: '+1 day',
+      color: 'var(--color-success)',
+      bg: 'var(--color-success-light)',
+    },
+    {
+      key: 'HALF_DAY_MORNING',
+      label: 'Half day (morning)',
+      window: w.morningHalf,
+      credit: '+0.5 day',
+      color: 'var(--color-leave-replacement)',
+      bg: 'var(--color-leave-replacement-light)',
+    },
+    {
+      key: 'HALF_DAY_AFTERNOON',
+      label: 'Half day (afternoon)',
+      window: w.afternoonHalf,
+      credit: '+0.5 day',
+      color: 'var(--color-leave-replacement)',
+      bg: 'var(--color-leave-replacement-light)',
+    },
+  ];
+}
 
 export function LogExtraWorkModal({ open, onClose }: Props) {
   const submit = useSubmitExtraWork();
   const { data: holidays = [] } = useHolidays();
+  const { data: settings } = useSettings();
+  const options = useMemo(
+    () => buildOptions(settings?.workStartTime ?? '09:00', settings?.workEndTime ?? '17:00'),
+    [settings?.workStartTime, settings?.workEndTime],
+  );
   const [workDate, setWorkDate] = useState('');
   const [workType, setWorkType] = useState<WorkType | null>(null);
   const [reason, setReason] = useState('');
@@ -184,7 +199,7 @@ export function LogExtraWorkModal({ open, onClose }: Props) {
           </Field>
 
           <div className="lew-options">
-            {OPTIONS.map((o) => (
+            {options.map((o) => (
               <button
                 key={o.key}
                 type="button"
