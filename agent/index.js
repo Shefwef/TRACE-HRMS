@@ -1,12 +1,12 @@
 /**
- * Trace HRIS — Biometric Punch Agent
+ * TRACE HRMS — Biometric Punch Agent
  *
  * Runs on the office PC. Every POLL_SECONDS seconds it fetches new punch
- * records from ZKBioTime and forwards them to the HRIS ingest endpoint.
+ * records from ZKBioTime and forwards them to the HRMS ingest endpoint.
  * Nothing in ZKBioTime is ever modified — this is read-only.
  *
  * Environment (agent/.env):
- *   HRIS_BASE_URL          Public HTTPS URL of the deployed HRIS
+ *   HRMS_BASE_URL          Public HTTPS URL of the deployed HRMS
  *   BIOMETRIC_INGEST_TOKEN Shared secret — must match hris/.env.local
  *   BIOTIME_BASE_URL       http://<LAN-IP>:<port>  e.g. http://192.168.68.64:8081
  *   BIOTIME_USERNAME       ZKBioTime login username
@@ -51,7 +51,7 @@ try {
 // ---------------------------------------------------------------------------
 // Config — validated at startup so failures are loud and immediate
 // ---------------------------------------------------------------------------
-const HRIS_BASE_URL        = required('HRIS_BASE_URL');
+const HRMS_BASE_URL        = required('HRMS_BASE_URL');
 const INGEST_TOKEN         = required('BIOMETRIC_INGEST_TOKEN');
 const BIOTIME_BASE_URL     = required('BIOTIME_BASE_URL');
 const BIOTIME_USERNAME     = required('BIOTIME_USERNAME');
@@ -64,7 +64,7 @@ const LOOKBACK_MINUTES     = Number(process.env.LOOKBACK_MINUTES ?? '15');
  * Cold-start lookback. Overriding this is the way to backfill historical
  * punches: temporarily set INITIAL_LOOKBACK_HOURS=720 (30 days) or higher,
  * restart the agent once, wait for the first poll to finish, then set it
- * back. Duplicates are no-ops on the HRIS side, so it's always safe.
+ * back. Duplicates are no-ops on the HRMS side, so it's always safe.
  */
 const INITIAL_LOOKBACK_HRS = Number(process.env.INITIAL_LOOKBACK_HOURS ?? '12');
 
@@ -149,7 +149,7 @@ async function fetchPunches(since) {
   return allPunches;
 }
 
-// punch_state is sent as-is to the HRIS. The server resolves "255" (Unknown)
+// punch_state is sent as-is to the HRMS. The server resolves "255" (Unknown)
 // via toggle logic: second tap = clock-out, third tap = clock-in again, etc.
 // This is more accurate than a time-of-day heuristic and handles multiple
 // in/out cycles in a single day.
@@ -166,7 +166,7 @@ function formatBiotimeDate(date) {
 }
 
 // ---------------------------------------------------------------------------
-// HRIS ingest
+// HRMS ingest
 // ---------------------------------------------------------------------------
 
 async function postToHris(punches) {
@@ -181,7 +181,7 @@ async function postToHris(punches) {
     })),
   };
 
-  const res = await fetch(`${HRIS_BASE_URL}/api/biometric/punches`, {
+  const res = await fetch(`${HRMS_BASE_URL}/api/biometric/punches`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -192,7 +192,7 @@ async function postToHris(punches) {
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`HRIS ingest failed ${res.status}: ${text.slice(0, 200)}`);
+    throw new Error(`HRMS ingest failed ${res.status}: ${text.slice(0, 200)}`);
   }
 
   return res.json();
@@ -232,7 +232,7 @@ async function poll() {
     return;
   }
 
-  // Batch in chunks of 500 (HRIS API limit)
+  // Batch in chunks of 500 (HRMS API limit)
   const BATCH = 500;
   let totalApplied = 0, totalDuplicates = 0, totalUnmapped = 0;
 
@@ -250,8 +250,8 @@ async function poll() {
 }
 
 async function run() {
-  log('Trace HRIS Biometric Agent starting');
-  log(`HRIS:    ${HRIS_BASE_URL}`);
+  log('TRACE HRMS Biometric Agent starting');
+  log(`HRMS:    ${HRMS_BASE_URL}`);
   log(`BioTime: ${BIOTIME_BASE_URL}  auth=${BIOTIME_AUTH}  sn=${BIOTIME_TERMINAL_SN}`);
   log(`Poll every ${POLL_SECONDS}s, incremental lookback ${LOOKBACK_MINUTES}min, cold-start lookback ${INITIAL_LOOKBACK_HRS}h`);
 

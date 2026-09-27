@@ -7,7 +7,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="auth-pattern" aria-hidden />
         <div className="auth-brand">
           <img
-            src="/Trace%20HRIS%20Transparent%20White.png"
+            src="/TRACE%20HRMS%20Transparent%20White.png"
             alt="TRACE HRMS"
             className="auth-brand-logo"
           />
@@ -22,7 +22,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </div>
       <div className="auth-right">
         <div className="auth-mobile-brand">
-          <img src="/Trace%20HRIS%20Transparent.png" alt="TRACE HRMS" />
+          <img src="/TRACE%20HRMS%20Transparent.png" alt="TRACE HRMS" />
         </div>
         {children}
       </div>

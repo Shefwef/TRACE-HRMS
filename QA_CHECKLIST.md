@@ -1,4 +1,4 @@
-# Trace HRIS — QA Checklist
+# TRACE HRMS — QA Checklist
 
 Everything in the batch pushed as `217d3f9`, in the order I'd test it. Biometric
 integration is **not** in scope and is not started.

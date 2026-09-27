@@ -9,8 +9,8 @@ before starting so the shape of this makes sense. The short version:
 
 > The M2-LR already pushes its punches to the vendor's software on the office PC.
 > That software keeps that job. A small agent on the same PC polls it and posts
-> the punches out to the HRIS over HTTPS. No device setting is touched, no vendor
-> setting is touched, and the HRIS is never addressed by IP.
+> the punches out to the HRMS over HTTPS. No device setting is touched, no vendor
+> setting is touched, and the HRMS is never addressed by IP.
 
 ## Status legend
 
@@ -57,7 +57,7 @@ All values confirmed. The office PC work is done.
 state `"255"` instead of `"0"` (In) or `"1"` (Out). This is because the device
 was not configured with check-in/check-out states when those punches were
 recorded — employees tapped without selecting a direction. The agent handles
-`"255"` as a neutral tap and the HRIS ingest stores it as-is; the attendance
+`"255"` as a neutral tap and the HRMS ingest stores it as-is; the attendance
 logic treats the first tap of the day as clock-in and the last as clock-out
 regardless of `punch_state`. See Step 13 for the agent's handling.
 
@@ -455,7 +455,7 @@ Copy the output. Then fill in these two files (both are gitignored):
 **`agent/.env`** — create this file in the `agent/` directory:
 
 ```ini
-HRIS_BASE_URL=https://<your-vercel-or-custom-domain>
+HRMS_BASE_URL=https://<your-vercel-or-custom-domain>
 BIOMETRIC_INGEST_TOKEN=<paste-generated-token-here>
 
 BIOTIME_BASE_URL=http://192.168.68.64:8081
@@ -476,8 +476,8 @@ BIOMETRIC_TZ=Asia/Dhaka
 BIOMETRIC_DEVICE_SERIAL=FQQ2251600181
 ```
 
-The agent runs on the office PC and dials **out** to the HRIS over HTTPS.
-The HRIS never dials in. `BIOTIME_BASE_URL` uses the LAN IP because the
+The agent runs on the office PC and dials **out** to the HRMS over HTTPS.
+The HRMS never dials in. `BIOTIME_BASE_URL` uses the LAN IP because the
 agent is on the same network as ZKBioTime.
 
 Once both files are filled in, proceed to Step 13 (build the agent).
@@ -500,7 +500,7 @@ by intention.
 
 ## Step 12 — Fix their two IP problems **NET**
 
-Independent of the HRIS, and worth doing while you are there.
+Independent of the HRMS, and worth doing while you are there.
 
 1. **DHCP reservation for the PC**, by MAC address, in the router admin page —
    or a static IP on the PC. This is what permanently ends the recurring "the
@@ -510,7 +510,7 @@ Independent of the HRIS, and worth doing while you are there.
    stable hostname instead of a public IP that rotates.
 
 Neither is required for attendance sync. The agent dials *out*, so their WAN IP
-is irrelevant to the HRIS. Do them because they fix a real recurring outage.
+is irrelevant to the HRMS. Do them because they fix a real recurring outage.
 
 ---
 
@@ -523,13 +523,13 @@ office PC.
 
 Loop:
 
-1. Ask the HRIS, or read from local state, for the newest punch already
+1. Ask the HRMS, or read from local state, for the newest punch already
    delivered. On a cold start, use `now - LOOKBACK_MINUTES`.
 2. `GET /iclock/api/transactions/?terminal_sn=<SN>&start_time=<since>&ordering=punch_time&page_size=500`,
    following `next` until exhausted. `start_time` format is
    `YYYY-MM-DD HH:MM:SS`; URL-encode the space as `%20`.
 3. Keep only `punch_state` `"0"` and `"1"`.
-4. `POST` to `${HRIS_BASE_URL}/api/biometric/punches` with the bearer token.
+4. `POST` to `${HRMS_BASE_URL}/api/biometric/punches` with the bearer token.
 5. Log the returned counts. Sleep `POLL_SECONDS`.
 
 Requirements, each of which corresponds to a way this otherwise breaks in
@@ -580,7 +580,7 @@ PM's phone panel still works, and `state` on `/iclock/api/terminals/` is still
 | F | Same batch replayed | `applied: 0, duplicates: n`, nothing changes |
 | G | Unknown `emp_code` | stored, `unmapped: 1`, appears in the queue |
 | H | Agent stopped 30 min, restarted | backlog arrives, none lost, none doubled |
-| I | HRIS unreachable during a poll | agent retries, cursor unmoved, catches up |
+| I | HRMS unreachable during a poll | agent retries, cursor unmoved, catches up |
 | J | Break buttons in the web UI | still work, `BreakSession` rows unaffected |
 | K | HR corrects a time by hand | correction survives the next sync |
 | L | Wrong bearer token | 401, nothing written |
@@ -591,7 +591,7 @@ E, F, H and K are the ones that fail quietly if you skip them.
 ## Step 15 — Cutover **PC**
 
 Run the agent alongside the existing manual process for one full week. Compare
-the HRIS attendance report against the vendor software's own report for the same
+the HRMS attendance report against the vendor software's own report for the same
 week; they should agree employee by employee, day by day. Only then tell people
 the wall panel is the system of record for clock-in and clock-out.
 
@@ -600,7 +600,7 @@ the wall panel is the system of record for clock-in and clock-out.
 Three levels, in increasing order of severity. You will almost certainly never
 need past the first.
 
-1. **Stop the agent.** Punches stop flowing. The HRIS keeps everything it
+1. **Stop the agent.** Punches stop flowing. The HRMS keeps everything it
    already has; manual clock-in still works. The office is completely unaffected.
 2. **Deactivate the device row** at `/admin/biometric`. Ingest starts rejecting
    that serial even if a stray agent is still running.
@@ -648,7 +648,7 @@ Password, `15` Face, `16` Palm.
   BIOMETRIC_INTEGRATION.md §5. The ingest already stores `punchState` as text
   and ignores `"2"`/`"3"`, so enabling this later needs no schema change.
 - Overtime punch states `"4"` / `"5"`.
-- Enrolling fingerprints from the HRIS. Enrollment stays in the vendor software.
+- Enrolling fingerprints from the HRMS. Enrollment stays in the vendor software.
 - Pushing employees or schedules *into* the device. Read-only, always.
 - Face and palm verification, even though the M2-LR supports them.
 

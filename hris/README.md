@@ -1,6 +1,6 @@
-# Trace HRIS — dev quick start
+# TRACE HRMS — dev quick start
 
-Next.js 16 app for TRACE Consulting's HRIS. See [`../README.md`](../README.md)
+Next.js 16 app for TRACE Consulting's HRMS. See [`../README.md`](../README.md)
 for the product overview and [`SETUP.md`](./SETUP.md) for the one-time provisioning
 of external services (Clerk, Neon, Resend, Gemini).
 
@@ -39,7 +39,7 @@ table below for why.
 ## Environment variables
 
 All are required except `GEMINI_API_KEY` (chatbot) and
-`CLERK_WEBHOOK_SIGNING_SECRET` (Clerk → HRIS sync webhook). Both degrade
+`CLERK_WEBHOOK_SIGNING_SECRET` (Clerk → HRMS sync webhook). Both degrade
 gracefully — the affected endpoints return `501 NOT_CONFIGURED` and the rest
 of the app keeps working.
 

@@ -54,7 +54,7 @@ export const SEED_USERS: SeedUser[] = [
     designation: 'System Administrator',
     employeeIdCode: 'SUPER-001',
     avatarPath: '',
-    password: 'Trace-HRIS-Super-2026!',
+    password: 'Trace-HRMS-Super-2026!',
   },
   {
     email: 'fuad.khalid@traceconsultingltd.com',
@@ -66,7 +66,7 @@ export const SEED_USERS: SeedUser[] = [
     designation: 'Chief Executive Officer',
     employeeIdCode: 'TRACE-001',
     avatarPath: '/Fuad-M-Khalid-Hossen.png',
-    password: 'Trace-HRIS-Fuad-2026!',
+    password: 'Trace-HRMS-Fuad-2026!',
   },
   {
     email: 'asmsaifullah@traceconsultingltd.com',
@@ -78,7 +78,7 @@ export const SEED_USERS: SeedUser[] = [
     designation: 'Chief Operating Officer (COO)',
     employeeIdCode: 'TRACE-002',
     avatarPath: '/Abu-Saleh_Muhammad-Saifullah.png',
-    password: 'Trace-HRIS-Saifullah-2026!',
+    password: 'Trace-HRMS-Saifullah-2026!',
   },
   {
     email: 'umtama@traceconsultingltd.com',
@@ -90,7 +90,7 @@ export const SEED_USERS: SeedUser[] = [
     designation: 'Research Associate',
     employeeIdCode: 'TRACE-003',
     avatarPath: '/Umme-Mahmuda-Tama.jpg',
-    password: 'Trace-HRIS-Tama-2026!',
+    password: 'Trace-HRMS-Tama-2026!',
   },
   {
     email: 'tanvir.kabir@traceconsultingltd.com',
@@ -102,7 +102,7 @@ export const SEED_USERS: SeedUser[] = [
     designation: 'Digital Content & Multimedia Specialist',
     employeeIdCode: 'TRACE-101',
     avatarPath: '/Tanvir_Kabir.jpg',
-    password: 'Trace-HRIS-Tanvir-2026!',
+    password: 'Trace-HRMS-Tanvir-2026!',
   },
   {
     email: 'res.anik@traceconsultingltd.com',
@@ -114,7 +114,7 @@ export const SEED_USERS: SeedUser[] = [
     designation: 'Policy, Research and Business Development Specialist',
     employeeIdCode: 'TRACE-102',
     avatarPath: '/Rubayat_E_Shams_Anik.jpg',
-    password: 'Trace-HRIS-Anik-2026!',
+    password: 'Trace-HRMS-Anik-2026!',
   },
   {
     email: 'mimma.afrin@traceconsultingltd.com',
@@ -126,7 +126,7 @@ export const SEED_USERS: SeedUser[] = [
     designation: 'Technical Lead - Laboratory Operations',
     employeeIdCode: 'TRACE-103',
     avatarPath: '/Mimma_Afrin.png',
-    password: 'Trace-HRIS-Mimma-2026!',
+    password: 'Trace-HRMS-Mimma-2026!',
   },
   {
     email: 'recardo.halder@traceconsultingltd.com',
@@ -138,7 +138,7 @@ export const SEED_USERS: SeedUser[] = [
     designation: 'Manager, Business Development',
     employeeIdCode: 'TRACE-104',
     avatarPath: '/Recardo_Saurav_Antor_Haider.png',
-    password: 'Trace-HRIS-Recardo-2026!',
+    password: 'Trace-HRMS-Recardo-2026!',
   },
   {
     email: 'nabeel.khan@traceconsultingltd.com',
@@ -150,7 +150,7 @@ export const SEED_USERS: SeedUser[] = [
     designation: 'Head of Partnerships & Strategic Growth',
     employeeIdCode: 'TRACE-105',
     avatarPath: '/Nabeel_Khan.png',
-    password: 'Trace-HRIS-Nabeel-2026!',
+    password: 'Trace-HRMS-Nabeel-2026!',
   },
   {
     email: 'moudud.sujan@traceconsultingltd.com',
@@ -162,7 +162,7 @@ export const SEED_USERS: SeedUser[] = [
     designation: 'Head of External Affairs',
     employeeIdCode: 'TRACE-106',
     avatarPath: '/Moudud_Ahmmed_Sujan.png',
-    password: 'Trace-HRIS-Moudud-2026!',
+    password: 'Trace-HRMS-Moudud-2026!',
   },
   {
     email: 'ahmed.nine@traceconsultingltd.com',
@@ -174,7 +174,7 @@ export const SEED_USERS: SeedUser[] = [
     designation: 'Research and Policy Analyst',
     employeeIdCode: 'TRACE-107',
     avatarPath: '/Ahmed_Julker_Nine.png',
-    password: 'Trace-HRIS-Ahmed-2026!',
+    password: 'Trace-HRMS-Ahmed-2026!',
   },
   {
     email: 'tahsina.shiva@traceconsultingltd.com',
@@ -186,6 +186,6 @@ export const SEED_USERS: SeedUser[] = [
     designation: 'IT Project Manager',
     employeeIdCode: 'TRACE-108',
     avatarPath: '/Tahsina_Shiva.png',
-    password: 'Trace-HRIS-Tahsina-2026!',
+    password: 'Trace-HRMS-Tahsina-2026!',
   },
 ];

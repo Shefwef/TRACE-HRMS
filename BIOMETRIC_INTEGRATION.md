@@ -19,7 +19,7 @@ This document supersedes the earlier version of this file, which was written
 before the device was bought and asked you to choose between a wall-mounted
 terminal, WebAuthn on laptops, and a phone app. That choice was made in the real
 world: the terminal is on the wall and people are already punching into it. What
-is left is to get a copy of those punches into the HRIS — specifically, to build
+is left is to get a copy of those punches into the HRMS — specifically, to build
 the office agent that polls ZKBioTime and forwards punches to `/api/biometric/punches`.
 
 For the ordered, do-this-then-that runbook, see
@@ -98,7 +98,7 @@ the new address into the device.
 *Fix:* a DHCP reservation for the PC's MAC address on the office router, or a
 static IP configured on the PC itself. This is a few minutes of work in the
 router admin page and it removes the recurring failure permanently. It has
-nothing to do with the HRIS and is worth doing regardless of this project.
+nothing to do with the HRMS and is worth doing regardless of this project.
 
 **Problem 2 — the router's WAN IP changes, and the phone can no longer reach
 the admin panel.** The ISP allocates the office a dynamic public address. When
@@ -108,8 +108,8 @@ it rotates, whatever address the phone had saved is dead.
 DynDNS; DuckDNS is free. The phone then uses a stable hostname instead of a
 number.
 
-**Why neither touches the HRIS.** In the design below, the office side always
-dials *out* to the HRIS. The HRIS never dials in. No port forwarding, no static
+**Why neither touches the HRMS.** In the design below, the office side always
+dials *out* to the HRMS. The HRMS never dials in. No port forwarding, no static
 public IP, no VPN, no firewall rule. Whatever their WAN IP does on any given
 day is irrelevant to attendance sync.
 
@@ -122,8 +122,8 @@ occupied by the vendor's software, and everything the office relies on today —
 enrollment, the reports the PM looks at, the phone panel — hangs off it.
 
 So the plan reads a **copy** of the punches out of the vendor software and
-forwards them to the HRIS. The vendor software stays the system of record for
-the device. The HRIS becomes a second consumer of the same data.
+forwards them to the HRMS. The vendor software stays the system of record for
+the device. The HRMS becomes a second consumer of the same data.
 
 ```
   [ M2-LR ]                                     UNCHANGED
@@ -137,7 +137,7 @@ the device. The HRIS becomes a second consumer of the same data.
       |
       |  HTTPS POST, bearer token, batched, idempotent
       v
-  [ HRIS /api/biometric/punches ]  ->  attendance_records
+  [ HRMS /api/biometric/punches ]  ->  attendance_records
 ```
 
 Three properties make this the right shape:
@@ -145,8 +145,8 @@ Three properties make this the right shape:
 - **Nothing the vendor set up is modified.** No device menu is touched, no
   ADMS destination is repointed, no vendor setting is changed. If the agent is
   switched off, the office is exactly where it is today.
-- **The HRIS is never addressed by IP.** The agent dials out to the
-  HRIS's public HTTPS hostname. Their IP churn cannot break it.
+- **The HRMS is never addressed by IP.** The agent dials out to the
+  HRMS's public HTTPS hostname. Their IP churn cannot break it.
 - **It is reversible in one step.** Stop the agent. That is the entire rollback.
 
 ### Why not connect directly to the fingerprint machine?
@@ -178,7 +178,7 @@ success. Page with `page` and `page_size` (default 10, practical max ~1000).
 Fields on one transaction, of which we need five:
 
 ```
-emp_code           "10001"                  -> maps to an HRIS employee
+emp_code           "10001"                  -> maps to an HRMS employee
 punch_time         "2026-08-25 09:02:13"    -> LOCAL wall clock, NO offset
 punch_state        "0"                      -> 0 In, 1 Out, 2 Break Out,
                                                 3 Break In, 4 OT In, 5 OT Out
@@ -222,7 +222,7 @@ the roster API. Never issue a clear-log command on this channel.
 
 ### Path D — rejected
 
-Repointing the M2-LR's ADMS destination at the HRIS. It would work, and it
+Repointing the M2-LR's ADMS destination at the HRMS. It would work, and it
 would take the push slot away from the vendor software, and the office's
 enrollment and reports and phone panel would go dark. This is the thing the
 "installed by professionals, keep that in mind" instruction exists to prevent.
@@ -230,7 +230,7 @@ Not doing it.
 
 ---
 
-## 4. What lands in the HRIS
+## 4. What lands in the HRMS
 
 ### The ingest endpoint
 
@@ -285,7 +285,7 @@ already did in commits `36c54b5` and `59c7222`.
 
 ### Mapping a punch to a person
 
-`emp_code` on the device is a number like `10001`. The HRIS needs a column for
+`emp_code` on the device is a number like `10001`. The HRMS needs a column for
 it: `User.biometricUserId String? @unique`. The admin screen offers a
 side-by-side mapping table, pre-filled by matching names from
 `GET /personnel/api/employees/`, and an unmapped punch is stored and counted
@@ -385,7 +385,7 @@ The goal you set: get the system to a point where connecting the device is
 filling in a form. This is that form. Every value is obtainable from the office
 PC in one sitting; none of it requires the vendor.
 
-`hris/.env.local` (the HRIS side):
+`hris/.env.local` (the HRMS side):
 
 ```ini
 # Shared secret the office agent presents on every POST. Generate with
@@ -402,8 +402,8 @@ BIOMETRIC_DEVICE_SERIAL=
 `agent/.env` (on the office PC, never in the repo):
 
 ```ini
-# Where the HRIS lives. Public HTTPS. No IP, no port forwarding.
-HRIS_BASE_URL=https://<the-vercel-or-custom-domain>
+# Where the HRMS lives. Public HTTPS. No IP, no port forwarding.
+HRMS_BASE_URL=https://<the-vercel-or-custom-domain>
 BIOMETRIC_INGEST_TOKEN=            # same value as above
 
 # The vendor software. Take the host and port from the URL the PM opens on
@@ -458,8 +458,8 @@ integration-ready and nothing stronger.
   device, and the same Postgres fixed-window rate limiter that guards the rest
   of the API.
 - **No fingerprint template, image or biometric feature vector is ever sent to
-  or stored in the HRIS.** Templates stay on the M2-LR, where the vendor put
-  them. The HRIS receives an integer and a timestamp. This is the property that
+  or stored in the HRMS.** Templates stay on the M2-LR, where the vendor put
+  them. The HRMS receives an integer and a timestamp. This is the property that
   keeps the whole feature out of biometric-data territory.
 - The agent needs one read-only credential. If ZKBioTime supports a
   reports-only role, use it rather than `admin`.

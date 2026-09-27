@@ -1,11 +1,11 @@
-# HRIS Architecture Reference
+# HRMS Architecture Reference
 
 > **Who this is for:** you (developer / super admin) and future maintainers. This
 > is the single doc that explains *how the whole thing works* — what talks to
 > what, why we chose each piece of the stack, how the data stays consistent, and
 > how to reason about the system when something breaks or needs extending.
 >
-> Read [`HRIS_Implementation.md`](../HRIS_Implementation.md) first for the *product* spec
+> Read [`HRMS_Implementation.md`](../HRMS_Implementation.md) first for the *product* spec
 > (what the app does). Read [`DEMO_GUIDE.md`](./DEMO_GUIDE.md) for the *user-facing walkthrough*.
 > This doc covers *engineering*.
 

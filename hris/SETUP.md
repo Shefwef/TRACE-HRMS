@@ -1,4 +1,4 @@
-# HRIS Production Setup Guide
+# HRMS Production Setup Guide
 
 > **Who this is for:** you (the developer/super-admin). This is what you need to do
 > before the production build can start talking to real services. Everything on
@@ -23,7 +23,7 @@ Total cost: **$0** while you're getting started.
 Time: ~5 min.
 
 1. Go to https://dashboard.clerk.com/sign-up and sign up with `shefadib@gmail.com`.
-2. Click **Create application**. Name it `Trace HRIS`.
+2. Click **Create application**. Name it `TRACE HRMS`.
 3. On the "How will your users sign in?" screen, enable:
    - **Email** (with password)
    - **Google**
@@ -80,7 +80,7 @@ Time: ~5 min (plus DNS verification wait, ~10 min).
 
 1. Go to https://resend.com/signup and sign up with `shefadib@gmail.com`.
 2. Verify your email (they send a confirmation link).
-3. In the dashboard, go to **API Keys → Create API Key**. Name it `Trace HRIS Production`. Permission: **Full access**.
+3. In the dashboard, go to **API Keys → Create API Key**. Name it `TRACE HRMS Production`. Permission: **Full access**.
 4. Copy the key (starts with `re_...`) — you'll only see it once:
    ```
    RESEND_API_KEY=re_...
@@ -101,7 +101,7 @@ Time: ~5 min (plus DNS verification wait, ~10 min).
 
 ## Step 4 — Vercel Postgres (already handled via Neon)
 
-You're already deploying to Vercel from https://github.com/Shefwef/Trace-HRIS. We'll add the environment variables from steps 1–3 to that Vercel project so production picks them up.
+You're already deploying to Vercel from https://github.com/Shefwef/Trace-HRMS. We'll add the environment variables from steps 1–3 to that Vercel project so production picks them up.
 
 You don't need to do anything here yet — I'll walk you through pasting the env vars into Vercel once we have all four values ready.
 
@@ -111,7 +111,7 @@ You don't need to do anything here yet — I'll walk you through pasting the env
 
 Time: ~2 min. **Free tier — no credit card required.**
 
-Powers the "Ask HRIS" chatbot in the bottom-right of every authenticated page. Scoped to only answer questions about this app or general HR-information-system concepts. Uses Google Gemini 3.6 Flash — the free tier covers ~1,500 requests/day, well beyond what a 4–100 person team will use.
+Powers the "Ask HRMS" chatbot in the bottom-right of every authenticated page. Scoped to only answer questions about this app or general HR-information-system concepts. Uses Google Gemini 3.6 Flash — the free tier covers ~1,500 requests/day, well beyond what a 4–100 person team will use.
 
 1. Go to https://aistudio.google.com/apikey and sign in with your Google account.
 2. Click **Create API key** → **Create API key in new project** (or pick an existing GCP project).

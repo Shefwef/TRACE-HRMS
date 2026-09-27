@@ -1,13 +1,13 @@
-# Trace HRIS Biometric Agent
+# TRACE HRMS Biometric Agent
 
 Runs on the office PC, polls ZKBioTime every minute, and forwards new punches
-to the HRIS ingest endpoint.
+to the HRMS ingest endpoint.
 
 ## Running it
 
 **Simple / recommended:** double-click **`start-agent.bat`**.
 
-A console window titled *"Trace HRIS Biometric Agent"* opens and stays in
+A console window titled *"TRACE HRMS Biometric Agent"* opens and stays in
 the taskbar. Minimise it and it keeps running in the background — click the
 taskbar icon any time to bring the window back and check the log output.
 Closing the window stops the agent.
@@ -36,7 +36,7 @@ The agent will now start every time the user logs into Windows.
 The agent only looks back **12 hours** on cold start. Anything older than the
 first successful poll never gets pulled unless you explicitly ask for it.
 
-To backfill (e.g. after connecting a new HRIS instance or discovering a gap):
+To backfill (e.g. after connecting a new HRMS instance or discovering a gap):
 
 1. Open `agent/.env` and add or edit:
 
@@ -46,7 +46,7 @@ To backfill (e.g. after connecting a new HRIS instance or discovering a gap):
 
     - `168` = last 7 days
     - `720` = last 30 days
-    - `8760` = last 365 days *(HRIS supports up to a year in the Punches tab filter)*
+    - `8760` = last 365 days *(HRMS supports up to a year in the Punches tab filter)*
 
 2. Stop the agent (close the window / Ctrl+C).
 3. Start it again (`start-agent.bat`).
@@ -64,7 +64,7 @@ All read from `agent/.env`:
 
 | Var | Required | Default | Meaning |
 |---|---|---|---|
-| `HRIS_BASE_URL` | ✓ | — | Public HTTPS URL of the deployed HRIS |
+| `HRMS_BASE_URL` | ✓ | — | Public HTTPS URL of the deployed HRMS |
 | `BIOMETRIC_INGEST_TOKEN` | ✓ | — | Shared secret; must match `hris/.env.local` |
 | `BIOTIME_BASE_URL` | ✓ | — | ZKBioTime URL, e.g. `http://192.168.68.64:8081` |
 | `BIOTIME_USERNAME` | ✓ | — | ZKBioTime login |
@@ -89,9 +89,9 @@ All read from `agent/.env`:
   The taps aren't reaching ZKBioTime either — check the device's Cloud Server
   setting and network connection. This is a device ↔ ZKBioTime problem, not
   an agent problem.
-- **Punches show as "Unmapped" in HRIS**
-  The employee's biometric `emp_code` isn't mapped to their HRIS profile.
-  Fix in HRIS → Biometric → Mapping tab.
+- **Punches show as "Unmapped" in HRMS**
+  The employee's biometric `emp_code` isn't mapped to their HRMS profile.
+  Fix in HRMS → Biometric → Mapping tab.
 
 ## Running as a true Windows service (optional)
 

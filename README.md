@@ -1,4 +1,4 @@
-# Trace HRIS
+# TRACE HRMS
 
 Production-grade HR Information System for Trace Consulting Ltd. Handles leave,
 attendance, holidays, employee management, audit, and reporting - designed for
@@ -14,7 +14,7 @@ Live at [trace-hris.vercel.app](https://trace-hris.vercel.app).
 |---|---|
 | **This file** | Product overview, feature list, stack, roles - start here. |
 | [`DEMO_GUIDE.md`](./DEMO_GUIDE.md) | 35-minute demo script + A-to-Z QA walkthrough + post-launch checklist. Written for a non-technical reader. |
-| [`HRIS_Implementation.md`](./HRIS_Implementation.md) | Full engineering-level product spec - every screen, every field, every state transition. |
+| [`HRMS_Implementation.md`](./HRMS_Implementation.md) | Full engineering-level product spec - every screen, every field, every state transition. |
 | [`BIOMETRIC_INTEGRATION.md`](./BIOMETRIC_INTEGRATION.md) | Three architecture options for a fingerprint scanner at the office entrance + recommended implementation plan. |
 | [`hris/SETUP.md`](./hris/SETUP.md) | One-time provisioning of Clerk, Neon, Resend, Gemini. ~20 minutes total. |
 | [`hris/README.md`](./hris/README.md) | Dev quick-start: local run, scripts, env vars, deploy. |
@@ -29,7 +29,7 @@ Live at [trace-hris.vercel.app](https://trace-hris.vercel.app).
 | Auth | Clerk 7 (email + password, Google OAuth, invites, webhook sync) |
 | Database | Neon Postgres (serverless, auto-pause) via Prisma 6 |
 | Email | Resend (leave decisions, holiday notices, welcome mails) |
-| Chatbot | Google Gemini 3.6 Flash (free tier, scoped to HRIS topics) |
+| Chatbot | Google Gemini 3.6 Flash (free tier, scoped to HRMS topics) |
 | PDF reports | `@react-pdf/renderer` - server-side, no headless browser |
 | Hosting | Vercel |
 | UI | React 19, Framer Motion, Recharts, Zustand, TanStack Query |
@@ -271,7 +271,7 @@ Once you have a verified domain on Resend, `scripts/send-welcome.ts` sends the e
 - [x] Per-user write rate limiting (30/min via Postgres)
 - [x] Clerk webhook sync (`user.deleted`, `user.updated`)
 - [x] Neon cold-start retry via Prisma `$extends` (300/900/2100 ms backoff)
-- [x] "Ask HRIS" chatbot (Gemini 3.6 Flash, scoped, markdown-aware)
+- [x] "Ask HRMS" chatbot (Gemini 3.6 Flash, scoped, markdown-aware)
 - [x] Mobile responsive (sidebar drawer, reflowing tables, floating chat)
 - [x] **Installable PWA** — company logo icons (192 × 192, 512 × 512, 180 × 180 Apple touch), manifest with `id`/`scope`/`orientation`, service worker cache v2, correct `apple-touch-icon` meta
 - [x] Next.js 16 conventions - `viewport` export for `themeColor`, `proxy.ts` instead of `middleware.ts`

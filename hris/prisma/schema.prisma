@@ -1,5 +1,5 @@
-// HRIS — Production DB schema
-// Source of truth: HRIS_Implementation.md §10 + ARCHITECTURE.md
+// HRMS — Production DB schema
+// Source of truth: HRMS_Implementation.md §10 + ARCHITECTURE.md
 // Ref: extra_work_logs replaces the old overtime_hours_bank model.
 
 generator client {

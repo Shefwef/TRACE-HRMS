@@ -1,6 +1,6 @@
-# Trace HRIS - Demo Guide
+# TRACE HRMS - Demo Guide
 
-> **For:** the instructor and senior reviewers walking through Trace HRIS for the first time.
+> **For:** the instructor and senior reviewers walking through TRACE HRMS for the first time.
 > **Demo length:** ~35 minutes end-to-end. Skim in 10, deep-dive in 60.
 > **Style:** written for a non-technical reader. No code, no jargon without a definition.
 
@@ -22,7 +22,7 @@
 
 ## What is this system?
 
-Trace HRIS is the internal People Operations app for Trace Consulting Ltd. It replaces
+TRACE HRMS is the internal People Operations app for Trace Consulting Ltd. It replaces
 the spreadsheets, WhatsApp threads and email chains that were being used to manage:
 
 - **Leave** - who is off, when, and whether it's approved
@@ -42,7 +42,7 @@ about how any of the existing screens work.
 
 ## Cast of characters - 4 roles, 12 real users
 
-Trace HRIS treats every action through the lens of **who is doing it**. There are
+TRACE HRMS treats every action through the lens of **who is doing it**. There are
 four roles, each with a different level of access:
 
 | Role | Who has it | What they can do |
@@ -56,18 +56,18 @@ The 12 real users seeded into the system (multi-role - a person can hold more th
 
 | Name | Designation | Email | Role set | Password (first-time) |
 |---|---|---|---|---|
-| Shefayat Adib | System Administrator | `shefadib@gmail.com` | **Super Admin** | `Trace-HRIS-Super-2026!` |
-| Fuad M Khalid Hossen | Chief Executive Officer (CEO) | `fuad.khalid@traceconsultingltd.com` | **Admin** | `Trace-HRIS-Fuad-2026!` |
-| Abu Saleh Muhammad Saifullah | Chief Operating Officer (COO) | `asmsaifullah@traceconsultingltd.com` | **Admin + HR** | `Trace-HRIS-Saifullah-2026!` |
-| Umme Mahbuba Tama | Research Associate | `umtama@traceconsultingltd.com` | **HR** | `Trace-HRIS-Tama-2026!` |
-| Tanvir Kabir | Digital Content & Multimedia Specialist | `tanvir.kabir@traceconsultingltd.com` | **Employee** | `Trace-HRIS-Tanvir-2026!` |
-| Rubayat E Shams Anik | Policy, Research and Business Development Specialist | `res.anik@traceconsultingltd.com` | **Employee** | `Trace-HRIS-Anik-2026!` |
-| Mimma Afrin | Technical Lead - Laboratory Operations | `mimma.afrin@traceconsultingltd.com` | **Employee** | `Trace-HRIS-Mimma-2026!` |
-| Recardo Saurav Antor Halder | Manager, Business Development | `recardo.halder@traceconsultingltd.com` | **Employee** | `Trace-HRIS-Recardo-2026!` |
-| Nabeel Khan | Head of Partnerships & Strategic Growth | `nabeel.khan@traceconsultingltd.com` | **Employee** | `Trace-HRIS-Nabeel-2026!` |
-| Moudud Ahmmed Sujan | Head of External Affairs | `moudud.sujan@traceconsultingltd.com` | **Employee** | `Trace-HRIS-Moudud-2026!` |
-| Ahmed Julker Nine | Research and Policy Analyst | `ahmed.nine@traceconsultingltd.com` | **Employee** | `Trace-HRIS-Ahmed-2026!` |
-| Tahsina Shiva | IT Project Manager | `tahsina.shiva@traceconsultingltd.com` | **Employee** | `Trace-HRIS-Tahsina-2026!` |
+| Shefayat Adib | System Administrator | `shefadib@gmail.com` | **Super Admin** | `Trace-HRMS-Super-2026!` |
+| Fuad M Khalid Hossen | Chief Executive Officer (CEO) | `fuad.khalid@traceconsultingltd.com` | **Admin** | `Trace-HRMS-Fuad-2026!` |
+| Abu Saleh Muhammad Saifullah | Chief Operating Officer (COO) | `asmsaifullah@traceconsultingltd.com` | **Admin + HR** | `Trace-HRMS-Saifullah-2026!` |
+| Umme Mahbuba Tama | Research Associate | `umtama@traceconsultingltd.com` | **HR** | `Trace-HRMS-Tama-2026!` |
+| Tanvir Kabir | Digital Content & Multimedia Specialist | `tanvir.kabir@traceconsultingltd.com` | **Employee** | `Trace-HRMS-Tanvir-2026!` |
+| Rubayat E Shams Anik | Policy, Research and Business Development Specialist | `res.anik@traceconsultingltd.com` | **Employee** | `Trace-HRMS-Anik-2026!` |
+| Mimma Afrin | Technical Lead - Laboratory Operations | `mimma.afrin@traceconsultingltd.com` | **Employee** | `Trace-HRMS-Mimma-2026!` |
+| Recardo Saurav Antor Halder | Manager, Business Development | `recardo.halder@traceconsultingltd.com` | **Employee** | `Trace-HRMS-Recardo-2026!` |
+| Nabeel Khan | Head of Partnerships & Strategic Growth | `nabeel.khan@traceconsultingltd.com` | **Employee** | `Trace-HRMS-Nabeel-2026!` |
+| Moudud Ahmmed Sujan | Head of External Affairs | `moudud.sujan@traceconsultingltd.com` | **Employee** | `Trace-HRMS-Moudud-2026!` |
+| Ahmed Julker Nine | Research and Policy Analyst | `ahmed.nine@traceconsultingltd.com` | **Employee** | `Trace-HRMS-Ahmed-2026!` |
+| Tahsina Shiva | IT Project Manager | `tahsina.shiva@traceconsultingltd.com` | **Employee** | `Trace-HRMS-Tahsina-2026!` |
 
 **Notification routing under the multi-role model:** any leave request notifies **anyone with the HR role** (Saifullah + Tama). Fuad, who is Admin-only, retains the power to approve but gets no notifications or emails. Saifullah gets both because he holds Admin + HR.
 
@@ -113,7 +113,7 @@ short on time - the essentials are Blocks 1–4.
    - **Replacement:** 0 (earned by working extra time - we'll see this later)
 4. Point at the **Attendance widget** - shows current time and a big "Clock in" button.
 5. Point at the **Notification bell** - top right. Currently 0 unread.
-6. Point at the **"Ask HRIS" button** - bottom-right. We'll come back to this.
+6. Point at the **"Ask HRMS" button** - bottom-right. We'll come back to this.
 
 > **What to say:** "Everything the employee needs on day one is on this screen.
 > They don't have to hunt through menus."
@@ -259,7 +259,7 @@ short on time - the essentials are Blocks 1–4.
 
 **Switch to: any user**
 
-1. Click the bottom-right **"Ask HRIS"** button. A **small floating window pops open** in the bottom-right corner - notice the rest of the app stays fully visible and usable behind it. The chat is a widget, not a takeover.
+1. Click the bottom-right **"Ask HRMS"** button. A **small floating window pops open** in the bottom-right corner - notice the rest of the app stays fully visible and usable behind it. The chat is a widget, not a takeover.
 2. Ask: *"How do I approve a leave request with modifications?"* → get a helpful step-by-step answer.
 3. Ask: *"What's the capital of France?"* → politely declines. The bot only answers questions about **this app** or about **HR-information-system concepts in general**.
 4. Ask: *"What is replacement leave?"* → explains the policy correctly.
@@ -329,7 +329,7 @@ Return to the dashboard as any user. Summarize:
 - Attendance widget (clock in / out / breaks)
 - "Apply for Leave" button (5-step wizard)
 - Notification bell
-- "Ask HRIS" chatbot
+- "Ask HRMS" chatbot
 
 **What they can do:**
 - Apply for full-day, half-day (morning/afternoon), or time-range partial leave
@@ -523,10 +523,10 @@ Saifullah, Tama, Tanvir and Rubayat currently bounce silently.
    like `mail.traceconsultingltd.com`).
 3. Resend gives you 4 DNS records (MX, TXT, DKIM). Add them in the domain
    registrar's DNS panel. Wait ~10 minutes for verification.
-4. In Trace HRIS, sign in as Super Admin → **Admin → Settings**:
+4. In TRACE HRMS, sign in as Super Admin → **Admin → Settings**:
    - **Sender email (from):** `hris@traceconsultingltd.com` (must match the
      verified domain)
-   - **Sender name:** `Trace HRIS` (already set)
+   - **Sender name:** `TRACE HRMS` (already set)
    - **Reply-to:** `people@traceconsultingltd.com` (or your ops inbox)
 5. Save. Test with a leave submission - email should now arrive at any
    recipient.
@@ -626,7 +626,7 @@ cutting**. Each pass takes ~15 minutes.
 
 Sign in as Super Admin (Shefayat) and open two browser tabs.
 
-- [ ] **Sign in works** - `shefadib@gmail.com` + password `Trace-HRIS-Super-2026!`.
+- [ ] **Sign in works** - `shefadib@gmail.com` + password `Trace-HRMS-Super-2026!`.
 - [ ] **Dashboard loads** - arc rings render, attendance widget visible, no console errors.
 - [ ] **Sidebar** - Employees, Requests, Holidays, Settings, Audit Log, System all visible for Super Admin.
 - [ ] **Wrong email is rejected** - try to sign in as `random@example.com` → Clerk refuses (not in allowlist).
@@ -738,7 +738,7 @@ post-launch checklist items above.
 
 # Where to look for more information
 
-- **Full product spec:** [`HRIS_Implementation.md`](./HRIS_Implementation.md) - every screen, every field, every state transition, in engineering-level detail.
+- **Full product spec:** [`HRMS_Implementation.md`](./HRMS_Implementation.md) - every screen, every field, every state transition, in engineering-level detail.
 - **How the app was set up:** [`hris/SETUP.md`](./hris/SETUP.md) - the one-time provisioning of Clerk, Neon, Resend, Gemini.
 - **Developer quick-start:** [`hris/README.md`](./hris/README.md) - run locally, deploy, environment variables.
 - **Product overview:** [`README.md`](./README.md) - feature checklist, tech stack, roles at a glance.
@@ -746,6 +746,6 @@ post-launch checklist items above.
 
 ---
 
-*This guide was written for the Trace HRIS launch demo. Keep it near you during
+*This guide was written for the TRACE HRMS launch demo. Keep it near you during
 the presentation. If something in the app doesn't match this guide, the app is
 authoritative - please flag the mismatch so this doc can be updated.*

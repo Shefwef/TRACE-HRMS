@@ -1,7 +1,7 @@
 {
   "name": "trace-hris-biometric-agent",
   "version": "1.0.0",
-  "description": "Polls ZKBioTime and forwards punches to Trace HRIS",
+  "description": "Polls ZKBioTime and forwards punches to TRACE HRMS",
   "type": "module",
   "main": "index.js",
   "scripts": {

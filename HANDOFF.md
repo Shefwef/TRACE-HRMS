@@ -1,11 +1,11 @@
-# Context handoff — Trace HRIS
+# Context handoff — TRACE HRMS
 
 Paste this whole file as your first message in the new chat.
 
 ---
 
-You are picking up a production HRIS for **Trace Consulting Ltd** (Dhaka, Bangladesh).
-The repo is `https://github.com/Shefwef/Trace-HRIS.git`, app lives in `hris/`, branch `main`.
+You are picking up a production HRMS for **Trace Consulting Ltd** (Dhaka, Bangladesh).
+The repo is `https://github.com/Shefwef/Trace-HRMS.git`, app lives in `hris/`, branch `main`.
 Everything described below is **already committed and pushed** as of `217d3f9`.
 
 ## Stack
@@ -149,7 +149,7 @@ Read in this order when you need context:
 | `BIOMETRIC_INTEGRATION.md` | The M2-LR integration **plan** and decisions | Yes — rewritten against the real installed setup |
 | `BIOMETRIC_FINGERPRINT_INTEGRATION_STEPS.md` | The **runbook**, Steps 1–16, to follow when implementing | Yes — this is the next work |
 | `ATTENDANCE_BIOMETRIC_EXCEL_IMPLEMENTATION_PROMPT.md` | The original LLM-authored spec that seeded this work | Partly — written without codebase knowledge, so its naming is unreliable; the *intent* is right |
-| `HRIS_Implementation.md` | Original product + implementation documentation, design system, roles | Mostly — predates Phase 7 |
+| `HRMS_Implementation.md` | Original product + implementation documentation, design system, roles | Mostly — predates Phase 7 |
 | `README.md` (root) | Project overview, documentation map, modules | Mostly — its static permission matrix predates the runtime one |
 | `DEMO_GUIDE.md` (root) | 35-minute demo script, 12 real users | Mostly — says "4 roles", predates `LINE_MANAGER` |
 | `hris/DEMO_GUIDE.md` | Old prototype walkthrough, "2 roles", 7 minutes | **No — stale** |
