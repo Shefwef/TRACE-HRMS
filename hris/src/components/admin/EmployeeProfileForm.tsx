@@ -3,11 +3,10 @@ import { Field, TextInput } from '../ui/Field';
 import { AvatarUpload } from '../ui/AvatarUpload';
 import './InviteEmployeeModal.css';
 
-export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE';
+export type Role = 'SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE';
 
 const ROLE_LABEL: Record<Role, string> = {
   SUPER_ADMIN: 'Super Admin',
-  ADMIN: 'Admin (CEO/CTO)',
   HR: 'HR',
   LINE_MANAGER: 'Line Manager',
   EMPLOYEE: 'Employee',

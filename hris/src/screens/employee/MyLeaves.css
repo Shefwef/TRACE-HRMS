@@ -286,7 +286,7 @@
   display: flex;
   gap: 10px;
   padding: 12px 14px;
-  background: var(--color-bg-subtle);
+  background: var(--color-bg-surface);
   border-radius: var(--radius-md);
   border-left: 3px solid var(--color-brand-secondary);
 }
@@ -301,3 +301,28 @@
   color: var(--color-text-secondary);
   line-height: 1.5;
 }
+/* Decision block (approved / rejected / cancelled) inside a leave item
+   card. Groups the status badge, reviewer name, review timestamp, and
+   the admin note into one clearly-spaced section. */
+.myleaves-detail-decision {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+  border-left: 3px solid var(--color-border-default);
+}
+.myleaves-detail-decision-approved { border-left-color: var(--color-success); }
+.myleaves-detail-decision-rejected { border-left-color: var(--color-danger); }
+.myleaves-detail-decision-cancelled { border-left-color: var(--color-text-muted); }
+.myleaves-detail-decision-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+.myleaves-detail-decision-by strong { color: var(--color-text-primary); font-weight: var(--weight-semibold); }
+.myleaves-detail-decision-when { font-size: var(--text-xs); }

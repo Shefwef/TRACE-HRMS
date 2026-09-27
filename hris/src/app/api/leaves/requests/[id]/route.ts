@@ -27,7 +27,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   // Multi-role safe: prefer roles[] over the denormalized scalar role.
   const roles = user.roles?.length ? user.roles : [user.role];
   const isFullReviewer =
-    roles.includes('ADMIN') || roles.includes('HR') || roles.includes('SUPER_ADMIN');
+    roles.includes('HR') || roles.includes('SUPER_ADMIN');
   // Line managers may open request details for their DIRECT reports only -
   // non-transitive, same rule the approve/reject endpoints already enforce.
   const isDirectLineManager =

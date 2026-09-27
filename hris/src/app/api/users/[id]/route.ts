@@ -35,7 +35,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   const isSelf = actor.id === target.id;
   const actorRoles = actor.roles?.length ? actor.roles : [actor.role];
   const isFullReviewer =
-    actorRoles.includes('ADMIN') || actorRoles.includes('HR') || actorRoles.includes('SUPER_ADMIN');
+    actorRoles.includes('HR') || actorRoles.includes('SUPER_ADMIN');
   const isDirectLineManager =
     actorRoles.includes('LINE_MANAGER') && target.lineManagerId === actor.id;
   if (!isSelf && !isFullReviewer && !isDirectLineManager)

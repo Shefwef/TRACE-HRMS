@@ -8,7 +8,6 @@ export default async function Page() {
   // Line Managers reach this page too - the API scopes the queue to their team.
   const canReview =
     roles.includes('SUPER_ADMIN') ||
-    roles.includes('ADMIN') ||
     roles.includes('HR') ||
     roles.includes('LINE_MANAGER');
   if (!canReview) redirect('/');

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ArrowRight, CalendarClock, ClipboardList, Plus, TrendingUp, Sparkles } from 'lucide-react';
+import { ArrowRight, CalendarClock, ClipboardList, Plus, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -204,21 +204,6 @@ export function EmployeeDashboard() {
               </div>
             </motion.div>
           )}
-
-          <motion.div
-            className="edash-tip"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-          >
-            <div className="edash-tip-icon">
-              <Sparkles size={16} />
-            </div>
-            <div className="edash-tip-body">
-              <strong>{balance.replacementBalance} replacement day{balance.replacementBalance === 1 ? '' : 's'} in the bank</strong>
-              <p>Apply for replacement leave for weekends or holidays you worked - a full day earns +1, a half day earns +0.5.</p>
-            </div>
-          </motion.div>
 
           <MiniCalendar />
 

@@ -27,12 +27,12 @@ export async function requireRole(...allowed: Role[]) {
 
 /** Convenience helper: is this user allowed to approve leaves/extra-work? */
 export function canApprove(role: Role) {
-  return role === 'ADMIN' || role === 'HR' || role === 'SUPER_ADMIN';
+  return role === 'HR' || role === 'SUPER_ADMIN';
 }
 
 /** Convenience helper: is this user an admin-tier role? */
 export function isAdminTier(role: Role) {
-  return role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'HR';
+  return role === 'SUPER_ADMIN' || role === 'HR';
 }
 
 /**

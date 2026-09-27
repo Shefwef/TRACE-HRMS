@@ -30,7 +30,7 @@ export async function GET(req: Request) {
   if (scope === 'all' || scope === 'pending') {
     const roles = user.roles.length > 0 ? user.roles : [user.role];
     const isFullReviewer =
-      roles.includes('ADMIN') || roles.includes('HR') || roles.includes('SUPER_ADMIN');
+      roles.includes('HR') || roles.includes('SUPER_ADMIN');
     const isLineManager = roles.includes('LINE_MANAGER');
     if (!isFullReviewer && !isLineManager)
       return err(403, 'FORBIDDEN', 'You do not have permission to view other requests.');

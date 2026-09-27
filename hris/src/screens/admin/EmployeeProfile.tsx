@@ -23,19 +23,19 @@ import { Modal } from '../../components/ui/Modal';
 import { cx, fmtDate } from '../../lib/utils';
 import './EmployeeProfile.css';
 
-type AppRole = 'SUPER_ADMIN' | 'ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE';
+type AppRole = 'SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE';
 
 const ROLE_LABEL: Record<AppRole, string> = {
-  SUPER_ADMIN: 'Super Admin', ADMIN: 'Admin', HR: 'HR', LINE_MANAGER: 'Line Manager', EMPLOYEE: 'Employee',
+  SUPER_ADMIN: 'Super Admin', HR: 'HR', LINE_MANAGER: 'Line Manager', EMPLOYEE: 'Employee',
 };
 const ROLE_BADGE: Record<AppRole, 'info' | 'replacement' | 'success' | 'default' | 'warning'> = {
-  SUPER_ADMIN: 'success', ADMIN: 'info', HR: 'replacement', LINE_MANAGER: 'warning', EMPLOYEE: 'default',
+  SUPER_ADMIN: 'success', HR: 'replacement', LINE_MANAGER: 'warning', EMPLOYEE: 'default',
 };
 
 function assignableRoles(actor: { role: string; roles?: string[] | null }): AppRole[] {
   const roles = actor.roles?.length ? actor.roles : [actor.role];
-  if (roles.includes('SUPER_ADMIN') || roles.includes('ADMIN'))
-    return ['SUPER_ADMIN', 'ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE'];
+  if (roles.includes('SUPER_ADMIN'))
+    return ['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE'];
   if (roles.includes('HR')) return ['HR', 'LINE_MANAGER', 'EMPLOYEE'];
   return [];
 }
@@ -95,11 +95,11 @@ export function EmployeeProfilePage({ id }: { id: string }) {
   }, [currentUser]);
 
   const isSelf = currentUser?.id === id;
-  const isFullReviewer = actorRoles.some((r) => r === 'ADMIN' || r === 'HR' || r === 'SUPER_ADMIN');
+  const isFullReviewer = actorRoles.some((r) => r === 'HR' || r === 'SUPER_ADMIN');
   const isLineManager = actorRoles.includes('LINE_MANAGER');
 
   // Permission matrix per the spec:
-  //   Admin/HR/SUPER_ADMIN: edit + deactivate + delete + see balance
+  //   HR/SUPER_ADMIN: edit + deactivate + delete + see balance
   //   Line Manager: view direct reports + balance, no deactivate/delete
   //   Employee (self): edit own profile, view own balance, no deactivate/delete
   const canDeactivate = isFullReviewer && !isSelf;
@@ -310,7 +310,7 @@ export function EmployeeProfilePage({ id }: { id: string }) {
               {/* SUPER_ADMIN is intentionally omitted from the picker - that role
                   is provisioned through infrastructure only, never granted from
                   the UI. */}
-              {(['ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE'] as AppRole[]).map((r) => {
+              {(['HR', 'LINE_MANAGER', 'EMPLOYEE'] as AppRole[]).map((r) => {
                 const allowed = assignableRoles(currentUser ?? { role: 'EMPLOYEE' }).includes(r);
                 const on = draft.roles.includes(r);
                 return (

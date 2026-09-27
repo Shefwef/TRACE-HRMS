@@ -160,7 +160,6 @@ export async function POST(req: Request) {
   const granterRoles = user.roles?.length ? user.roles : [user.role];
   const granterIsHRAdmin =
     granterRoles.includes('HR') ||
-    granterRoles.includes('ADMIN') ||
     granterRoles.includes('SUPER_ADMIN');
   const granterIsLineManagerOnly =
     !granterIsHRAdmin && granterRoles.includes('LINE_MANAGER');
@@ -172,13 +171,13 @@ export async function POST(req: Request) {
   }
 
   if (granterIsLineManagerOnly) {
-    // Notify HR / Admin so they can see LM-issued grants
+    // Notify HR / Super Admin so they can see LM-issued grants
     const hrUsers = await prisma.user.findMany({
       where: {
         isActive: true,
         OR: [
-          { role: { in: ['HR', 'ADMIN', 'SUPER_ADMIN'] } },
-          { roles: { hasSome: ['HR', 'ADMIN', 'SUPER_ADMIN'] } },
+          { role: { in: ['HR', 'SUPER_ADMIN'] } },
+          { roles: { hasSome: ['HR', 'SUPER_ADMIN'] } },
         ],
       },
       select: { id: true },

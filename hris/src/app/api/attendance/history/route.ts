@@ -29,7 +29,6 @@ export async function GET(req: Request) {
     // Multi-role safe: prefer roles[] over the denormalized scalar role.
     const roles = user.roles?.length ? user.roles : [user.role];
     const isFullReviewer =
-      roles.includes('ADMIN') ||
       roles.includes('HR') ||
       roles.includes('SUPER_ADMIN');
     if (!isFullReviewer) {

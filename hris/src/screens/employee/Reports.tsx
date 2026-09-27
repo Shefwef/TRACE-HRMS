@@ -119,7 +119,7 @@ export function ReportsPage() {
 
   const roles = user.roles.length > 0 ? user.roles : [user.role];
   const isAdmin =
-    roles.includes('HR') || roles.includes('ADMIN') || roles.includes('SUPER_ADMIN');
+    roles.includes('HR') || roles.includes('SUPER_ADMIN');
   const isManager = isAdmin || roles.includes('LINE_MANAGER');
 
   const list = REPORTS.filter((r) => !r.adminOnly || isAdmin);

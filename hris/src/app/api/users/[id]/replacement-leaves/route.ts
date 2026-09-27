@@ -34,7 +34,6 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     // Line Manager: enforce team scope (permission alone is not enough)
     const actorRoles = user.roles?.length ? user.roles : [user.role];
     const isFullReviewer =
-      actorRoles.includes('ADMIN') ||
       actorRoles.includes('HR') ||
       actorRoles.includes('SUPER_ADMIN');
     if (!isFullReviewer && actorRoles.includes('LINE_MANAGER')) {

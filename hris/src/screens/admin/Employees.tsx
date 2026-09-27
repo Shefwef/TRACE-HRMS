@@ -43,7 +43,7 @@ export function EmployeesPage() {
   }, [list, q]);
 
   const actorRoles = currentUser?.roles?.length ? currentUser.roles : currentUser ? [currentUser.role] : [];
-  const canInvite = actorRoles.includes('ADMIN') || actorRoles.includes('HR') || actorRoles.includes('SUPER_ADMIN');
+  const canInvite = actorRoles.includes('HR') || actorRoles.includes('SUPER_ADMIN');
 
   const activeCount     = activeUsers.length;
   const deactivatedCount = allUsers.filter((u) => !u.isActive).length;

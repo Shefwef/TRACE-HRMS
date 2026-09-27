@@ -15,8 +15,8 @@ interface Props {
 }
 
 function invitableRoles(actorRole: string | undefined): Role[] {
-  if (actorRole === 'SUPER_ADMIN' || actorRole === 'ADMIN')
-    return ['SUPER_ADMIN', 'ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE'];
+  if (actorRole === 'SUPER_ADMIN')
+    return ['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE'];
   if (actorRole === 'HR') return ['HR', 'LINE_MANAGER', 'EMPLOYEE'];
   return [];
 }

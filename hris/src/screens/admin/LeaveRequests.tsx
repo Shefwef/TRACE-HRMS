@@ -1,5 +1,6 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAllLeaves, useAllExtraWork, type LeaveStatus, type LeaveRequestSummary } from '@/lib/hooks';
@@ -71,11 +72,32 @@ function bundleStatus(items: LeaveRequestSummary[]): LeaveStatus {
 export function LeaveRequestsPage() {
   const { data: requests = [] } = useAllLeaves();
   const { data: extraWork = [] } = useAllExtraWork();
+  const searchParams = useSearchParams();
   const [tab, setTab] = useState<'LEAVES' | 'EXTRA'>('LEAVES');
   const [status, setStatus] = useState<'ALL' | LeaveStatus>('PENDING');
   const [q, setQ] = useState('');
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [reviewExtraId, setReviewExtraId] = useState<string | null>(null);
+
+  // Honour ?tab=leaves|extra so notifications can deep-link into the right
+  // tab. Also auto-open a specific request when ?highlight=<id> is present.
+  useEffect(() => {
+    const t = searchParams?.get('tab');
+    if (t === 'extra') setTab('EXTRA');
+    else if (t === 'leaves') setTab('LEAVES');
+  }, [searchParams]);
+
+  useEffect(() => {
+    const highlight = searchParams?.get('highlight');
+    if (!highlight) return;
+    if (tab === 'LEAVES' && requests.some((r) => r.id === highlight)) {
+      setReviewId(highlight);
+    } else if (tab === 'EXTRA' && extraWork.some((x) => x.id === highlight)) {
+      setReviewExtraId(highlight);
+    }
+    // Only auto-open once per URL change; a manual close won't reopen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, tab, requests.length, extraWork.length]);
 
   // Count bundles as one "request" - a multi-type submission collapses into
   // a single entry both in the queue and in the pending badge.

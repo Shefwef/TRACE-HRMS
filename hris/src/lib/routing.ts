@@ -6,15 +6,13 @@
  *   EMPLOYEE       -> All HR + Super Admin
  *   LINE_MANAGER   -> All HR + Super Admin (not peer line managers)
  *   HR             -> All Super Admin + other HR
- *   ADMIN          -> All Super Admin
  *   SUPER_ADMIN    -> All HR (rescue if no HR: log warning, empty list)
  *
  * On top of that table: whoever the applicant reports to (`lineManagerId`) is
  * always prepended, whatever the applicant's own role is. That keeps a
  * manager-of-managers chain intact and means the reporting line is honoured
- * even for an Admin or Super Admin who has been placed under a Line Manager.
+ * even for a Super Admin who has been placed under a Line Manager.
  *
- * Never route to Admin-only users (they check the requests page manually).
  * Never route to Employees (their own decision notifications are handled
  * by the approve/reject routes, not here).
  */
@@ -60,12 +58,6 @@ export async function approvalRecipients(
     case 'HR': {
       // All Super Admin + other HR (excluding the applicant, already filtered)
       toUsers = [...superAdmins, ...hr];
-      break;
-    }
-
-    case 'ADMIN': {
-      // All Super Admin only
-      toUsers = [...superAdmins];
       break;
     }
 

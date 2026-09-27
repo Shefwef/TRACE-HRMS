@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, XCircle, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMyLeaves, useCancelLeave, type LeaveRequestSummary, type LeaveStatus } from '@/lib/hooks';
@@ -47,6 +47,7 @@ interface DetailPayload {
 
 export function MyLeaves() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: requests = [], isLoading } = useMyLeaves();
   const cancel = useCancelLeave();
   const [filter, setFilter] = useState<'ALL' | LeaveStatus>('ALL');
@@ -54,6 +55,24 @@ export function MyLeaves() {
   const [detail, setDetail] = useState<DetailPayload | null>(null);
 
   const filtered = requests.filter((r) => filter === 'ALL' || r.status === filter);
+
+  // Deep-link support: notifications point here with ?highlight=<requestId>
+  // when a leave decision lands. Auto-open the detail modal for that row (or
+  // its bundle) so the requester lands on the exact context.
+  useEffect(() => {
+    const highlight = searchParams?.get('highlight');
+    if (!highlight || requests.length === 0) return;
+    const target = requests.find((r) => r.id === highlight);
+    if (!target) return;
+    if (target.bundleId) {
+      const siblings = requests.filter((r) => r.bundleId === target.bundleId);
+      setDetail({ items: siblings, bundleId: target.bundleId });
+    } else {
+      setDetail({ items: [target], bundleId: null });
+    }
+    // Only auto-open once per URL change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, requests.length]);
 
   // Group rows sharing a bundleId. A bundle's status/date shown at the header
   // level uses the first item; users expand to see per-type breakdown.
@@ -355,13 +374,32 @@ function BundleDetail({ items, bundleId }: { items: LeaveRequestSummary[]; bundl
                   </div>
                 </div>
               )}
-              {i.adminNote && (
-                <div className="myleaves-detail-note">
-                  <MessageCircle size={14} />
-                  <div>
-                    <strong>Note from reviewer</strong>
-                    <p>{i.adminNote}</p>
+              {/* Decision summary - visible for every non-pending item so the
+                  requester can see who acted on it, when, and why. */}
+              {i.status !== 'PENDING' && (i.reviewer || i.reviewedAt || i.adminNote) && (
+                <div className={cx('myleaves-detail-decision', `myleaves-detail-decision-${i.status.toLowerCase()}`)}>
+                  <div className="myleaves-detail-decision-head">
+                    <Badge variant={statusVariant[i.status]}>{i.status.toLowerCase()}</Badge>
+                    {i.reviewer && (
+                      <span className="myleaves-detail-decision-by">
+                        by <strong>{i.reviewer.fullName}</strong>
+                      </span>
+                    )}
+                    {i.reviewedAt && (
+                      <span className="muted myleaves-detail-decision-when">
+                        {fmtDate(i.reviewedAt, 'd MMM yyyy · h:mm a')}
+                      </span>
+                    )}
                   </div>
+                  {i.adminNote && (
+                    <div className="myleaves-detail-note">
+                      <MessageCircle size={14} />
+                      <div>
+                        <strong>Note from reviewer</strong>
+                        <p>{i.adminNote}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

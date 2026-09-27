@@ -8,11 +8,10 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
 
   const { id } = await ctx.params;
 
-  // Authorization: Only the line manager themselves, or Admin/Super Admin/HR
+  // Authorization: Only the line manager themselves, or Super Admin / HR.
   if (
     actor.id !== id &&
     !actor.roles.includes('SUPER_ADMIN') &&
-    !actor.roles.includes('ADMIN') &&
     !actor.roles.includes('HR')
   ) {
     return err(403, 'FORBIDDEN', 'You do not have permission to view this team roster.');

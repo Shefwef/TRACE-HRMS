@@ -37,7 +37,7 @@ export function LeaveApplicationFlow({ open, onClose }: Props) {
   const submit = useSubmitLeave();
 
   const admins = useMemo(
-    () => allUsers.filter((u) => u.role === 'HR' || u.role === 'ADMIN'),
+    () => allUsers.filter((u) => u.role === 'HR' || u.role === 'SUPER_ADMIN'),
     [allUsers]
   );
 

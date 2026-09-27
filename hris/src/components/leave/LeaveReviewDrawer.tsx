@@ -547,6 +547,21 @@ function ItemModifyEditor({
   onNewDate: (d: string) => void;
   onAdd: () => void;
 }) {
+  // Single-day requests get an always-visible Full / Half AM / Half PM
+  // picker so the approver can adjust the slot without hunting for a
+  // "Modify" toggle. Multi-day requests still use the per-day editor,
+  // which stays gated behind the toggle to keep the drawer compact.
+  const isSingleDay = item.startDate === item.endDate;
+  const currentSlot = (alloc[0]?.slot ?? 'FULL') as AllocationSlot;
+
+  function pickSlot(slot: AllocationSlot) {
+    // Mark this item as modified so buildBundleAllocations() actually
+    // ships the picked allocation - even if the reviewer's pick matches
+    // the original slot, sending it is harmless.
+    if (!modify) onToggle(true);
+    onSlot(0, slot);
+  }
+
   return (
     <div className="lrd-item-modify">
       <div className="lrd-item-modify-head">
@@ -556,17 +571,42 @@ function ItemModifyEditor({
             <span className="lrd-item-modify-days">{item.durationDays} d requested</span>
           </span>
         )}
-        <button
-          className={cx('lrd-modify-toggle', modify && 'lrd-modify-toggle-active')}
-          onClick={() => onToggle(!modify)}
-          type="button"
-        >
-          <Pencil size={12} />
-          {modify ? 'Cancel changes' : 'Modify'}
-        </button>
+        {!isSingleDay && (
+          <button
+            className={cx('lrd-modify-toggle', modify && 'lrd-modify-toggle-active')}
+            onClick={() => onToggle(!modify)}
+            type="button"
+          >
+            <Pencil size={12} />
+            {modify ? 'Cancel changes' : 'Modify'}
+          </button>
+        )}
       </div>
 
-      {!modify ? (
+      {isSingleDay ? (
+        <div className="lrd-slot-picker">
+          {(
+            [
+              { key: 'FULL',           label: slotLabel('FULL'),           hint: '1 day' },
+              { key: 'HALF_MORNING',   label: slotLabel('HALF_MORNING'),   hint: '0.5 day' },
+              { key: 'HALF_AFTERNOON', label: slotLabel('HALF_AFTERNOON'), hint: '0.5 day' },
+            ] as { key: AllocationSlot; label: string; hint: string }[]
+          ).map((opt) => {
+            const on = currentSlot === opt.key;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                className={cx('lrd-slot-btn', on && 'lrd-slot-btn-on')}
+                onClick={() => pickSlot(opt.key)}
+              >
+                <span className="lrd-slot-label">{opt.label}</span>
+                <span className="lrd-slot-hint">{opt.hint}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : !modify ? (
         <p className="lrd-alloc-hint">
           Approve as requested - <strong>{item.durationDays} day{item.durationDays === 1 ? '' : 's'}</strong>.
         </p>

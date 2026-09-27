@@ -20,29 +20,37 @@ export interface HrefableNotification {
 }
 
 export function notificationHref(n: HrefableNotification): string {
-  const ref = n.referenceId ? `?highlight=${encodeURIComponent(n.referenceId)}` : '';
+  const ref = n.referenceId ? `highlight=${encodeURIComponent(n.referenceId)}` : '';
+  const withRef = (base: string, extra: string) => {
+    const parts = [extra, ref].filter(Boolean).join('&');
+    return parts ? `${base}?${parts}` : base;
+  };
 
   // Explicit override: managers get audit copies of grants they issued (or an
   // HR user gets a copy of a LM-issued grant). Route them to the admin queue
   // so the click is useful, not the employee's own list.
-  if (n.referenceType === 'admin_requests') return `/admin/requests${ref}`;
+  if (n.referenceType === 'admin_requests') return withRef('/admin/requests', 'tab=leaves');
 
   switch (n.type) {
-    // Approver-facing: someone submitted, please review
+    // Approver-facing: someone submitted a leave, please review.
     case 'LEAVE_PENDING':
-    case 'EXTRA_WORK_PENDING':
-      return `/admin/requests${ref}`;
+      return withRef('/admin/requests', 'tab=leaves');
 
-    // Employee-facing: your leave request was decided (or a manager granted you one)
+    // Approver-facing: replacement-leave (extra work) request needs review.
+    case 'EXTRA_WORK_PENDING':
+      return withRef('/admin/requests', 'tab=extra');
+
+    // Employee-facing: your leave request was decided.
     case 'LEAVE_APPROVED':
     case 'LEAVE_REJECTED':
-      return `/leaves${ref}`;
+      return withRef('/leaves', '');
 
-    // Employee-facing: extra work outcome shows on attendance
+    // Employee-facing: replacement-leave outcome shows on the Replacement tab
+    // inside My Leaves (not the Attendance page anymore).
     case 'EXTRA_WORK_APPROVED':
     case 'EXTRA_WORK_REJECTED':
     case 'REPLACEMENT_EARNED':
-      return `/attendance${ref}`;
+      return withRef('/leaves/replacement', '');
 
     case 'HOLIDAY_NOTICE':
       return '/calendar';

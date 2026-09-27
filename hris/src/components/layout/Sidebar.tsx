@@ -80,9 +80,9 @@ export function Sidebar() {
   if (!user) return null;
 
   const roles = user.roles?.length ? user.roles : [user.role];
-  const isAdmin = roles.includes('ADMIN') || roles.includes('SUPER_ADMIN') || roles.includes('HR');
+  const isAdmin = roles.includes('SUPER_ADMIN') || roles.includes('HR');
   // A pure Line Manager gets the team review queue only; someone who also holds
-  // HR/Admin already sees Requests inside the full Administration section.
+  // HR/Super Admin already sees Requests inside the full Administration section.
   const isLineManagerOnly = !isAdmin && roles.includes('LINE_MANAGER');
 
   const nav = (

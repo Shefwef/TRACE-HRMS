@@ -71,7 +71,6 @@ export function canApprove(
         ? userOrRole.roles
         : [userOrRole.role];
   return (
-    roles.includes('ADMIN') ||
     roles.includes('HR') ||
     roles.includes('SUPER_ADMIN') ||
     roles.includes('LINE_MANAGER')
@@ -83,10 +82,10 @@ export function canApprove(
  * Returns null if allowed, or a human-readable message if forbidden.
  *
  * Rules:
- *   SUPER_ADMIN / ADMIN -> can approve/reject any request
- *   HR                  -> can approve/reject except ADMIN or SUPER_ADMIN applicant
- *   LINE_MANAGER        -> only where applicant.lineManagerId === actor.id
- *   EMPLOYEE            -> cannot approve
+ *   SUPER_ADMIN  -> can approve/reject any request
+ *   HR           -> can approve/reject except SUPER_ADMIN applicant
+ *   LINE_MANAGER -> only where applicant.lineManagerId === actor.id
+ *   EMPLOYEE     -> cannot approve
  *
  * Self-approval/rejection is always forbidden (handled separately).
  */
@@ -99,15 +98,15 @@ export function canApproveRequest(
   const applicantRoles: readonly Role[] =
     applicant.roles && applicant.roles.length > 0 ? applicant.roles : [applicant.role];
 
-  // SUPER_ADMIN or ADMIN can approve anyone
-  if (actorRoles.includes('SUPER_ADMIN') || actorRoles.includes('ADMIN')) {
+  // SUPER_ADMIN can approve anyone.
+  if (actorRoles.includes('SUPER_ADMIN')) {
     return null;
   }
 
-  // HR can approve anyone except ADMIN or SUPER_ADMIN applicants
+  // HR can approve anyone except SUPER_ADMIN applicants.
   if (actorRoles.includes('HR')) {
-    if (applicantRoles.includes('ADMIN') || applicantRoles.includes('SUPER_ADMIN')) {
-      return 'HR cannot approve or reject requests from Admin or Super Admin users.';
+    if (applicantRoles.includes('SUPER_ADMIN')) {
+      return 'HR cannot approve or reject requests from Super Admin users.';
     }
     return null;
   }

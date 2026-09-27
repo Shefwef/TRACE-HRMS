@@ -528,7 +528,6 @@ const EVENT_LABEL: Record<string, string> = {
 
 const ROLE_LABEL: Record<Role, string> = {
   SUPER_ADMIN: 'Super Admin',
-  ADMIN: 'Admin',
   HR: 'HR',
   LINE_MANAGER: 'Line Manager',
   EMPLOYEE: 'Employee',

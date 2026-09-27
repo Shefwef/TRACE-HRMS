@@ -1096,7 +1096,7 @@ export interface InviteEmployeePayload {
   firstName: string;
   lastName?: string;
   /** Role set to grant on creation. Must be non-empty. */
-  roles: ('SUPER_ADMIN' | 'ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE')[];
+  roles: ('SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE')[];
   department?: string;
   designation: string;
   employeeIdCode: string;
@@ -1122,7 +1122,7 @@ export function useInviteEmployee() {
 export interface UpdateEmployeePayload {
   fullName?: string;
   /** Full role set (multi-role model). Must be non-empty. */
-  roles?: ('SUPER_ADMIN' | 'ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE')[];
+  roles?: ('SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE')[];
   department?: string;
   designation?: string;
   employeeIdCode?: string;

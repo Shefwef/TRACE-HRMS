@@ -129,7 +129,7 @@ export const useStore = create<Store>((set, get) => ({
           return { ...b, sickPending: b.sickPending + input.durationDays };
         return b;
       });
-      const admins = s.users.filter((u) => u.role === 'ADMIN');
+      const admins = s.users.filter((u) => u.role === 'HR' || u.role === 'SUPER_ADMIN');
       const newNotifs: Notification[] = admins.map((a) => ({
         id: 'n-' + uid(),
         recipientId: a.id,
