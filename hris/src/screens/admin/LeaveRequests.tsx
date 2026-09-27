@@ -128,8 +128,8 @@ export function LeaveRequestsPage() {
     <div className="lreq">
       <div className="lreq-head">
         <div>
-          <h1>Approvals</h1>
-          <p className="muted">Review leave requests and extra-work logs from your team.</p>
+          <h1>Requests</h1>
+          <p className="muted">Review leave requests from your team.</p>
         </div>
       </div>
 
