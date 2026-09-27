@@ -19,6 +19,7 @@ const EMPTY: ProfileFormValues = {
   employeeIdCode: '', joiningDate: '',
   designation: '', department: '',
   roles: [],
+  lineManagerName: null,
 };
 
 function splitName(full: string): { firstName: string; lastName: string } {
@@ -49,6 +50,7 @@ export function MyProfileModal({ open, onClose }: Props) {
       phone: null, dateOfBirth: null, joiningDate: null,
       avatarUrl: me.avatarUrl, department: null, designation: null,
       employeeIdCode: null,
+      lineManager: null,
     };
     const { firstName, lastName } = splitName(source.fullName);
     setValues({
@@ -62,6 +64,7 @@ export function MyProfileModal({ open, onClose }: Props) {
       designation: source.designation ?? '',
       department: source.department ?? '',
       roles: [],
+      lineManagerName: source.lineManager?.fullName ?? null,
     });
   }, [open, me, users]);
 

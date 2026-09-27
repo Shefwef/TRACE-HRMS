@@ -29,14 +29,11 @@ function standardMinutesFromWindow(workStartTime: string, workEndTime: string): 
 }
 
 /**
- * When only ONE punch is recorded for a day, we can't tell "did they come in
- * late and forget to tap out" from "did they forget to tap in and only tap
- * out on the way home". Use the hour of the punch as a tiebreaker: at or
- * after 14:00 office-local, treat the lone punch as clock-OUT (they clearly
- * worked most of the day and only remembered to tap on exit). Before 14:00,
- * treat it as clock-IN (they probably arrived and forgot to tap on exit).
+ * The office-local hour that splits "morning" (clock-in) taps from
+ * "afternoon" (clock-out) taps. Taps strictly before this hour are treated
+ * as arrival attempts; taps at/after are treated as departure attempts.
  */
-const SINGLE_PUNCH_CLOCKOUT_HOUR = 14;
+const AFTERNOON_HOUR = 14;
 
 /** Hour of day (0-23) for a UTC instant in office-local time. */
 function localHour(at: Date): number {
@@ -50,21 +47,36 @@ function localHour(at: Date): number {
 }
 
 /**
- * Decide clock-in / clock-out from a sorted list of punches for one day.
- * - 0 punches → both null
- * - 1 punch, before 14:00 → clock-in only
- * - 1 punch, at/after 14:00 → clock-out only
- * - 2+ punches → earliest is clock-in, latest is clock-out
+ * Decide clock-in / clock-out from a sorted list of punches for one day,
+ * using the 14:00 office-local rule:
+ *
+ *   * Any punch strictly BEFORE 14:00 is a candidate clock-in. Only the
+ *     earliest one counts; any additional morning taps are ignored (a
+ *     second tap before 14:00 does NOT end the session).
+ *   * Any punch AT OR AFTER 14:00 is a candidate clock-out - but only
+ *     when there is already a morning clock-in. In that case the earliest
+ *     afternoon tap becomes the clock-out; further afternoon taps ignored.
+ *   * If the employee never tapped before 14:00, the earliest afternoon
+ *     tap becomes the clock-in and the next afternoon tap (if any) is
+ *     the clock-out. Everything after that is ignored.
+ *   * 0 punches -> both null.
+ *
+ * `punches` MUST arrive sorted ascending by time (both callers do this).
  */
 function resolveInOut(punches: Date[]): { clockIn: Date | null; clockOut: Date | null } {
   if (punches.length === 0) return { clockIn: null, clockOut: null };
-  if (punches.length === 1) {
-    const single = punches[0];
-    return localHour(single) >= SINGLE_PUNCH_CLOCKOUT_HOUR
-      ? { clockIn: null, clockOut: single }
-      : { clockIn: single, clockOut: null };
+
+  const morning: Date[] = [];
+  const afternoon: Date[] = [];
+  for (const p of punches) {
+    if (localHour(p) < AFTERNOON_HOUR) morning.push(p);
+    else afternoon.push(p);
   }
-  return { clockIn: punches[0], clockOut: punches[punches.length - 1] };
+
+  if (morning.length > 0) {
+    return { clockIn: morning[0], clockOut: afternoon[0] ?? null };
+  }
+  return { clockIn: afternoon[0] ?? null, clockOut: afternoon[1] ?? null };
 }
 
 export interface RawPunch {

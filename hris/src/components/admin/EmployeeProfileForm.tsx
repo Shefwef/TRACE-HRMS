@@ -25,6 +25,12 @@ export interface ProfileFormValues {
   designation: string;
   department: string;
   roles: Role[];
+  /**
+   * Display-only line-manager name for the self-edit modal. Read-only in
+   * every mode - assigning a line manager is an HR/Admin action on the
+   * dedicated Employee Profile page, not on the self-service form.
+   */
+  lineManagerName?: string | null;
 }
 
 interface Props {
@@ -170,6 +176,19 @@ export function EmployeeProfileForm({ mode, values, onChange, allowedRoles = [] 
           />
         </Field>
       </div>
+      {isSelf && (
+        <Field
+          label="Line manager"
+          hint="Assigned by HR. Reach out to HR if you need this changed."
+        >
+          <TextInput
+            value={values.lineManagerName ?? ''}
+            onChange={() => {}}
+            placeholder="No line manager assigned"
+            disabled
+          />
+        </Field>
+      )}
       {showCycle && (
         <Field
           label="Cycle starts in"
