@@ -447,6 +447,7 @@ async function maybeAutoFileReplacementLeave(
       reason: `${label} on ${dayKey} - auto-detected from biometric attendance`,
       description: null,
       status: 'PENDING',
+      source: 'AUTO',
     },
   });
 

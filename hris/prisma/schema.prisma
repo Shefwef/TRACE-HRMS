@@ -95,6 +95,18 @@ enum ExtraWorkStatus {
   REJECTED
 }
 
+/**
+ * Where an ExtraWorkLog came from.
+ *   MANUAL - employee submitted it via the Apply for replacement leave form.
+ *   AUTO   - biometric pipeline auto-filed it when the employee clocked in
+ *            AND out on a weekend / public holiday. HR then picks Full /
+ *            Half AM / Half PM in the review drawer before crediting.
+ */
+enum ExtraWorkSource {
+  MANUAL
+  AUTO
+}
+
 enum HolidayRecipients {
   ALL
   HR_ONLY
@@ -282,6 +294,7 @@ model ExtraWorkLog {
   reason         String          @db.VarChar(200)
   description    String?
   status         ExtraWorkStatus @default(PENDING)
+  source         ExtraWorkSource @default(MANUAL)
   adminNote      String?
   reviewedById   String?
   reviewedAt     DateTime?

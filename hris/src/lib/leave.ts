@@ -109,38 +109,6 @@ export function extraWorkCredit(
   return workType === 'FULL_DAY' ? 1 : 0.5;
 }
 
-/**
- * Decide which slot an employee qualifies for based on how long they were
- * clocked in on a non-working day.
- *
- *   > 4 hours worked          -> FULL_DAY   (+1 credit)
- *   <= 4 hours, clock-in AM   -> HALF_DAY_MORNING   (+0.5)
- *   <= 4 hours, clock-in PM   -> HALF_DAY_AFTERNOON (+0.5)
- *   worked <= 0 or no clockIn -> null (not eligible)
- *
- * The 4-hour threshold matches the office 9-5 window: a full day is 8h,
- * so anything strictly over half of that (4h) rounds up to a full-day
- * credit. AM/PM is derived from the clock-in hour in Dhaka time.
- */
-export function evaluateReplacementEligibility(input: {
-  totalWorkedMinutes: number;
-  clockIn: Date | null;
-}): 'FULL_DAY' | 'HALF_DAY_MORNING' | 'HALF_DAY_AFTERNOON' | null {
-  if (!input.clockIn || input.totalWorkedMinutes <= 0) return null;
-  if (input.totalWorkedMinutes > 240) return 'FULL_DAY';
-  // Use Dhaka-local hour to decide AM vs PM; clock-in is a UTC instant.
-  const hourInDhaka = Number(
-    new Intl.DateTimeFormat('en-US', {
-      timeZone: 'Asia/Dhaka',
-      hour: '2-digit',
-      hour12: false,
-    })
-      .formatToParts(input.clockIn)
-      .find((p) => p.type === 'hour')?.value ?? '0',
-  ) % 24;
-  return hourInDhaka < 13 ? 'HALF_DAY_MORNING' : 'HALF_DAY_AFTERNOON';
-}
-
 export function leaveTypeLabel(t: 'CASUAL' | 'SICK' | 'REPLACEMENT'): string {
   return t === 'CASUAL' ? 'Casual Leave' : t === 'SICK' ? 'Sick Leave' : 'Replacement Leave';
 }

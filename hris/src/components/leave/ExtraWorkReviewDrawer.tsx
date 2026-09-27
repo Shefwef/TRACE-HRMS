@@ -59,13 +59,10 @@ export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
   const [rejectReason, setRejectReason] = useState('');
   const [slotOverride, setSlotOverride] = useState<WorkType | null>(null);
 
-  // Reason includes the "auto-detected" marker for logs the biometric
-  // pipeline filed on the employee's behalf. Only those get the slot picker;
-  // manually-filed logs keep the workType the employee submitted.
-  const isAutoDetected = useMemo(
-    () => (log?.reason ?? '').toLowerCase().includes('auto-detected'),
-    [log?.reason],
-  );
+  // The biometric pipeline sets source='AUTO' when it auto-files a log.
+  // Only AUTO logs get the Full/Half AM/Half PM picker; MANUAL logs keep
+  // the workType the employee explicitly selected in the Apply form.
+  const isAutoDetected = log?.source === 'AUTO';
 
   useEffect(() => {
     if (!logId) {

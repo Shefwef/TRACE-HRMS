@@ -120,6 +120,7 @@ export async function POST(req: Request) {
       workType: input.workType,
       reason: input.reason,
       description: input.description,
+      source: 'MANUAL',
     },
   });
 
@@ -180,6 +181,7 @@ interface RawLog {
   reason: string;
   description: string | null;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  source: 'MANUAL' | 'AUTO';
   adminNote: string | null;
   reviewedById: string | null;
   reviewedAt: Date | null;
@@ -204,6 +206,7 @@ function serialize(
     reason: l.reason,
     description: l.description,
     status: l.status,
+    source: l.source,
     adminNote: l.adminNote,
     reviewedById: l.reviewedById,
     reviewedAt: l.reviewedAt?.toISOString() ?? null,

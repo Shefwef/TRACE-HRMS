@@ -108,6 +108,9 @@ export interface ExtraWorkSummary {
   reason: string;
   description: string | null;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  /** Where the log came from - drives whether HR sees the Full/Half AM/Half PM
+   *  picker in the review drawer (AUTO only). */
+  source: 'MANUAL' | 'AUTO';
   adminNote: string | null;
   reviewedAt: string | null;
   createdAt: string;
