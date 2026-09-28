@@ -152,6 +152,13 @@
 .lreq-table-extra .lreq-row {
   grid-template-columns: minmax(200px, 2fr) 120px 130px 70px minmax(120px, 1.5fr) 100px 100px 90px;
 }
+
+/* Reviewed tab: Employee · Category · Period · Duration · Status · Reviewed by · Details */
+.lreq-table-reviewed .lreq-thead,
+.lreq-table-reviewed .lreq-row {
+  grid-template-columns: minmax(200px, 2fr) 140px minmax(180px, 1fr) 80px 100px minmax(140px, 1fr) 90px;
+}
+
 .lreq-serial {
   color: var(--color-text-muted);
   font-weight: var(--weight-semibold);

@@ -126,15 +126,6 @@ export async function POST(req: Request) {
   if (!balance)
     return err(500, 'NO_BALANCE', 'No leave balance found for this cycle.');
 
-  // Validate against balance
-  const available = availableFor(balance, input.leaveType);
-  if (duration > available)
-    return err(
-      400,
-      'INSUFFICIENT_BALANCE',
-      `Only ${available} day(s) of ${input.leaveType.toLowerCase()} leave available; requested ${duration}.`
-    );
-
   // Create request + reserve pending balance atomically
   const created = await prisma.$transaction(async (tx) => {
     const request = await tx.leaveRequest.create({
@@ -307,7 +298,7 @@ async function handleBundle(
     }
   }
 
-  // Balance check per type - duration = count(FULL) + 0.5 * count(HALF_*)
+  // Compute durations per type - duration = count(FULL) + 0.5 * count(HALF_*)
   const year = new Date().getFullYear();
   const balance = await prisma.leaveBalance.findUnique({
     where: { employeeId_cycleYear: { employeeId: user.id, cycleYear: year } },
@@ -321,13 +312,6 @@ async function handleBundle(
     if (d <= 0)
       return err(400, 'ZERO_DURATION', `${item.leaveType.toLowerCase()} leave in this submission comes out to zero days.`);
     perTypeDuration.set(item.leaveType, d);
-    const avail = availableFor(balance, item.leaveType);
-    if (d > avail)
-      return err(
-        400,
-        'INSUFFICIENT_BALANCE',
-        `Only ${avail} day(s) of ${item.leaveType.toLowerCase()} leave available; requested ${d}.`,
-      );
   }
 
   const bundleId = randomUUID();

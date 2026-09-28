@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAllLeaves, useAllExtraWork, type LeaveStatus, type LeaveRequestSummary } from '@/lib/hooks';
+import { useAllLeaves, useAllExtraWork, type LeaveStatus, type LeaveRequestSummary, type ExtraWorkSummary } from '@/lib/hooks';
 import { initials, avatarColorFor } from '@/lib/session';
 import { extraWorkTypeLabel, extraWorkCredit } from '@/lib/leave';
 import { Badge } from '../../components/ui/Badge';
@@ -73,7 +73,7 @@ export function LeaveRequestsPage() {
   const { data: requests = [] } = useAllLeaves();
   const { data: extraWork = [] } = useAllExtraWork();
   const searchParams = useSearchParams();
-  const [tab, setTab] = useState<'LEAVES' | 'EXTRA'>('LEAVES');
+  const [tab, setTab] = useState<'LEAVES' | 'EXTRA' | 'REVIEWED'>('LEAVES');
   const [status, setStatus] = useState<'ALL' | LeaveStatus>('PENDING');
   const [q, setQ] = useState('');
   const [reviewId, setReviewId] = useState<string | null>(null);
@@ -85,6 +85,7 @@ export function LeaveRequestsPage() {
     const t = searchParams?.get('tab');
     if (t === 'extra') setTab('EXTRA');
     else if (t === 'leaves') setTab('LEAVES');
+    else if (t === 'reviewed') setTab('REVIEWED');
   }, [searchParams]);
 
   useEffect(() => {
@@ -116,6 +117,19 @@ export function LeaveRequestsPage() {
   }
   const pendingLeaves = countEntries('PENDING');
   const pendingExtras = extraWork.filter((x) => x.status === 'PENDING').length;
+  const reviewedCount = useMemo(() => {
+    const seenBundles = new Set<string>();
+    let n = 0;
+    for (const r of requests) {
+      if (r.status === 'PENDING') continue;
+      if (r.bundleId) {
+        if (seenBundles.has(r.bundleId)) continue;
+        seenBundles.add(r.bundleId);
+      }
+      n++;
+    }
+    return n + extraWork.filter((x) => x.status !== 'PENDING').length;
+  }, [requests, extraWork]);
 
   const entries: Entry[] = useMemo(() => {
     // Apply search first (against the flat row list) so bundle rows survive
@@ -169,6 +183,13 @@ export function LeaveRequestsPage() {
         >
           Replacement Leave
           <span className="lreq-tab-count">{pendingExtras}</span>
+        </button>
+        <button
+          className={cx('lreq-tab', tab === 'REVIEWED' && 'lreq-tab-active')}
+          onClick={() => setTab('REVIEWED')}
+        >
+          Reviewed Requests
+          <span className="lreq-tab-count">{reviewedCount}</span>
         </button>
       </div>
 
@@ -270,7 +291,6 @@ export function LeaveRequestsPage() {
               </AnimatePresence>
             </div>
           )}
-          <LeaveReviewDrawer requestId={reviewId} onClose={() => setReviewId(null)} />
         </>
       )}
 
@@ -340,9 +360,205 @@ export function LeaveRequestsPage() {
               </AnimatePresence>
             </div>
           )}
-          <ExtraWorkReviewDrawer logId={reviewExtraId} onClose={() => setReviewExtraId(null)} />
         </>
       )}
+
+      {tab === 'REVIEWED' && (
+        <ReviewedRequestsTab
+          requests={requests}
+          extraWork={extraWork}
+          onOpenLeave={setReviewId}
+          onOpenExtra={setReviewExtraId}
+        />
+      )}
+
+      <LeaveReviewDrawer requestId={reviewId} onClose={() => setReviewId(null)} />
+      <ExtraWorkReviewDrawer logId={reviewExtraId} onClose={() => setReviewExtraId(null)} />
     </div>
+  );
+}
+
+// ─── Reviewed Requests Tab ─────────────────────────────────
+
+type ReviewedEntry =
+  | { kind: 'leave'; entry: Entry; sortKey: string }
+  | { kind: 'extra'; row: ExtraWorkSummary; sortKey: string };
+
+function ReviewedRequestsTab({
+  requests,
+  extraWork,
+  onOpenLeave,
+  onOpenExtra,
+}: {
+  requests: LeaveRequestSummary[];
+  extraWork: ExtraWorkSummary[];
+  onOpenLeave: (id: string) => void;
+  onOpenExtra: (id: string) => void;
+}) {
+  const [q, setQ] = useState('');
+
+  const reviewedEntries = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    const matchesLeave = (r: LeaveRequestSummary) => {
+      if (!needle) return true;
+      return (
+        r.employee?.fullName.toLowerCase().includes(needle) ||
+        r.reason.toLowerCase().includes(needle) ||
+        r.employee?.department?.toLowerCase().includes(needle)
+      );
+    };
+
+    // Reviewed leave entries (non-PENDING)
+    const reviewedRequests = requests.filter((r) => r.status !== 'PENDING');
+    const bundleIdsWithMatch = new Set<string>();
+    for (const r of reviewedRequests) {
+      if (r.bundleId && matchesLeave(r)) bundleIdsWithMatch.add(r.bundleId);
+    }
+    const filteredLeave = reviewedRequests.filter((r) => {
+      if (r.bundleId) return bundleIdsWithMatch.has(r.bundleId);
+      return matchesLeave(r);
+    });
+    const leaveEntries: ReviewedEntry[] = groupEntries(filteredLeave).map((entry) => ({
+      kind: 'leave',
+      entry,
+      sortKey: entry.kind === 'single' ? entry.row.updatedAt : entry.representative.updatedAt,
+    }));
+
+    // Reviewed extra work entries (non-PENDING)
+    const reviewedExtra = extraWork
+      .filter((x) => x.status !== 'PENDING')
+      .filter((x) => {
+        if (!needle) return true;
+        return (
+          x.employee?.fullName.toLowerCase().includes(needle) ||
+          x.reason.toLowerCase().includes(needle) ||
+          x.employee?.department?.toLowerCase().includes(needle)
+        );
+      });
+    const extraEntries: ReviewedEntry[] = reviewedExtra.map((row) => ({
+      kind: 'extra',
+      row,
+      sortKey: row.reviewedAt ?? row.createdAt,
+    }));
+
+    return [...leaveEntries, ...extraEntries].sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+  }, [requests, extraWork, q]);
+
+  return (
+    <>
+      <div className="lreq-filters">
+        <div className="lreq-search">
+          <Search size={14} />
+          <input
+            placeholder="Search by name, reason or department…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {reviewedEntries.length === 0 ? (
+        <div className="card" style={{ padding: 0 }}>
+          <EmptyState
+            title="No reviewed requests yet"
+            body="Approved and rejected leave and replacement leave requests will appear here."
+          />
+        </div>
+      ) : (
+        <div className="lreq-table lreq-table-reviewed">
+          <div className="lreq-thead">
+            <span>Employee</span>
+            <span>Category</span>
+            <span>Period</span>
+            <span>Duration</span>
+            <span>Status</span>
+            <span>Reviewed by</span>
+            <span aria-hidden="true"></span>
+          </div>
+          <AnimatePresence initial={false}>
+            {reviewedEntries.map((entry, idx) => {
+              if (entry.kind === 'leave') {
+                const e = entry.entry;
+                const rep = e.kind === 'single' ? e.row : e.representative;
+                const emp = rep.employee;
+                if (!emp) return null;
+                const items = e.kind === 'single' ? [e.row] : e.items;
+                const earliestStart = items.reduce((min, i) => (i.startDate < min ? i.startDate : min), items[0].startDate);
+                const latestEnd     = items.reduce((max, i) => (i.endDate > max ? i.endDate : max), items[0].endDate);
+                const totalDays     = items.reduce((s, i) => s + i.durationDays, 0);
+                const stat = e.kind === 'single' ? e.row.status : bundleStatus(e.items);
+                const leaveTypes = items.map((i) => i.leaveType.charAt(0) + i.leaveType.slice(1).toLowerCase()).join(' · ');
+                return (
+                  <motion.div
+                    key={`leave-${e.kind === 'single' ? e.row.id : e.bundleId}`}
+                    className="lreq-row"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    layout
+                  >
+                    <span className="lreq-emp" data-label="Employee">
+                      <Avatar initials={initials(emp.fullName)} color={avatarColorFor(emp.id)} size="sm" imageUrl={emp.avatarUrl} alt={emp.fullName} />
+                      <span>
+                        <strong>{emp.fullName}</strong>
+                        <em>{emp.department}</em>
+                      </span>
+                    </span>
+                    <span data-label="Category"><Badge variant="default">{leaveTypes}</Badge></span>
+                    <span data-label="Period">
+                      <strong>{fmtDate(earliestStart)}</strong>
+                      {earliestStart !== latestEnd && <> – <strong>{fmtDate(latestEnd)}</strong></>}
+                    </span>
+                    <span className="mono" data-label="Duration">{totalDays}d</span>
+                    <span data-label="Status"><Badge variant={statusVariant[stat]}>{stat.toLowerCase()}</Badge></span>
+                    <span className="muted" data-label="Reviewed by">{rep.reviewer?.fullName ?? '—'}</span>
+                    <span data-label="Details">
+                      <button type="button" className="lreq-details-btn" onClick={() => onOpenLeave(rep.id)}>
+                        Details
+                      </button>
+                    </span>
+                  </motion.div>
+                );
+              }
+
+              // extra work entry
+              const x = entry.row;
+              const emp = x.employee;
+              if (!emp) return null;
+              const credit = extraWorkCredit(x.workType);
+              const statusVar = x.status === 'APPROVED' ? 'success' : 'danger';
+              return (
+                <motion.div
+                  key={`extra-${x.id}`}
+                  className="lreq-row"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  layout
+                >
+                  <span className="lreq-emp" data-label="Employee">
+                    <Avatar initials={initials(emp.fullName)} color={avatarColorFor(emp.id)} size="sm" imageUrl={emp.avatarUrl} alt={emp.fullName} />
+                    <span>
+                      <strong>{emp.fullName}</strong>
+                      <em>{emp.department}</em>
+                    </span>
+                  </span>
+                  <span data-label="Category"><Badge variant="default">Replacement Credit</Badge></span>
+                  <span data-label="Period"><strong>{fmtDate(x.workDate, 'd MMM yyyy')}</strong></span>
+                  <span className="mono" data-label="Duration">+{credit}d</span>
+                  <span data-label="Status"><Badge variant={statusVar}>{x.status.toLowerCase()}</Badge></span>
+                  <span className="muted" data-label="Reviewed by">{x.reviewer?.fullName ?? '—'}</span>
+                  <span data-label="Details">
+                    <button type="button" className="lreq-details-btn" onClick={() => onOpenExtra(x.id)}>
+                      Details
+                    </button>
+                  </span>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      )}
+    </>
   );
 }

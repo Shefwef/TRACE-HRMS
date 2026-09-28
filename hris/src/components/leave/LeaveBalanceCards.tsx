@@ -10,6 +10,7 @@ interface BalanceLike {
   sickUsed: number;
   sickPending: number;
   replacementBalance: number;
+  replacementUsed?: number;
 }
 
 interface Props {
@@ -17,8 +18,10 @@ interface Props {
 }
 
 export function LeaveBalanceCards({ balance }: Props) {
-  const casualLeft = Math.max(0, balance.casualTotal - balance.casualUsed - balance.casualPending);
-  const sickLeft = Math.max(0, balance.sickTotal - balance.sickUsed - balance.sickPending);
+  const casualLeft = balance.casualTotal - balance.casualUsed - balance.casualPending;
+  const sickLeft = balance.sickTotal - balance.sickUsed - balance.sickPending;
+  const replacementUsed = balance.replacementUsed ?? 0;
+  const replacementTotal = balance.replacementBalance + replacementUsed;
 
   const cards = [
     {
@@ -45,8 +48,8 @@ export function LeaveBalanceCards({ balance }: Props) {
       title: 'Replacement',
       code: 'RL',
       value: balance.replacementBalance,
-      total: Math.max(balance.replacementBalance, 3),
-      used: 0,
+      total: replacementTotal,
+      used: replacementUsed,
       pending: 0,
       color: 'var(--color-leave-replacement)',
       bg: 'var(--color-leave-replacement-light)',
@@ -71,8 +74,8 @@ export function LeaveBalanceCards({ balance }: Props) {
           </div>
           <div className="lbc-arc">
             <ArcRing
-              value={c.value}
-              total={c.total || 1}
+              value={Math.max(0, c.value)}
+              total={Math.max(c.total, 1)}
               color={c.color}
               centerLabel={c.value.toString()}
               centerSublabel={c.value === 1 ? 'day left' : 'days left'}
@@ -93,7 +96,7 @@ export function LeaveBalanceCards({ balance }: Props) {
             )}
             <div>
               <dt>Total</dt>
-              <dd>{c.total}</dd>
+              <dd>{c.code === 'RL' ? replacementTotal : c.total}</dd>
             </div>
           </dl>
         </motion.div>

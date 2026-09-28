@@ -36,6 +36,7 @@ export interface Balance {
   sickUsed: number;
   sickPending: number;
   replacementBalance: number;
+  replacementUsed: number;
 }
 
 export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';

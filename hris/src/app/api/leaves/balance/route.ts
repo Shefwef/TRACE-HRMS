@@ -9,16 +9,24 @@ export async function GET(req: Request) {
   const year = new Date().getFullYear();
   // upsert is atomic - a race between two first-load requests for the same
   // employee can't produce a P2002 unique violation.
-  const balance = await prisma.leaveBalance.upsert({
-    where: { employeeId_cycleYear: { employeeId: user.id, cycleYear: year } },
-    create: {
-      employeeId: user.id,
-      cycleYear: year,
-      cycleStartDate: new Date(Date.UTC(year, 0, 1)),
-      cycleEndDate: new Date(Date.UTC(year, 11, 31)),
-    },
-    update: {},
-  });
+  const [balance, replacementUsedAgg] = await Promise.all([
+    prisma.leaveBalance.upsert({
+      where: { employeeId_cycleYear: { employeeId: user.id, cycleYear: year } },
+      create: {
+        employeeId: user.id,
+        cycleYear: year,
+        cycleStartDate: new Date(Date.UTC(year, 0, 1)),
+        cycleEndDate: new Date(Date.UTC(year, 11, 31)),
+      },
+      update: {},
+    }),
+    prisma.leaveRequest.aggregate({
+      where: { employeeId: user.id, leaveType: 'REPLACEMENT', status: 'APPROVED' },
+      _sum: { durationDays: true },
+    }),
+  ]);
+
+  const replacementUsed = Number(replacementUsedAgg._sum.durationDays ?? 0);
 
   return NextResponse.json({
     cycleYear: balance.cycleYear,
@@ -31,5 +39,6 @@ export async function GET(req: Request) {
     sickUsed: Number(balance.sickUsed),
     sickPending: Number(balance.sickPending),
     replacementBalance: Number(balance.replacementBalance),
+    replacementUsed,
   });
 }
