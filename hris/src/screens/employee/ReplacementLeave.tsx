@@ -124,7 +124,7 @@ export function ReplacementLeavePage() {
                       {x.status === 'APPROVED' ? (
                         <strong>+{formatDays(creditOf(x.workType))}</strong>
                       ) : x.status === 'PENDING' ? (
-                        <span className="muted">&mdash; pending &mdash;</span>
+                        <span className="muted">-</span>
                       ) : (
                         <span className="muted">&mdash;</span>
                       )}

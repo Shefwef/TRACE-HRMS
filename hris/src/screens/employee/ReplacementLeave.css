@@ -123,7 +123,7 @@
 }
 .rlp-table tbody tr:last-child td { border-bottom: none; }
 .rlp-table tbody tr:hover td { background: var(--color-bg-subtle); }
-.rlp-num { text-align: right !important; }
+.rlp-num { text-align: center !important; }
 
 /* Truncating cells - ellipsis with tooltip on hover */
 .rlp-truncate {
@@ -134,6 +134,6 @@
   color: var(--color-text-secondary);
   cursor: help;
 }
-.rlp-note { color: var(--color-text-muted); font-style: italic; }
+.rlp-note { color: var(--color-text-muted); }
 .rlp-details-cell { white-space: nowrap; }
 
