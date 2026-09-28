@@ -14,6 +14,7 @@ import {
   getAttendanceReportData, getCompanyReportData, getLeaveReportData,
   getOffsiteRows, getSummaryReportData, monthPeriod, yearPeriod,
   getAttendanceSummaryRows, getEmployeeDirectoryRows, getPerformanceLeaveSummaryData,
+  type Period,
 } from '@/lib/reports/data';
 import {
   buildAttendanceWorkbook, buildCompanyWorkbook, buildLeavesWorkbook,
@@ -59,6 +60,22 @@ function pdfResponse(buf: Buffer, filename: string): Response {
       'cache-control': 'no-store',
     },
   });
+}
+
+/**
+ * Builds a Period from explicit startDate/endDate query params when present,
+ * falling back to monthPeriod(year, month). Lets the front-end pass a custom
+ * date range without the API needing to know which month to clamp to.
+ */
+function resolvePeriod(url: URL, year: number, month: number): Period {
+  const s = url.searchParams.get('startDate');
+  const e = url.searchParams.get('endDate');
+  if (s && e && /^\d{4}-\d{2}-\d{2}$/.test(s) && /^\d{4}-\d{2}-\d{2}$/.test(e) && s <= e) {
+    const from = new Date(s + 'T00:00:00Z');
+    const to = new Date(new Date(e + 'T00:00:00Z').getTime() + 86_400_000);
+    return { year, month: null, from, to, label: `${s} to ${e}`, fileRange: `${s}-to-${e}` };
+  }
+  return monthPeriod(year, month);
 }
 
 /**
@@ -141,6 +158,16 @@ export async function GET(
           400, 'PDF_UNAVAILABLE',
           'The off-site work report is Excel-only - 14 columns of coordinates do not fit a page.',
         );
+      case 'performance-leave-summary':
+        return await renderSummary(subject, year, month, logoDataUrl, generatedAt);
+      case 'attendance-summary':
+        if (!callerIsManager)
+          return err(403, 'FORBIDDEN', 'You do not have permission to export attendance summaries.');
+        return await renderAllEmployees(year, month, logoDataUrl, generatedAt);
+      case 'employee-summary':
+        if (!callerIsManager)
+          return err(403, 'FORBIDDEN', 'You do not have permission to export employee summaries.');
+        return await renderAllEmployees(year, month, logoDataUrl, generatedAt);
       default:
         return err(404, 'UNKNOWN_REPORT', `Unknown report type "${type}".`);
     }
@@ -231,7 +258,7 @@ async function renderXlsx(
     case 'attendance-summary': {
       if (!callerIsManager)
         return err(403, 'FORBIDDEN', 'You do not have permission to export attendance summaries.');
-      const period = monthPeriod(year, month);
+      const period = resolvePeriod(url, year, month);
       const empIdsParam = url.searchParams.get('employeeIds')?.split(',').filter(Boolean) ?? [];
       let empIds: string[];
       if (empIdsParam.length === 0) {
@@ -330,7 +357,7 @@ async function renderPreview(
     case 'attendance-summary': {
       if (!callerIsManager)
         return err(403, 'FORBIDDEN', 'You do not have permission to preview attendance summaries.');
-      const period = monthPeriod(year, month);
+      const period = resolvePeriod(url, year, month);
       const empIdsParam = url.searchParams.get('employeeIds')?.split(',').filter(Boolean) ?? [];
       let empIds: string[];
       if (empIdsParam.length === 0) {
@@ -349,7 +376,7 @@ async function renderPreview(
       const columns = [
         'Employee ID', 'Employee Name', 'Designation', 'Date', 'Day',
         'Clock In', 'Clock Out', 'Total Hours', 'Overtime Hours', 'Deficit Hours',
-        'Attendance Status', 'Initial Location', 'Final Location', 'Off-site Work Place',
+        'Attendance Status', 'Initial Location', 'Final Location', 'Off-site Workplace',
       ];
       const tableRows = rows.slice(0, 50).map((r) => [
         r.employeeIdCode, r.employeeName, r.designation,
@@ -368,7 +395,7 @@ async function renderPreview(
       const rows = await getEmployeeDirectoryRows();
       const columns = [
         'Employee ID', 'Employee Name', 'Email', 'Phone Number',
-        'Department', 'Designation', 'Line Manager', 'Joining Date', 'Departure Date',
+        'Department', 'Designation', 'Line Manager', 'Joining Date', 'Exit Date',
       ];
       const tableRows = rows.map((r) => [
         r.employeeIdCode, r.employeeName, r.email, r.phone,
@@ -390,25 +417,82 @@ async function renderPreview(
         designation: subject.designation ?? null,
       };
       const data = await getPerformanceLeaveSummaryData(identity, period);
+      const bal = data.balance;
+      const tab1 = {
+        kind: 'kv',
+        title: 'Performance Summary',
+        sections: [
+          {
+            heading: 'Attendance',
+            pairs: [
+              ['Working Days', data.performance.workingDays],
+              ['Half Days', data.performance.halfDays],
+              ['Leave Days', data.performance.leaveDays],
+              ['Hours Worked', data.performance.hoursWorked],
+              ['Overtime Hours', data.performance.overtimeHours],
+              ['Off-site Days', data.performance.offsiteDays],
+            ],
+          },
+          {
+            heading: 'Leave Requests (cycle year)',
+            pairs: [
+              ['Approved', data.requestCounts.approved],
+              ['Pending', data.requestCounts.pending],
+              ['Rejected', data.requestCounts.rejected],
+            ],
+          },
+        ],
+      };
+      const tab2 = {
+        kind: 'kv',
+        title: 'Leave History Summary',
+        sections: [
+          {
+            heading: 'Casual Leave',
+            pairs: [
+              ['Total', bal.casualTotal],
+              ['Used', bal.casualUsed],
+              ['Pending', bal.casualPending],
+              ['Remaining', Math.max(0, bal.casualTotal - bal.casualUsed - bal.casualPending)],
+            ],
+          },
+          {
+            heading: 'Sick Leave',
+            pairs: [
+              ['Total', bal.sickTotal],
+              ['Used', bal.sickUsed],
+              ['Pending', bal.sickPending],
+              ['Remaining', Math.max(0, bal.sickTotal - bal.sickUsed - bal.sickPending)],
+            ],
+          },
+          {
+            heading: 'Replacement Leave',
+            pairs: [
+              ['Balance', bal.replacementBalance],
+              ['Used', bal.replacementUsed ?? 0],
+            ],
+          },
+        ],
+      };
       const leaveColumns = [
         'Sl', 'Employee ID', 'Employee Name', 'Leave Type', 'Start Date', 'End Date',
         'Duration (days)', 'Half Day', 'Time From', 'Time To', 'Reason', 'Status',
         'Reviewed By', 'Reviewed At', 'Applied On', 'Admin Note',
       ];
-      const leaveRows = data.leaveRequests.slice(0, 20).map((r) => [
+      const leaveRows = data.leaveRequests.map((r) => [
         r.sl, r.employeeIdCode, r.employeeName, r.leaveType,
         fmtDate(r.startDate), fmtDate(r.endDate),
         fmtNum(r.durationDays), r.halfDay, r.timeFrom, r.timeTo,
         r.reason, r.status, r.reviewer,
         fmtDate(r.reviewedAt), fmtDate(r.appliedOn), r.adminNote,
       ]);
-      return json({
-        performance: data.performance,
-        balance: data.balance,
-        counts: data.requestCounts,
-        leaveColumns,
-        leaveRows,
-      });
+      const tab3 = {
+        kind: 'table',
+        title: 'Leave Request',
+        columns: leaveColumns,
+        rows: leaveRows,
+      };
+      return json({ tabs: [tab1, tab2, tab3] });
     }
 
     default:

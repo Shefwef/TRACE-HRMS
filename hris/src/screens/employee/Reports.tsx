@@ -1,9 +1,9 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileSpreadsheet, TrendingUp, Users, CalendarClock,
-  Loader2, Download, Eye,
+  Loader2, Download, Eye, Check,
 } from 'lucide-react';
 import { useCurrentUser } from '@/lib/session';
 import { useStore } from '@/lib/store';
@@ -14,11 +14,6 @@ import { type DatePreset, makeDateRange, type DateRange } from '../../components
 import './Reports.css';
 
 // ─── period helpers ───────────────────────────────────────
-
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
 
 const PRESETS: { key: DatePreset; label: string }[] = [
   { key: 'today',         label: 'Today' },
@@ -41,21 +36,79 @@ function toIso(d: Date): string {
   return `${y}-${m}-${dd}`;
 }
 
-// ─── preview types ────────────────────────────────────────
+// ─── types ────────────────────────────────────────────────
+
+type ReportType = 'attendance-summary' | 'employee-summary' | 'performance-leave-summary';
 
 type TablePreview = { columns: string[]; rows: (string | number)[][] };
 
-type PerformancePreview = {
-  performance: Record<string, number>;
-  balance: Record<string, number>;
-  counts: { approved: number; pending: number; rejected: number };
-  leaveColumns: string[];
-  leaveRows: (string | number)[][];
-};
+type PerfLeaveKvSection = { heading: string; pairs: [string, string | number][] };
+type PerfLeaveTab =
+  | { kind: 'kv'; title: string; sections: PerfLeaveKvSection[] }
+  | { kind: 'table'; title: string; columns: string[]; rows: (string | number)[][] };
+type PerfLeavePreview = { tabs: PerfLeaveTab[] };
 
 type PreviewData =
   | { kind: 'table'; data: TablePreview }
-  | { kind: 'performance'; data: PerformancePreview };
+  | { kind: 'perf-leave'; data: PerfLeavePreview };
+
+// ─── report type metadata ─────────────────────────────────
+
+interface ReportTypeMeta {
+  key: ReportType;
+  label: string;
+  Icon: React.FC<{ size?: number }>;
+  iconStyle: React.CSSProperties;
+  description: string;
+  details: string;
+  hasPeriod: boolean;
+  hasMultiEmp: boolean;
+  hasSingleEmp: boolean;
+  hasPdf: boolean;
+  managerOnly: boolean;
+}
+
+const REPORT_TYPES: ReportTypeMeta[] = [
+  {
+    key: 'attendance-summary',
+    label: 'Attendance Summary',
+    Icon: CalendarClock,
+    iconStyle: { background: 'var(--color-info-light)', color: 'var(--color-brand-primary)' },
+    description: 'Monitor attendance, work hours, overtime, and daily work locations.',
+    details: 'Monitor attendance, work hours, overtime, and daily work locations.',
+    hasPeriod: true,
+    hasMultiEmp: true,
+    hasSingleEmp: false,
+    hasPdf: true,
+    managerOnly: false,
+  },
+  {
+    key: 'employee-summary',
+    label: 'Employee Summary',
+    Icon: Users,
+    iconStyle: { background: 'var(--color-bg-subtle)', color: 'var(--color-text-secondary)' },
+    description: 'Access and review comprehensive employee information in one place.',
+    details: 'Access and review comprehensive employee information in one place.',
+    hasPeriod: false,
+    hasMultiEmp: false,
+    hasSingleEmp: false,
+    hasPdf: true,
+    managerOnly: true,
+  },
+  {
+    key: 'performance-leave-summary',
+    label: 'Performance & Leave Summary',
+    Icon: TrendingUp,
+    iconStyle: { background: 'var(--color-leave-replacement-light)', color: 'var(--color-leave-replacement)' },
+    description: 'Track individual performance, working days, overtime, and leave history.',
+    details: 'Track individual performance, working days, overtime, and leave history.',
+    hasPeriod: true,
+    hasMultiEmp: false,
+    hasSingleEmp: true,
+    hasPdf: true,
+    managerOnly: false,
+  },
+];
 
 // ─── period picker component ──────────────────────────────
 
@@ -93,7 +146,7 @@ function PeriodPicker({
         disabled={dateRange.preset !== 'custom'}
         onChange={(e) => onCustomStartChange(e.target.value)}
       />
-      <span className="rpts-period-custom-sep">-</span>
+      <span className="rpts-period-custom-sep">–</span>
       <span className="rpts-period-custom-label">To</span>
       <input
         type="date"
@@ -206,6 +259,7 @@ function MultiEmpPicker({ selectedIds, allUsers, onChange }: MultiEmpPickerProps
   const [search, setSearch] = useState('');
   const [showDrop, setShowDrop] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!showDrop) return;
@@ -234,32 +288,53 @@ function MultiEmpPicker({ selectedIds, allUsers, onChange }: MultiEmpPickerProps
     }
   }
 
-  const displayText = selectedIds.length === 0 ? 'All employees' : '';
+  const selectedUsers = activeUsers.filter((u) => selectedIds.includes(u.id));
 
   return (
     <div className="rpts-multi-picker" ref={ref}>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <input
-          type="text"
-          readOnly
-          className="rpts-multi-input"
-          value={displayText}
-          placeholder="All employees"
-          onClick={() => setShowDrop((v) => !v)}
-        />
-        {selectedIds.length > 0 && (
-          <span className="rpts-multi-selected">{selectedIds.length} selected</span>
+      <div
+        className={`rpts-multi-tags${showDrop ? ' rpts-multi-tags--open' : ''}`}
+        role="button"
+        tabIndex={0}
+        onClick={() => { setShowDrop(true); setTimeout(() => searchRef.current?.focus(), 10); }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setShowDrop(true); }}
+      >
+        {selectedUsers.length === 0 ? (
+          <span className="rpts-multi-placeholder">All employees</span>
+        ) : (
+          selectedUsers.map((u) => (
+            <span key={u.id} className="rpts-multi-tag">
+              <span className="rpts-multi-tag-name">{u.fullName}</span>
+              <button
+                type="button"
+                className="rpts-multi-tag-remove"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); onChange(selectedIds.filter((x) => x !== u.id)); }}
+                title={`Remove ${u.fullName}`}
+              >×</button>
+            </span>
+          ))
         )}
       </div>
+      {selectedUsers.length > 0 && (
+        <button
+          type="button"
+          className="rpts-multi-outer-clear"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => onChange([])}
+        >
+          Clear
+        </button>
+      )}
       {showDrop && (
         <div className="rpts-multi-dropdown">
           <input
+            ref={searchRef}
             type="text"
             className="rpts-multi-search"
             placeholder="Search employees..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            autoFocus
           />
           <div className="rpts-multi-controls">
             <button
@@ -268,13 +343,6 @@ function MultiEmpPicker({ selectedIds, allUsers, onChange }: MultiEmpPickerProps
               onMouseDown={(e) => { e.preventDefault(); onChange(activeUsers.map((u) => u.id)); }}
             >
               Select all
-            </button>
-            <button
-              type="button"
-              className="rpts-multi-ctrl-btn"
-              onMouseDown={(e) => { e.preventDefault(); onChange([]); }}
-            >
-              Clear all
             </button>
           </div>
           {filtered.length === 0 ? (
@@ -329,66 +397,48 @@ function TablePreviewContent({ data }: { data: TablePreview }) {
   );
 }
 
-function PerformancePreviewContent({ data }: { data: PerformancePreview }) {
-  const perfItems = Object.entries(data.performance);
-  const balItems = Object.entries(data.balance);
-  const countItems = Object.entries(data.counts);
+function PerfLeavePreviewContent({ data }: { data: PerfLeavePreview }) {
+  const [activeTab, setActiveTab] = useState(0);
+  useEffect(() => { setActiveTab(0); }, [data]);
 
+  const tab = data.tabs[activeTab];
   return (
     <div>
-      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 8 }}>
-        Performance
-      </p>
-      <dl className="rpts-preview-kv">
-        {perfItems.map(([k, v]) => (
-          <div key={k} className="rpts-preview-kv-item">
-            <dt>{k.replace(/([A-Z])/g, ' $1').trim()}</dt>
-            <dd>{String(v)}</dd>
-          </div>
+      <div className="rpts-preview-tabs">
+        {data.tabs.map((t, i) => (
+          <button
+            key={i}
+            type="button"
+            className={`rpts-preview-tab-btn${activeTab === i ? ' rpts-preview-tab-btn-active' : ''}`}
+            onClick={() => setActiveTab(i)}
+          >
+            {t.title}
+          </button>
         ))}
-      </dl>
-      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 8, marginTop: 16 }}>
-        Leave balance
-      </p>
-      <dl className="rpts-preview-kv">
-        {balItems.map(([k, v]) => (
-          <div key={k} className="rpts-preview-kv-item">
-            <dt>{k.replace(/([A-Z])/g, ' $1').trim()}</dt>
-            <dd>{String(v)}</dd>
-          </div>
-        ))}
-      </dl>
-      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 8, marginTop: 16 }}>
-        Requests this cycle
-      </p>
-      <dl className="rpts-preview-kv" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        {countItems.map(([k, v]) => (
-          <div key={k} className="rpts-preview-kv-item">
-            <dt>{k.charAt(0).toUpperCase() + k.slice(1)}</dt>
-            <dd>{String(v)}</dd>
-          </div>
-        ))}
-      </dl>
-      {data.leaveRows.length > 0 && (
-        <>
-          <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 8, marginTop: 16 }}>
-            Recent leave requests
-          </p>
-          <div className="rpts-preview-table">
-            <table>
+      </div>
+      {tab && tab.kind === 'table' && (
+        <TablePreviewContent data={{ columns: tab.columns, rows: tab.rows }} />
+      )}
+      {tab && tab.kind === 'kv' && (
+        <div className="rpts-preview-kv-sections">
+          {tab.sections.map((section, si) => (
+            <table key={si} className="rpts-preview-kv-table">
               <thead>
-                <tr>{data.leaveColumns.map((c) => <th key={c}>{c}</th>)}</tr>
+                <tr>
+                  <th className="rpts-preview-kv-section" colSpan={2}>{section.heading}</th>
+                </tr>
               </thead>
               <tbody>
-                {data.leaveRows.map((row, i) => (
-                  <tr key={i}>
-                    {row.map((cell, j) => <td key={j}>{cell}</td>)}
+                {section.pairs.map(([k, v], pi) => (
+                  <tr key={pi}>
+                    <td className="rpts-preview-kv-label">{k}</td>
+                    <td className="rpts-preview-kv-value">{String(v)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-        </>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -400,22 +450,20 @@ export function ReportsPage() {
   const user = useCurrentUser();
   const addToast = useStore((s) => s.addToast);
 
-  // Shared period state
+  const [selectedType, setSelectedType] = useState<ReportType | null>(null);
+
   const [dateRange, setDateRange] = useState<DateRange>(() => makeDateRange('this-month'));
   const [customStart, setCustomStart] = useState(() => toIso(new Date()));
   const [customEnd, setCustomEnd] = useState(() => toIso(new Date()));
 
-  // Per-operation busy/done
   const [busy, setBusy] = useState<string | null>(null);
 
-  // Preview modal state
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const [previewTitle, setPreviewTitle] = useState('');
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewExportKey, setPreviewExportKey] = useState<string | null>(null);
 
-  // Employee pickers
   const [selectedEmpIds, setSelectedEmpIds] = useState<string[]>([]);
   const [perfEmp, setPerfEmp] = useState<UserSummary | null>(null);
 
@@ -429,6 +477,9 @@ export function ReportsPage() {
 
   const year = dateRange.start.getFullYear();
   const month = dateRange.start.getMonth() + 1;
+
+  const visibleTypes = REPORT_TYPES.filter((rt) => !rt.managerOnly || isManager);
+  const activeRt = selectedType ? visibleTypes.find((r) => r.key === selectedType) ?? null : null;
 
   function selectPreset(key: DatePreset) {
     if (key === 'custom') {
@@ -447,13 +498,21 @@ export function ReportsPage() {
     setDateRange({ start: s, end: e, preset: 'custom' });
   }
 
-  function periodLabel() {
-    return `${MONTH_NAMES[month - 1]} ${year}`;
+  function getParams(type: ReportType): URLSearchParams {
+    const p = new URLSearchParams();
+    p.set('startDate', toIso(dateRange.start));
+    p.set('endDate', toIso(dateRange.end));
+    if (type === 'attendance-summary' && selectedEmpIds.length > 0) {
+      p.set('employeeIds', selectedEmpIds.join(','));
+    }
+    if (type === 'performance-leave-summary' && perfEmp) {
+      p.set('employeeId', perfEmp.id);
+    }
+    return p;
   }
 
   async function doDownload(type: string, extraParams: URLSearchParams, filename?: string) {
-    const key = type;
-    setBusy(key);
+    setBusy(type);
     try {
       const q = new URLSearchParams({ year: String(year), month: String(month), format: 'xlsx' });
       extraParams.forEach((v, k) => q.set(k, v));
@@ -508,7 +567,7 @@ export function ReportsPage() {
       }
       const json = await res.json() as unknown;
       if (type === 'performance-leave-summary') {
-        setPreviewData({ kind: 'performance', data: json as PerformancePreview });
+        setPreviewData({ kind: 'perf-leave', data: json as PerfLeavePreview });
       } else {
         setPreviewData({ kind: 'table', data: json as TablePreview });
       }
@@ -521,26 +580,6 @@ export function ReportsPage() {
     }
   }
 
-  // ── Attendance Summary handlers ───────────────────────────
-
-  function attendanceParams() {
-    const p = new URLSearchParams();
-    if (selectedEmpIds.length > 0) p.set('employeeIds', selectedEmpIds.join(','));
-    return p;
-  }
-
-  // ── Employee Summary handlers ─────────────────────────────
-  // (no extra params needed)
-
-  // ── Performance & Leave handlers ──────────────────────────
-
-  function perfLeaveParams() {
-    const p = new URLSearchParams();
-    if (perfEmp) p.set('employeeId', perfEmp.id);
-    return p;
-  }
-
-  // ── Shared export-from-preview button ─────────────────────
   async function exportFromPreview() {
     if (!previewExportKey) return;
     const [type, ...rest] = previewExportKey.split(':');
@@ -550,15 +589,13 @@ export function ReportsPage() {
     await doDownload(type, extraParams);
   }
 
-  // ── PDF for performance-leave-summary ─────────────────────
-  async function downloadPdf() {
-    if (!perfEmp && !isManager) return;
-    const key = 'performance-leave-summary:pdf';
+  async function downloadPdf(type: ReportType) {
+    const key = `${type}:pdf`;
     setBusy(key);
     try {
       const q = new URLSearchParams({ year: String(year), month: String(month), format: 'pdf' });
-      if (perfEmp) q.set('employeeId', perfEmp.id);
-      const res = await fetch(`/api/reports/performance-leave-summary?${q.toString()}`);
+      if (type === 'performance-leave-summary' && perfEmp) q.set('employeeId', perfEmp.id);
+      const res = await fetch(`/api/reports/${type}?${q.toString()}`);
       if (!res.ok) {
         let msg = `Request failed (${res.status})`;
         try { const j = (await res.json()) as { message?: string }; if (j.message) msg = j.message; } catch {}
@@ -566,7 +603,7 @@ export function ReportsPage() {
       }
       const blob = await res.blob();
       const cd = res.headers.get('content-disposition') ?? '';
-      const name = cd.match(/filename="([^"]+)"/)?.[1] ?? 'performance-leave-summary.pdf';
+      const name = cd.match(/filename="([^"]+)"/)?.[1] ?? `${type}.pdf`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -589,49 +626,66 @@ export function ReportsPage() {
       <div className="rpts-head">
         <h1>Reports</h1>
         <p className="muted">
-          Formatted Excel workbooks — filter, pivot and paste straight into payroll or audit
-          sheets. Pick a period, then export.
+          View and review employee-related records in one place, including attendance, working hours, overtime, performance, and leave information. These reports help HR monitor employee activities and access relevant details efficiently.
         </p>
       </div>
 
-      {/* ── Shared period picker ──────────────────────────────── */}
-      <div className="rpts-period card">
-        <div className="rpts-period-label">
-          <CalendarClock size={15} />
-          <span>Period</span>
-        </div>
-        <PeriodPicker
-          dateRange={dateRange}
-          customStart={customStart}
-          customEnd={customEnd}
-          onPresetChange={selectPreset}
-          onCustomStartChange={setCustomStart}
-          onCustomEndChange={setCustomEnd}
-          onApply={applyCustom}
-        />
+      {/* ── Type selector ─────────────────────────────────────── */}
+      <div className="rpts-type-selector">
+        {visibleTypes.map((rt) => (
+          <button
+            key={rt.key}
+            type="button"
+            className={`rpts-type-option${selectedType === rt.key ? ' rpts-type-option-active' : ''}`}
+            onClick={() => setSelectedType(selectedType === rt.key ? null : rt.key)}
+          >
+            <div className="rpts-type-option-icon" style={rt.iconStyle}>
+              <rt.Icon size={22} />
+            </div>
+            <div className="rpts-type-option-text">
+              <span className="rpts-type-option-label">{rt.label}</span>
+              <span className="rpts-type-option-desc">{rt.description}</span>
+            </div>
+            {selectedType === rt.key && (
+              <span className="rpts-type-option-check">
+                <Check size={11} />
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
-      <div className="rpts-cards">
+      {/* ── Selected type panel ───────────────────────────────── */}
+      <AnimatePresence mode="wait">
+        {activeRt && (
+          <motion.div
+            key={activeRt.key}
+            className="rpts-selected-panel card"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+          >
+            {activeRt.hasPeriod && (
+              <div className="rpts-filter-row">
+                <div className="rpts-period-label">
+                  <CalendarClock size={15} />
+                  <span>Period</span>
+                </div>
+                <PeriodPicker
+                  dateRange={dateRange}
+                  customStart={customStart}
+                  customEnd={customEnd}
+                  onPresetChange={selectPreset}
+                  onCustomStartChange={setCustomStart}
+                  onCustomEndChange={setCustomEnd}
+                  onApply={applyCustom}
+                />
+              </div>
+            )}
 
-        {/* ── Card 1: Attendance Summary ──────────────────────── */}
-        <motion.div
-          className="rpts-card card"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0 }}
-        >
-          <div className="rpts-card-header">
-            <div className="rpts-icon" style={{ background: 'var(--color-info-light)', color: 'var(--color-brand-primary)' }}>
-              <CalendarClock size={20} />
-            </div>
-            <div className="rpts-card-title-block">
-              <h4>Attendance Summary</h4>
-              <p>Daily clock-in/out, hours worked, deficit, overtime, and location for the selected employees and period.</p>
-            </div>
-          </div>
-          <div className="rpts-card-body">
-            {isManager && (
-              <>
+            {activeRt.hasMultiEmp && isManager && (
+              <div className="rpts-filter-row">
                 <div className="rpts-period-label">
                   <Users size={14} />
                   <span>Employees</span>
@@ -641,106 +695,11 @@ export function ReportsPage() {
                   allUsers={allUsers}
                   onChange={setSelectedEmpIds}
                 />
-              </>
+              </div>
             )}
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-              {periodLabel()}
-            </span>
-          </div>
-          <div className="rpts-card-actions">
-            <Button
-              variant="secondary"
-              size="sm"
-              leadingIcon={previewBusy && previewTitle === 'Attendance Summary' ? <Loader2 size={13} className="rpts-spin" /> : <Eye size={13} />}
-              onClick={() => openPreview(
-                'attendance-summary',
-                'Attendance Summary',
-                attendanceParams(),
-                `attendance-summary:${attendanceParams().toString()}`,
-              )}
-              disabled={busy !== null}
-            >
-              Preview
-            </Button>
-            <Button
-              variant="primary"
-              leadingIcon={busy === 'attendance-summary' ? <Loader2 size={14} className="rpts-spin" /> : <FileSpreadsheet size={14} />}
-              onClick={() => doDownload('attendance-summary', attendanceParams())}
-              disabled={busy !== null}
-            >
-              {busy === 'attendance-summary' ? 'Building…' : 'Export Excel'}
-            </Button>
-          </div>
-        </motion.div>
 
-        {/* ── Card 2: Employee Summary ────────────────────────── */}
-        {isManager && (
-          <motion.div
-            className="rpts-card card"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-          >
-            <div className="rpts-card-header">
-              <div className="rpts-icon" style={{ background: 'var(--color-bg-subtle)', color: 'var(--color-text-secondary)' }}>
-                <Users size={20} />
-              </div>
-              <div className="rpts-card-title-block">
-                <h4>Employee Summary</h4>
-                <p>Company directory — Employee IDs, contact info, department, designation, line manager, joining and departure dates.</p>
-              </div>
-            </div>
-            <div className="rpts-card-body">
-              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                All employees (active + deactivated)
-              </span>
-            </div>
-            <div className="rpts-card-actions">
-              <Button
-                variant="secondary"
-                size="sm"
-                leadingIcon={previewBusy && previewTitle === 'Employee Summary' ? <Loader2 size={13} className="rpts-spin" /> : <Eye size={13} />}
-                onClick={() => openPreview(
-                  'employee-summary',
-                  'Employee Summary',
-                  new URLSearchParams(),
-                  'employee-summary:',
-                )}
-                disabled={busy !== null}
-              >
-                Preview
-              </Button>
-              <Button
-                variant="primary"
-                leadingIcon={busy === 'employee-summary' ? <Loader2 size={14} className="rpts-spin" /> : <FileSpreadsheet size={14} />}
-                onClick={() => doDownload('employee-summary', new URLSearchParams())}
-                disabled={busy !== null}
-              >
-                {busy === 'employee-summary' ? 'Building…' : 'Export Excel'}
-              </Button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ── Card 3: Performance & Leave Summary ─────────────── */}
-        <motion.div
-          className="rpts-card card"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <div className="rpts-card-header">
-            <div className="rpts-icon" style={{ background: 'var(--color-leave-replacement-light)', color: 'var(--color-leave-replacement)' }}>
-              <TrendingUp size={20} />
-            </div>
-            <div className="rpts-card-title-block">
-              <h4>Performance &amp; Leave Summary</h4>
-              <p>Performance metrics and complete leave history with balance breakdown for a single employee.</p>
-            </div>
-          </div>
-          <div className="rpts-card-body">
-            {isManager && (
-              <>
+            {activeRt.hasSingleEmp && isManager && (
+              <div className="rpts-filter-row">
                 <div className="rpts-period-label">
                   <Users size={14} />
                   <span>Employee</span>
@@ -750,55 +709,71 @@ export function ReportsPage() {
                   allUsers={allUsers}
                   onSelect={setPerfEmp}
                 />
-              </>
+              </div>
             )}
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-              {periodLabel()}
-            </span>
-          </div>
-          <div className="rpts-card-actions">
-            <Button
-              variant="secondary"
-              size="sm"
-              leadingIcon={previewBusy && previewTitle === 'Performance & Leave Summary' ? <Loader2 size={13} className="rpts-spin" /> : <Eye size={13} />}
-              onClick={() => openPreview(
-                'performance-leave-summary',
-                'Performance & Leave Summary',
-                perfLeaveParams(),
-                `performance-leave-summary:${perfLeaveParams().toString()}`,
-              )}
-              disabled={busy !== null}
-            >
-              Preview
-            </Button>
-            <Button
-              variant="primary"
-              leadingIcon={busy === 'performance-leave-summary' ? <Loader2 size={14} className="rpts-spin" /> : <FileSpreadsheet size={14} />}
-              onClick={() => doDownload('performance-leave-summary', perfLeaveParams())}
-              disabled={busy !== null}
-            >
-              {busy === 'performance-leave-summary' ? 'Building…' : 'Export Excel'}
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              leadingIcon={busy === 'performance-leave-summary:pdf' ? <Loader2 size={13} className="rpts-spin" /> : <Download size={13} />}
-              onClick={downloadPdf}
-              disabled={busy !== null}
-            >
-              {busy === 'performance-leave-summary:pdf' ? 'Rendering…' : 'PDF'}
-            </Button>
-          </div>
-        </motion.div>
 
-      </div>
+            <div className="rpts-selected-details">{activeRt.details}</div>
+
+            <div className="rpts-card-actions">
+              <Button
+                variant="secondary"
+                size="sm"
+                leadingIcon={
+                  previewBusy
+                    ? <Loader2 size={13} className="rpts-spin" />
+                    : <Eye size={13} />
+                }
+                disabled={busy !== null}
+                onClick={() => {
+                  const params = getParams(activeRt.key);
+                  openPreview(
+                    activeRt.key,
+                    activeRt.label,
+                    params,
+                    `${activeRt.key}:${params.toString()}`,
+                  );
+                }}
+              >
+                Preview
+              </Button>
+              <Button
+                variant="primary"
+                leadingIcon={
+                  busy === activeRt.key
+                    ? <Loader2 size={14} className="rpts-spin" />
+                    : <FileSpreadsheet size={14} />
+                }
+                disabled={busy !== null}
+                onClick={() => doDownload(activeRt.key, getParams(activeRt.key))}
+              >
+                {busy === activeRt.key ? 'Building…' : 'Export Excel'}
+              </Button>
+              {activeRt.hasPdf && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  leadingIcon={
+                    busy === `${activeRt.key}:pdf`
+                      ? <Loader2 size={13} className="rpts-spin" />
+                      : <Download size={13} />
+                  }
+                  disabled={busy !== null}
+                  onClick={() => downloadPdf(activeRt.key)}
+                >
+                  {busy === `${activeRt.key}:pdf` ? 'Rendering…' : 'PDF'}
+                </Button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Preview modal ─────────────────────────────────────── */}
       <Modal
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
         title={previewTitle}
-        size="xl"
+        size="full"
         footer={
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
             <Button variant="secondary" size="sm" onClick={() => setPreviewOpen(false)}>
@@ -813,17 +788,21 @@ export function ReportsPage() {
             >
               Export Excel
             </Button>
-            {previewTitle === 'Performance & Leave Summary' && (
-              <Button
-                variant="secondary"
-                size="sm"
-                leadingIcon={<Download size={14} />}
-                onClick={() => { setPreviewOpen(false); downloadPdf(); }}
-                disabled={!previewData}
-              >
-                PDF
-              </Button>
-            )}
+            {(() => {
+              const pt = previewExportKey?.split(':')[0] as ReportType | undefined;
+              if (!pt || !REPORT_TYPES.find((r) => r.key === pt)?.hasPdf) return null;
+              return (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  leadingIcon={busy === `${pt}:pdf` ? <Loader2 size={13} className="rpts-spin" /> : <Download size={14} />}
+                  onClick={() => { setPreviewOpen(false); downloadPdf(pt); }}
+                  disabled={!previewData}
+                >
+                  PDF
+                </Button>
+              );
+            })()}
           </div>
         }
       >
@@ -836,16 +815,10 @@ export function ReportsPage() {
         {!previewBusy && previewData && (
           previewData.kind === 'table'
             ? <TablePreviewContent data={previewData.data} />
-            : <PerformancePreviewContent data={previewData.data} />
+            : <PerfLeavePreviewContent key={previewExportKey ?? undefined} data={previewData.data} />
         )}
       </Modal>
 
-      <div className="rpts-note card">
-        <strong>About these exports</strong>
-        <p>
-          Workbooks open on a Summary sheet carrying the period and headline figures, then the raw rows. Header rows are frozen and filterable; hours, days and rates are real numbers rather than text, so they sort and total correctly, and each sheet ends with a live <span className="mono">SUM()</span> row. Times are shown in Dhaka time. Everything is generated fresh on request, and you only ever receive rows you already have permission to see in the app.
-        </p>
-      </div>
     </div>
   );
 }

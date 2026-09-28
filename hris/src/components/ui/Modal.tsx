@@ -9,11 +9,14 @@ interface Props {
   title?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
 }
 
 export function Modal({ open, onClose, title, children, footer, size = 'md' }: Props) {
-  const widths = { sm: 360, md: 480, lg: 640, xl: 780 };
+  const widths: Record<string, number | string> = {
+    sm: 360, md: 480, lg: 640, xl: 780,
+    full: 'min(1200px, calc(100vw - 48px))',
+  };
   return (
     <AnimatePresence>
       {open && (
@@ -28,7 +31,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: P
           />
           <div className="modal-wrap" onClick={onClose}>
             <motion.div
-              className="modal"
+              className={`modal${size === 'full' ? ' modal--full' : ''}`}
               style={{ width: widths[size] }}
               initial={{ opacity: 0, scale: 0.96, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}

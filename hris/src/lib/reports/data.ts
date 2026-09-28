@@ -379,8 +379,8 @@ export async function getLeaveReportData(
     endDate: excelDateOnly(r.endDate),
     durationDays: Number(r.durationDays),
     halfDay: r.isHalfDay ? titleCase(r.halfDaySlot ?? 'Half day') : 'No',
-    timeFrom: r.timeFrom ?? '',
-    timeTo: r.timeTo ?? '',
+    timeFrom: r.timeFrom ?? (r.isHalfDay ? halfDayTimeFrom(r.halfDaySlot) : ''),
+    timeTo: r.timeTo ?? (r.isHalfDay ? halfDayTimeTo(r.halfDaySlot) : ''),
     reason: r.reason,
     status: titleCase(r.status),
     reviewer: r.reviewer?.fullName ?? '',
@@ -485,8 +485,8 @@ export async function getCompanyReportData(
         endDate: excelDateOnly(r.endDate),
         durationDays: Number(r.durationDays),
         halfDay: r.isHalfDay ? titleCase(r.halfDaySlot ?? 'Half day') : 'No',
-        timeFrom: r.timeFrom ?? '',
-        timeTo: r.timeTo ?? '',
+        timeFrom: r.timeFrom ?? (r.isHalfDay ? halfDayTimeFrom(r.halfDaySlot) : ''),
+        timeTo: r.timeTo ?? (r.isHalfDay ? halfDayTimeTo(r.halfDaySlot) : ''),
         reason: r.reason,
         status: titleCase(r.status),
         reviewer: r.reviewer?.fullName ?? '',
@@ -754,8 +754,8 @@ export async function getPerformanceLeaveSummaryData(
     endDate: excelDateOnly(r.endDate),
     durationDays: Number(r.durationDays),
     halfDay: r.isHalfDay ? titleCase(r.halfDaySlot ?? 'Half day') : 'No',
-    timeFrom: r.timeFrom ?? '',
-    timeTo: r.timeTo ?? '',
+    timeFrom: r.timeFrom ?? (r.isHalfDay ? halfDayTimeFrom(r.halfDaySlot) : ''),
+    timeTo: r.timeTo ?? (r.isHalfDay ? halfDayTimeTo(r.halfDaySlot) : ''),
     reason: r.reason,
     status: titleCase(r.status),
     reviewer: r.reviewer?.fullName ?? '',
@@ -904,6 +904,18 @@ function titleCase(v: string): string {
     .split('_')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
+}
+
+function halfDayTimeFrom(slot: string | null | undefined): string {
+  if (slot === 'MORNING') return '08:30';
+  if (slot === 'AFTERNOON') return '14:00';
+  return '';
+}
+
+function halfDayTimeTo(slot: string | null | undefined): string {
+  if (slot === 'MORNING') return '13:00';
+  if (slot === 'AFTERNOON') return '17:30';
+  return '';
 }
 
 function round2(n: number): number {

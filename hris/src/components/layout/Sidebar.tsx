@@ -14,7 +14,6 @@ import {
   CalendarDays,
   Settings,
   Cog,
-  ScrollText,
   Shield,
   MapPin,
   Fingerprint,
@@ -40,20 +39,14 @@ const adminNav = [
   { to: '/admin/locations', label: 'Work Locations', icon: <MapPin size={18} /> },
   { to: '/admin/holidays', label: 'Holiday Manager', icon: <CalendarDays size={18} /> },
   { to: '/admin/biometric', label: 'Biometric', icon: <Fingerprint size={18} /> },
-  { to: '/admin/audit', label: 'Audit Logs', icon: <ScrollText size={18} /> },
   { to: '/admin/permissions', label: 'Permissions', icon: <Shield size={18} /> },
   { to: '/admin/settings', label: 'Settings', icon: <Settings size={18} /> },
 ];
 
-/**
- * Line Managers get their team review entry points plus the shared oversight
- * pages (audit log, permissions). Holiday manager / settings stay HR/Admin.
- */
 const lineManagerNav = [
   { to: '/admin/requests', label: 'Team Requests', icon: <Inbox size={18} /> },
   { to: '/reports', label: 'Reports', icon: <FileText size={18} /> },
   { to: '/admin/locations', label: 'Team Locations', icon: <MapPin size={18} /> },
-  { to: '/admin/audit', label: 'Audit Logs', icon: <ScrollText size={18} /> },
   { to: '/admin/permissions', label: 'Permissions', icon: <Shield size={18} /> },
 ];
 

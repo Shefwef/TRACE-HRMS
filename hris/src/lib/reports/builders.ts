@@ -343,7 +343,7 @@ const ATTENDANCE_SUMMARY_COLS: Col[] = [
   { header: 'Attendance Status', key: 'status', width: 18 },
   { header: 'Initial Location', key: 'initialLocation', width: 16 },
   { header: 'Final Location', key: 'finalLocation', width: 22 },
-  { header: 'Off-site Work Place', key: 'offsiteWorkPlace', width: 30 },
+  { header: 'Off-site Workplace', key: 'offsiteWorkPlace', width: 30 },
 ];
 
 const EMPLOYEE_DIRECTORY_COLS: Col[] = [
@@ -355,7 +355,7 @@ const EMPLOYEE_DIRECTORY_COLS: Col[] = [
   { header: 'Designation', key: 'designation', width: 24 },
   { header: 'Line Manager', key: 'lineManager', width: 24 },
   { header: 'Joining Date', key: 'joiningDate', format: 'date' },
-  { header: 'Departure Date', key: 'departureDate', format: 'date' },
+  { header: 'Exit Date', key: 'departureDate', format: 'date' },
 ];
 
 const PERF_LEAVE_REQUEST_COLS: Col[] = [
