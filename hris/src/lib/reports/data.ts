@@ -174,6 +174,72 @@ export interface Identity {
   employeeIdCode: string | null;
   department?: string | null;
   designation?: string | null;
+  lineManagerName?: string | null;
+}
+
+// ─── new report row shapes ────────────────────────────────
+
+export type AttendanceSummaryRow = {
+  employeeIdCode: string;
+  employeeName: string;
+  designation: string;
+  date: Date;
+  weekday: string;
+  clockIn: Date | null;
+  clockOut: Date | null;
+  totalHours: number;
+  overtimeHours: number;
+  deficitHours: number;
+  status: string;
+  initialLocation: string;
+  finalLocation: string;
+  offsiteWorkPlace: string;
+}
+
+export type EmployeeDirectoryRow = {
+  employeeIdCode: string;
+  employeeName: string;
+  email: string;
+  phone: string;
+  department: string;
+  designation: string;
+  lineManager: string;
+  joiningDate: Date | null;
+  departureDate: Date | null;
+}
+
+export interface PerformanceLeaveSummaryData {
+  performance: {
+    workingDays: number;
+    halfDays: number;
+    leaveDays: number;
+    hoursWorked: number;
+    overtimeHours: number;
+    offsiteDays: number;
+  };
+  balance: LeaveBalanceFigures;
+  requestCounts: { approved: number; pending: number; rejected: number };
+  leaveRequests: PerformanceSummaryLeaveRow[];
+  lineManagerName: string;
+}
+
+export type PerformanceSummaryLeaveRow = {
+  sl: number;
+  employeeIdCode: string;
+  employeeName: string;
+  leaveType: string;
+  startDate: Date;
+  endDate: Date;
+  durationDays: number;
+  halfDay: string;
+  timeFrom: string;
+  timeTo: string;
+  reason: string;
+  status: string;
+  reviewer: string;
+  reviewedAt: Date | null;
+  appliedOn: Date;
+  adminNote: string;
 }
 
 // ─── attendance (one employee) ────────────────────────────
@@ -279,6 +345,8 @@ export interface LeaveBalanceFigures {
   sickUsed: number;
   sickPending: number;
   replacementBalance: number;
+  /** Populated by getPerformanceLeaveSummaryData; 0 otherwise. */
+  replacementUsed?: number;
 }
 
 export interface LeaveReportData {
@@ -513,6 +581,198 @@ export async function getSummaryReportData(
       rejected: requests.filter((r) => r.status === 'REJECTED').length,
       daysUsed: round2(approved.reduce((s, r) => s + Number(r.durationDays), 0)),
     },
+  };
+}
+
+// ─── new report data functions ────────────────────────────
+
+/**
+ * Multi-employee attendance summary. Each row maps to one AttendanceRecord,
+ * enriched with location events for that day to compute initial/final location
+ * and offsite workplace names.
+ */
+export async function getAttendanceSummaryRows(
+  employeeIds: string[],
+  period: Period,
+): Promise<AttendanceSummaryRow[]> {
+  if (employeeIds.length === 0) return [];
+
+  const records = await prisma.attendanceRecord.findMany({
+    where: {
+      employeeId: { in: employeeIds },
+      date: { gte: period.from, lt: period.to },
+    },
+    include: {
+      employee: {
+        select: { fullName: true, employeeIdCode: true, designation: true },
+      },
+      locationEvents: {
+        where: {
+          eventType: {
+            in: ['OFFSITE_STARTED', 'OFFSITE_LOCATION_CHANGED', 'RETURNED_TO_OFFICE'],
+          },
+        },
+        orderBy: { startedAt: 'asc' },
+        select: { eventType: true, placeName: true },
+      },
+    },
+    orderBy: [{ employeeId: 'asc' }, { date: 'asc' }],
+  });
+
+  return records.map((r) => {
+    const events = r.locationEvents;
+
+    // initialLocation: always "Office" when clocked in
+    const initialLocation = r.clockInTime ? 'Office' : '';
+
+    // finalLocation: "Office" unless the LAST relevant event is OFFSITE with no RETURNED_TO_OFFICE after it
+    let finalLocation = r.clockInTime ? 'Office' : '';
+    if (r.clockInTime && events.length > 0) {
+      const lastEvent = events[events.length - 1];
+      if (
+        lastEvent.eventType === 'OFFSITE_STARTED' ||
+        lastEvent.eventType === 'OFFSITE_LOCATION_CHANGED'
+      ) {
+        finalLocation = lastEvent.placeName ?? 'Off-site';
+      }
+    }
+
+    // offsiteWorkPlace: comma-joined place names from OFFSITE_STARTED + OFFSITE_LOCATION_CHANGED
+    const offsitePlaces = events
+      .filter((e) => e.eventType === 'OFFSITE_STARTED' || e.eventType === 'OFFSITE_LOCATION_CHANGED')
+      .map((e) => e.placeName ?? '')
+      .filter(Boolean);
+    const uniquePlaces = [...new Set(offsitePlaces)];
+    const offsiteWorkPlace = uniquePlaces.join(', ');
+
+    return {
+      employeeIdCode: r.employee.employeeIdCode ?? '-',
+      employeeName: r.employee.fullName,
+      designation: r.employee.designation ?? '',
+      date: excelDateOnly(r.date),
+      weekday: WEEKDAY_SHORT[r.date.getUTCDay()],
+      clockIn: r.clockInTime ? excelInstant(r.clockInTime) : null,
+      clockOut: r.clockOutTime ? excelInstant(r.clockOutTime) : null,
+      totalHours: round2(r.totalWorkedMinutes / 60),
+      overtimeHours: round2(r.overtimeMinutes / 60),
+      deficitHours: round2(r.deficitMinutes / 60),
+      status: titleCase(r.status),
+      initialLocation,
+      finalLocation,
+      offsiteWorkPlace,
+    };
+  });
+}
+
+/**
+ * Company directory — all users (active + deactivated) where deletedAt IS NULL,
+ * ordered by isActive desc, department asc, fullName asc.
+ */
+export async function getEmployeeDirectoryRows(): Promise<EmployeeDirectoryRow[]> {
+  const users = await prisma.user.findMany({
+    where: { deletedAt: null },
+    include: { lineManager: { select: { fullName: true } } },
+    orderBy: [
+      { isActive: 'desc' },
+      { department: 'asc' },
+      { fullName: 'asc' },
+    ],
+  });
+
+  return users.map((u) => ({
+    employeeIdCode: u.employeeIdCode ?? '-',
+    employeeName: u.fullName,
+    email: u.email,
+    phone: u.phone ?? '',
+    department: u.department ?? '',
+    designation: u.designation ?? '',
+    lineManager: u.lineManager?.fullName ?? '',
+    joiningDate: u.joiningDate ? excelDateOnly(u.joiningDate) : null,
+    departureDate: u.deactivatedAt ? excelDateOnly(u.deactivatedAt) : null,
+  }));
+}
+
+/**
+ * Performance & Leave summary for a single employee over a period. Returns
+ * rolled-up attendance stats, leave balance, request counts and all leave
+ * request rows for the cycle year.
+ */
+export async function getPerformanceLeaveSummaryData(
+  employee: Identity,
+  period: Period,
+): Promise<PerformanceLeaveSummaryData> {
+  const cycleYear = period.year;
+  const cycleFrom = new Date(Date.UTC(cycleYear, 0, 1));
+  const cycleTo = new Date(Date.UTC(cycleYear + 1, 0, 1));
+
+  const [attendanceRows, balance, leaveRequestsRaw, managerInfo] = await Promise.all([
+    getAttendanceSummaryRows([employee.id], period),
+    ensureBalance(employee.id, cycleYear),
+    prisma.leaveRequest.findMany({
+      where: {
+        employeeId: employee.id,
+        startDate: { gte: cycleFrom, lt: cycleTo },
+      },
+      include: { reviewer: { select: { fullName: true } } },
+      orderBy: { startDate: 'asc' },
+    }),
+    employee.lineManagerName !== undefined
+      ? Promise.resolve(employee.lineManagerName)
+      : prisma.user
+          .findUnique({ where: { id: employee.id }, select: { lineManager: { select: { fullName: true } } } })
+          .then((u) => u?.lineManager?.fullName ?? ''),
+  ]);
+
+  // Performance stats from the period's attendance rows
+  const workingDays = attendanceRows.filter(
+    (r) => r.status !== 'Weekend' && r.status !== 'Holiday',
+  ).length;
+  const halfDays = attendanceRows.filter((r) => r.status === 'Half Day').length;
+  const leaveDays = attendanceRows.filter((r) => r.status === 'Leave').length;
+  const hoursWorked = round2(attendanceRows.reduce((s, r) => s + r.totalHours, 0));
+  const overtimeHours = round2(attendanceRows.reduce((s, r) => s + r.overtimeHours, 0));
+  const offsiteDays = attendanceRows.filter((r) => r.offsiteWorkPlace.length > 0).length;
+
+  // Request counts for the cycle year
+  const approved = leaveRequestsRaw.filter((r) => r.status === 'APPROVED').length;
+  const pending = leaveRequestsRaw.filter((r) => r.status === 'PENDING').length;
+  const rejected = leaveRequestsRaw.filter((r) => r.status === 'REJECTED').length;
+
+  // Replacement used: sum of approved REPLACEMENT leave requests for the cycle year
+  const replacementUsed = round2(
+    leaveRequestsRaw
+      .filter((r) => r.status === 'APPROVED' && r.leaveType === 'REPLACEMENT')
+      .reduce((s, r) => s + Number(r.durationDays), 0),
+  );
+
+  const leaveRequests: PerformanceSummaryLeaveRow[] = leaveRequestsRaw.map((r, i) => ({
+    sl: i + 1,
+    employeeIdCode: employee.employeeIdCode ?? '-',
+    employeeName: employee.fullName,
+    leaveType: titleCase(r.leaveType),
+    startDate: excelDateOnly(r.startDate),
+    endDate: excelDateOnly(r.endDate),
+    durationDays: Number(r.durationDays),
+    halfDay: r.isHalfDay ? titleCase(r.halfDaySlot ?? 'Half day') : 'No',
+    timeFrom: r.timeFrom ?? '',
+    timeTo: r.timeTo ?? '',
+    reason: r.reason,
+    status: titleCase(r.status),
+    reviewer: r.reviewer?.fullName ?? '',
+    reviewedAt: r.reviewedAt ? excelInstant(r.reviewedAt) : null,
+    appliedOn: excelInstant(r.createdAt),
+    adminNote: r.adminNote ?? '',
+  }));
+
+  return {
+    performance: { workingDays, halfDays, leaveDays, hoursWorked, overtimeHours, offsiteDays },
+    balance: {
+      ...balance,
+      replacementUsed,
+    },
+    requestCounts: { approved, pending, rejected },
+    leaveRequests,
+    lineManagerName: typeof managerInfo === 'string' ? managerInfo : (employee.lineManagerName ?? ''),
   };
 }
 

@@ -83,8 +83,8 @@ enum WorkLocationEventType {
 }
 
 enum ExtraWorkType {
-  FULL_DAY          // 9 AM – 5 PM  → +1.0 replacement leave day
-  HALF_DAY_MORNING  // 9 AM – 1 PM  → +0.5 replacement leave day
+  FULL_DAY // 9 AM – 5 PM  → +1.0 replacement leave day
+  HALF_DAY_MORNING // 9 AM – 1 PM  → +0.5 replacement leave day
   HALF_DAY_AFTERNOON // 1 PM – 5 PM → +0.5 replacement leave day
 }
 
@@ -96,10 +96,10 @@ enum ExtraWorkStatus {
 
 /**
  * Where an ExtraWorkLog came from.
- *   MANUAL - employee submitted it via the Apply for replacement leave form.
- *   AUTO   - biometric pipeline auto-filed it when the employee clocked in
- *            AND out on a weekend / public holiday. HR then picks Full /
- *            Half AM / Half PM in the review drawer before crediting.
+ * MANUAL - employee submitted it via the Apply for replacement leave form.
+ * AUTO   - biometric pipeline auto-filed it when the employee clocked in
+ * AND out on a weekend / public holiday. HR then picks Full /
+ * Half AM / Half PM in the review drawer before crediting.
  */
 enum ExtraWorkSource {
   MANUAL
@@ -138,56 +138,56 @@ enum NotificationType {
 /// Real users are seeded via prisma/seed.ts; new users are added via the
 /// invite flow which calls Clerk's invitation API then mirrors here.
 model User {
-  id               String   @id
-  fullName         String
-  email            String   @unique
+  id              String    @id
+  fullName        String
+  email           String    @unique
   /// Denormalized "primary" role — always the highest-ranked entry in `roles`.
   /// Kept in sync by the server whenever roles are updated. Used for display,
   /// badges and the top-bar. Reads should prefer `roles` for permission checks.
-  role             Role
+  role            Role
   /// Full set of granted roles. Source of truth for permissions and
   /// notification routing. Users can hold multiple roles simultaneously
   /// (e.g. a COO with ADMIN + HR). Must contain at least one role.
-  roles            Role[]   @default([])
-  department       String?
-  designation      String?
-  employeeIdCode   String?  @unique
-  avatarUrl        String?
-  phone            String?  @db.VarChar(30)
-  dateOfBirth      DateTime? @db.Date
-  joiningDate      DateTime? @db.Date
-  cycleStartMonth  Int      @default(1)
-  cycleStartDay    Int      @default(1)
-  isActive         Boolean  @default(true)
+  roles           Role[]    @default([])
+  department      String?
+  designation     String?
+  employeeIdCode  String?   @unique
+  avatarUrl       String?
+  phone           String?   @db.VarChar(30)
+  dateOfBirth     DateTime? @db.Date
+  joiningDate     DateTime? @db.Date
+  cycleStartMonth Int       @default(1)
+  cycleStartDay   Int       @default(1)
+  isActive        Boolean   @default(true)
   /// Soft-deactivation tracking. Set when isActive flips to false.
-  deactivatedAt    DateTime?
-  deactivatedById  String?
+  deactivatedAt   DateTime?
+  deactivatedById String?
   /// Soft-delete tracking. When set, the user is hidden from most views and
   /// scheduled for permanent removal 60 days later (cron/auto-clean).
   /// Restore = set to null. Permanent delete = actual DELETE.
-  deletedAt        DateTime?
-  deletedById      String?
+  deletedAt       DateTime?
+  deletedById     String?
   /// Team assignment: LINE_MANAGER self-relation.
-  lineManagerId    String?
-  lineManager      User?    @relation("TeamReports", fields: [lineManagerId], references: [id], onDelete: SetNull)
-  reports          User[]   @relation("TeamReports")
+  lineManagerId   String?
+  lineManager     User?     @relation("TeamReports", fields: [lineManagerId], references: [id], onDelete: SetNull)
+  reports         User[]    @relation("TeamReports")
   /// The numeric ID enrolled on the biometric device (emp_code from ZKBioTime).
   /// Null until mapped by HR. Unique so two people can't share a fingerprint ID.
-  biometricUserId  String?  @unique
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  biometricUserId String?   @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  leaveBalances    LeaveBalance[]
-  leaveRequests    LeaveRequest[]     @relation("EmployeeLeaves")
-  reviewedLeaves   LeaveRequest[]     @relation("ReviewerLeaves")
-  grantedLeaves    LeaveRequest[]     @relation("GrantedLeaves")
-  extraWorkLogs    ExtraWorkLog[]     @relation("EmployeeExtraWork")
-  reviewedExtras   ExtraWorkLog[]     @relation("ReviewerExtraWork")
-  attendance       AttendanceRecord[]
-  notifications    Notification[]
-  createdHolidays  Holiday[]
-  auditLog         AuditLog[]
-  locationEvents   WorkLocationEvent[] @relation("EmployeeLocations")
+  leaveBalances     LeaveBalance[]
+  leaveRequests     LeaveRequest[]      @relation("EmployeeLeaves")
+  reviewedLeaves    LeaveRequest[]      @relation("ReviewerLeaves")
+  grantedLeaves     LeaveRequest[]      @relation("GrantedLeaves")
+  extraWorkLogs     ExtraWorkLog[]      @relation("EmployeeExtraWork")
+  reviewedExtras    ExtraWorkLog[]      @relation("ReviewerExtraWork")
+  attendance        AttendanceRecord[]
+  notifications     Notification[]
+  createdHolidays   Holiday[]
+  auditLog          AuditLog[]
+  locationEvents    WorkLocationEvent[] @relation("EmployeeLocations")
   authoredLocations WorkLocationEvent[] @relation("AuthoredLocations")
 
   @@index([role])
@@ -199,22 +199,22 @@ model User {
 /// One row per employee per leave-cycle-year. The `casual_used + casual_pending`
 /// invariant is enforced by a DB check constraint (see migration).
 model LeaveBalance {
-  id                      String   @id @default(cuid())
-  employeeId              String
-  cycleYear               Int
-  cycleStartDate          DateTime @db.Date
-  cycleEndDate            DateTime @db.Date
-  casualTotal             Decimal  @default(8.0)  @db.Decimal(4, 1)
-  casualUsed              Decimal  @default(0.0)  @db.Decimal(4, 1)
-  casualPending           Decimal  @default(0.0)  @db.Decimal(4, 1)
-  sickTotal               Decimal  @default(10.0) @db.Decimal(4, 1)
-  sickUsed                Decimal  @default(0.0)  @db.Decimal(4, 1)
-  sickPending             Decimal  @default(0.0)  @db.Decimal(4, 1)
-  replacementBalance      Decimal  @default(0.0)  @db.Decimal(4, 1)
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  employeeId         String
+  cycleYear          Int
+  cycleStartDate     DateTime @db.Date
+  cycleEndDate       DateTime @db.Date
+  casualTotal        Decimal  @default(8.0) @db.Decimal(4, 1)
+  casualUsed         Decimal  @default(0.0) @db.Decimal(4, 1)
+  casualPending      Decimal  @default(0.0) @db.Decimal(4, 1)
+  sickTotal          Decimal  @default(10.0) @db.Decimal(4, 1)
+  sickUsed           Decimal  @default(0.0) @db.Decimal(4, 1)
+  sickPending        Decimal  @default(0.0) @db.Decimal(4, 1)
+  replacementBalance Decimal  @default(0.0) @db.Decimal(4, 1)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  employee                User     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee User @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@unique([employeeId, cycleYear])
   @@index([employeeId])
@@ -224,57 +224,57 @@ model LeaveBalance {
 /// A leave request. Supports full-day range, half-day, and — new — time-range
 /// partial leave (timeFrom/timeTo, e.g. 09:00–13:00 within a single day).
 model LeaveRequest {
-  id                    String                @id @default(cuid())
-  employeeId            String
-  leaveType             LeaveType
-  startDate             DateTime              @db.Date
-  endDate               DateTime              @db.Date
-  isHalfDay             Boolean               @default(false)
-  halfDaySlot           HalfDaySlot?
+  id                 String                @id @default(cuid())
+  employeeId         String
+  leaveType          LeaveType
+  startDate          DateTime              @db.Date
+  endDate            DateTime              @db.Date
+  isHalfDay          Boolean               @default(false)
+  halfDaySlot        HalfDaySlot?
   /// Optional custom time slot (single-day only, mutually exclusive with isHalfDay).
   /// Stored as HH:mm strings. Duration derived server-side.
-  timeFrom              String?
-  timeTo                String?
-  durationDays          Decimal               @db.Decimal(4, 1)
-  reason                String                @db.VarChar(100)
-  description           String?
-  attachmentUrl         String?
-  channels              NotificationChannel[] @default([EMAIL])
-  customMessage         String?
-  status                LeaveStatus           @default(PENDING)
-  adminNote             String?
-  reviewedById          String?
-  reviewedAt            DateTime?
+  timeFrom           String?
+  timeTo             String?
+  durationDays       Decimal               @db.Decimal(4, 1)
+  reason             String                @db.VarChar(100)
+  description        String?
+  attachmentUrl      String?
+  channels           NotificationChannel[] @default([EMAIL])
+  customMessage      String?
+  status             LeaveStatus           @default(PENDING)
+  adminNote          String?
+  reviewedById       String?
+  reviewedAt         DateTime?
   /// If the reviewer modified the allocation at approval time, this stores
   /// the per-day breakdown as JSON: [{ date: "YYYY-MM-DD", slot: "FULL"|"HALF_MORNING"|"HALF_AFTERNOON" }, ...]
   /// When set, durationDays reflects the sum of these entries, not the
   /// original request. Null means the reviewer accepted the request as-is.
-  approvedAllocation    Json?
+  approvedAllocation Json?
   /// Set when this leave was directly granted by HR / Line Manager
   /// (as opposed to a normal employee request that was later approved).
   /// The granter is stored here; the record is also seeded with
   /// status=APPROVED and reviewedById=grantedById in the same transaction.
-  grantedById           String?
+  grantedById        String?
   /// Optional overtime work date the grant is compensating for (context only,
   /// balance is not adjusted since the leave IS the credit).
-  overtimeWorkDate      DateTime?             @db.Date
+  overtimeWorkDate   DateTime?             @db.Date
 
   /// Groups multi-type submissions from the Apply-for-leave page. All rows
   /// in a bundle share reason/description/attachment/channels + move through
   /// PENDING → APPROVED/REJECTED/CANCELLED together (approve/reject/cancel
   /// endpoints cascade on bundleId). Null for legacy single-type requests.
-  bundleId              String?
+  bundleId         String?
   /// Per-day full/half breakdown at submit time, source of truth for the
   /// row's durationDays. Shape: [{ date: "YYYY-MM-DD", slot: "FULL" | "HALF_MORNING" | "HALF_AFTERNOON" }, ...]
   /// Null for legacy requests that only stored isHalfDay/halfDaySlot at the range level.
-  perDayAllocation      Json?
+  perDayAllocation Json?
 
-  createdAt             DateTime              @default(now())
-  updatedAt             DateTime              @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  employee              User                  @relation("EmployeeLeaves", fields: [employeeId], references: [id], onDelete: Cascade)
-  reviewer              User?                 @relation("ReviewerLeaves", fields: [reviewedById], references: [id])
-  grantedBy             User?                 @relation("GrantedLeaves", fields: [grantedById], references: [id])
+  employee  User  @relation("EmployeeLeaves", fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewer  User? @relation("ReviewerLeaves", fields: [reviewedById], references: [id])
+  grantedBy User? @relation("GrantedLeaves", fields: [grantedById], references: [id])
 
   @@index([employeeId, status])
   @@index([status, createdAt(sort: Desc)])
@@ -286,22 +286,22 @@ model LeaveRequest {
 /// by HR or Admin, credits +1.0 (FULL_DAY) or +0.5 (HALF_DAY_*) to the
 /// employee's replacement leave balance.
 model ExtraWorkLog {
-  id             String          @id @default(cuid())
-  employeeId     String
-  workDate       DateTime        @db.Date
-  workType       ExtraWorkType
-  reason         String          @db.VarChar(200)
-  description    String?
-  status         ExtraWorkStatus @default(PENDING)
-  source         ExtraWorkSource @default(MANUAL)
-  adminNote      String?
-  reviewedById   String?
-  reviewedAt     DateTime?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id           String          @id @default(cuid())
+  employeeId   String
+  workDate     DateTime        @db.Date
+  workType     ExtraWorkType
+  reason       String          @db.VarChar(200)
+  description  String?
+  status       ExtraWorkStatus @default(PENDING)
+  source       ExtraWorkSource @default(MANUAL)
+  adminNote    String?
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
-  employee       User            @relation("EmployeeExtraWork", fields: [employeeId], references: [id], onDelete: Cascade)
-  reviewer       User?           @relation("ReviewerExtraWork", fields: [reviewedById], references: [id])
+  employee User  @relation("EmployeeExtraWork", fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("ReviewerExtraWork", fields: [reviewedById], references: [id])
 
   @@unique([employeeId, workDate], name: "one_log_per_day")
   @@index([employeeId, status])
@@ -310,29 +310,29 @@ model ExtraWorkLog {
 }
 
 model AttendanceRecord {
-  id                    String            @id @default(cuid())
-  employeeId            String
-  date                  DateTime          @db.Date
-  clockInTime           DateTime?
-  clockOutTime          DateTime?
-  totalWorkedMinutes    Int               @default(0)
-  totalBreakMinutes     Int               @default(0)
-  overtimeMinutes       Int               @default(0)
-  deficitMinutes        Int               @default(0)
-  status                AttendanceStatus
-  source                AttendanceSource  @default(MANUAL)
-  biometricDeviceId     String?
+  id                 String           @id @default(cuid())
+  employeeId         String
+  date               DateTime         @db.Date
+  clockInTime        DateTime?
+  clockOutTime       DateTime?
+  totalWorkedMinutes Int              @default(0)
+  totalBreakMinutes  Int              @default(0)
+  overtimeMinutes    Int              @default(0)
+  deficitMinutes     Int              @default(0)
+  status             AttendanceStatus
+  source             AttendanceSource @default(MANUAL)
+  biometricDeviceId  String?
   /// Where the employee is working *right now* for this day. Lives here rather
   /// than on User so it resets naturally at midnight — a stale "OFFSITE" on the
   /// user row would survive forever if someone forgot to return.
-  workLocation          WorkLocationType  @default(OFFICE)
-  notes                 String?
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  workLocation       WorkLocationType @default(OFFICE)
+  notes              String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
-  employee              User              @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  breaks                BreakSession[]
-  locationEvents        WorkLocationEvent[]
+  employee       User                @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  breaks         BreakSession[]
+  locationEvents WorkLocationEvent[]
 
   @@unique([employeeId, date])
   @@index([employeeId, date(sort: Desc)])
@@ -348,39 +348,39 @@ model AttendanceRecord {
 /// Nothing in this table is ever updated except to stamp `endedAt`. Corrections
 /// are appended as ADMIN_CORRECTION rows.
 model WorkLocationEvent {
-  id                    String                @id @default(cuid())
-  employeeId            String
+  id                   String                @id @default(cuid())
+  employeeId           String
   /// The attendance day this period belongs to. Null for periods created
   /// outside a clocked-in session (admin corrections on historical days).
-  attendanceId          String?
-  eventType             WorkLocationEventType
-  previousLocationType  WorkLocationType?
-  newLocationType       WorkLocationType
+  attendanceId         String?
+  eventType            WorkLocationEventType
+  previousLocationType WorkLocationType?
+  newLocationType      WorkLocationType
 
   /// Google Places data, captured once at selection time. Null for OFFICE
   /// periods. We store what the employee chose — we never poll their device.
-  placeId               String?
-  placeName             String?
-  formattedAddress      String?
-  latitude              Float?
-  longitude             Float?
+  placeId          String?
+  placeName        String?
+  formattedAddress String?
+  latitude         Float?
+  longitude        Float?
 
-  purpose               String?               @db.VarChar(200)
+  purpose String? @db.VarChar(200)
 
-  startedAt             DateTime
-  endedAt               DateTime?
+  startedAt  DateTime
+  endedAt    DateTime?
   /// True when clock-out closed this period instead of the employee returning.
   /// Rule 7: the record is flagged, not rewritten, so HR can see who forgot.
-  autoClosed            Boolean               @default(false)
+  autoClosed Boolean   @default(false)
 
   /// Who wrote the row. Equals employeeId for self-service changes; differs for
   /// ADMIN_CORRECTION.
-  createdById           String
-  createdAt             DateTime              @default(now())
+  createdById String
+  createdAt   DateTime @default(now())
 
-  employee              User                  @relation("EmployeeLocations", fields: [employeeId], references: [id], onDelete: Cascade)
-  createdBy             User                  @relation("AuthoredLocations", fields: [createdById], references: [id])
-  attendance            AttendanceRecord?     @relation(fields: [attendanceId], references: [id], onDelete: SetNull)
+  employee   User              @relation("EmployeeLocations", fields: [employeeId], references: [id], onDelete: Cascade)
+  createdBy  User              @relation("AuthoredLocations", fields: [createdById], references: [id])
+  attendance AttendanceRecord? @relation(fields: [attendanceId], references: [id], onDelete: SetNull)
 
   @@index([employeeId, startedAt(sort: Desc)])
   @@index([attendanceId])
@@ -389,69 +389,69 @@ model WorkLocationEvent {
 }
 
 model BreakSession {
-  id               String   @id @default(cuid())
-  attendanceId     String
-  breakStart       DateTime
-  breakEnd         DateTime?
-  durationMinutes  Int?
+  id              String    @id @default(cuid())
+  attendanceId    String
+  breakStart      DateTime
+  breakEnd        DateTime?
+  durationMinutes Int?
 
-  attendance       AttendanceRecord @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  attendance AttendanceRecord @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
 
   @@index([attendanceId])
   @@map("break_sessions")
 }
 
 model Holiday {
-  id                      String             @id @default(cuid())
-  name                    String
-  date                    DateTime           @db.Date
-  isRecurring             Boolean            @default(true)
-  description             String?
-  notificationScheduled   Boolean            @default(true)
-  notificationSendAt      DateTime?
-  recipients              HolidayRecipients  @default(ALL)
-  customRecipientIds      String[]           @default([])
-  notificationSentAt      DateTime?
-  createdById             String?
-  createdAt               DateTime           @default(now())
-  updatedAt               DateTime           @updatedAt
+  id                    String            @id @default(cuid())
+  name                  String
+  date                  DateTime          @db.Date
+  isRecurring           Boolean           @default(true)
+  description           String?
+  notificationScheduled Boolean           @default(true)
+  notificationSendAt    DateTime?
+  recipients            HolidayRecipients @default(ALL)
+  customRecipientIds    String[]          @default([])
+  notificationSentAt    DateTime?
+  createdById           String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
 
-  createdBy               User?              @relation(fields: [createdById], references: [id])
+  createdBy User? @relation(fields: [createdById], references: [id])
 
   @@index([date])
   @@map("holidays")
 }
 
 model Notification {
-  id             String           @id @default(cuid())
-  recipientId    String
-  type           NotificationType
-  title          String
-  body           String
-  referenceType  String?
-  referenceId    String?
-  isRead         Boolean          @default(false)
-  createdAt      DateTime         @default(now())
+  id            String           @id @default(cuid())
+  recipientId   String
+  type          NotificationType
+  title         String
+  body          String
+  referenceType String?
+  referenceId   String?
+  isRead        Boolean          @default(false)
+  createdAt     DateTime         @default(now())
 
-  recipient      User             @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  recipient User @relation(fields: [recipientId], references: [id], onDelete: Cascade)
 
   @@index([recipientId, isRead, createdAt(sort: Desc)])
   @@map("notifications")
 }
 
 model EmailLog {
-  id                 String       @id @default(cuid())
-  toAddresses        String[]
-  ccAddresses        String[]     @default([])
-  subject            String
-  bodyPreview        String?
-  status             EmailStatus  @default(QUEUED)
-  providerMessageId  String?
-  errorMessage       String?
-  referenceType      String?
-  referenceId        String?
-  sentAt             DateTime?
-  createdAt          DateTime     @default(now())
+  id                String      @id @default(cuid())
+  toAddresses       String[]
+  ccAddresses       String[]    @default([])
+  subject           String
+  bodyPreview       String?
+  status            EmailStatus @default(QUEUED)
+  providerMessageId String?
+  errorMessage      String?
+  referenceType     String?
+  referenceId       String?
+  sentAt            DateTime?
+  createdAt         DateTime    @default(now())
 
   @@index([status, createdAt(sort: Desc)])
   @@map("email_log")
@@ -459,16 +459,16 @@ model EmailLog {
 
 /// Singleton settings row (id = "singleton"). Editable by SUPER_ADMIN, ADMIN, HR.
 model SystemSettings {
-  id                        String   @id @default("singleton")
-  senderEmail               String   @default("shefadib@gmail.com")
-  senderName                String   @default("TRACE HRMS")
-  fromEmail                 String   @default("onboarding@resend.dev")
-  standardHoursPerDay       Int      @default(8)
-  workStartTime             String   @default("09:00")
-  workEndTime               String   @default("17:00")
-  workDaysBitmask           Int      @default(31) // Sun-Thu = bits 0-4 (Bangladesh work week)
-  overtimeThresholdMinutes  Int      @default(480)
-  updatedAt                 DateTime @updatedAt
+  id                       String   @id @default("singleton")
+  senderEmail              String   @default("shefadib@gmail.com")
+  senderName               String   @default("TRACE HRMS")
+  fromEmail                String   @default("onboarding@resend.dev")
+  standardHoursPerDay      Int      @default(8)
+  workStartTime            String   @default("09:00")
+  workEndTime              String   @default("17:00")
+  workDaysBitmask          Int      @default(31) // Sun-Thu = bits 0-4 (Bangladesh work week)
+  overtimeThresholdMinutes Int      @default(480)
+  updatedAt                DateTime @updatedAt
 
   @@map("system_settings")
 }
@@ -478,13 +478,13 @@ model SystemSettings {
 /// window; if count > max the request is rejected. Windows expire naturally
 /// via a periodic prune (any old row can be deleted safely).
 model RateLimitBucket {
-  id           String   @id @default(cuid())
+  id          String   @id @default(cuid())
   /// e.g. "user:<id>" or "ip:<address>"
-  subject      String
+  subject     String
   /// e.g. "POST /api/leaves/requests"
-  key          String
-  windowStart  DateTime
-  count        Int      @default(0)
+  key         String
+  windowStart DateTime
+  count       Int      @default(0)
 
   @@unique([subject, key, windowStart])
   @@index([windowStart])
@@ -493,17 +493,17 @@ model RateLimitBucket {
 
 /// Append-only audit trail. Only SUPER_ADMIN can view.
 model AuditLog {
-  id           String   @id @default(cuid())
-  actorId      String?
-  action       String
-  targetType   String?
-  targetId     String?
-  metadata     Json?
-  ip           String?
-  userAgent    String?
-  createdAt    DateTime @default(now())
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  targetType String?
+  targetId   String?
+  metadata   Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
 
-  actor        User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([actorId, createdAt(sort: Desc)])
   @@index([targetType, targetId])
@@ -515,7 +515,7 @@ model AuditLog {
 model RolePermission {
   id          String   @id @default(cuid())
   role        Role
-  permission  String   // e.g. "leave.approve", "notifications.leave_pending"
+  permission  String // e.g. "leave.approve", "notifications.leave_pending"
   enabled     Boolean  @default(true)
   updatedAt   DateTime @updatedAt
   updatedById String?
@@ -527,31 +527,31 @@ model RolePermission {
 // ─── Biometric integration ────────────────────────────────
 
 model BiometricDevice {
-  id          String    @id @default(cuid())
-  serial      String    @unique
-  alias       String
-  isActive    Boolean   @default(true)
-  lastSeenAt  DateTime?
-  createdAt   DateTime  @default(now())
+  id         String    @id @default(cuid())
+  serial     String    @unique
+  alias      String
+  isActive   Boolean   @default(true)
+  lastSeenAt DateTime?
+  createdAt  DateTime  @default(now())
 
-  punches     BiometricPunch[]
+  punches BiometricPunch[]
 
   @@map("biometric_devices")
 }
 
 model BiometricPunch {
-  id            String    @id @default(cuid())
-  deviceId      String
-  deviceUserId  String
-  punchedAt     DateTime
-  punchState    String
-  verifyType    Int?
-  employeeId    String?
-  appliedAt     DateTime?
-  rawPayload    Json
-  createdAt     DateTime  @default(now())
+  id           String    @id @default(cuid())
+  deviceId     String
+  deviceUserId String
+  punchedAt    DateTime
+  punchState   String
+  verifyType   Int?
+  employeeId   String?
+  appliedAt    DateTime?
+  rawPayload   Json
+  createdAt    DateTime  @default(now())
 
-  device        BiometricDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  device BiometricDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   @@unique([deviceId, deviceUserId, punchedAt])
   @@index([employeeId, punchedAt])

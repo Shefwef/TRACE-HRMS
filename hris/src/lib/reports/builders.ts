@@ -18,6 +18,7 @@ import {
   type AttendanceReportData, type AttendanceTotals, type CompanyReportData,
   type Identity, type LeaveReportData, type OffsiteEventRow, type Period,
   type SummaryReportData,
+  type AttendanceSummaryRow, type EmployeeDirectoryRow, type PerformanceLeaveSummaryData,
 } from './data';
 
 // ─── column sets ──────────────────────────────────────────
@@ -324,4 +325,181 @@ function attendanceMeta(t: AttendanceTotals): [string, CellValue][] {
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
+}
+
+// ─── new column sets ──────────────────────────────────────
+
+const ATTENDANCE_SUMMARY_COLS: Col[] = [
+  { header: 'Employee ID', key: 'employeeIdCode', width: 14 },
+  { header: 'Employee Name', key: 'employeeName', width: 26 },
+  { header: 'Designation', key: 'designation', width: 22 },
+  { header: 'Date', key: 'date', format: 'date' },
+  { header: 'Day', key: 'weekday', width: 8 },
+  { header: 'Clock In', key: 'clockIn', format: 'time' },
+  { header: 'Clock Out', key: 'clockOut', format: 'time' },
+  { header: 'Total Hours', key: 'totalHours', format: 'decimal', total: true },
+  { header: 'Overtime Hours', key: 'overtimeHours', format: 'decimal', total: true },
+  { header: 'Deficit Hours', key: 'deficitHours', format: 'decimal', total: true },
+  { header: 'Attendance Status', key: 'status', width: 18 },
+  { header: 'Initial Location', key: 'initialLocation', width: 16 },
+  { header: 'Final Location', key: 'finalLocation', width: 22 },
+  { header: 'Off-site Work Place', key: 'offsiteWorkPlace', width: 30 },
+];
+
+const EMPLOYEE_DIRECTORY_COLS: Col[] = [
+  { header: 'Employee ID', key: 'employeeIdCode', width: 14 },
+  { header: 'Employee Name', key: 'employeeName', width: 26 },
+  { header: 'Email', key: 'email', width: 34 },
+  { header: 'Phone Number', key: 'phone', width: 18 },
+  { header: 'Department', key: 'department', width: 20 },
+  { header: 'Designation', key: 'designation', width: 24 },
+  { header: 'Line Manager', key: 'lineManager', width: 24 },
+  { header: 'Joining Date', key: 'joiningDate', format: 'date' },
+  { header: 'Departure Date', key: 'departureDate', format: 'date' },
+];
+
+const PERF_LEAVE_REQUEST_COLS: Col[] = [
+  { header: 'Sl', key: 'sl', format: 'int', width: 6 },
+  { header: 'Employee ID', key: 'employeeIdCode', width: 14 },
+  { header: 'Employee Name', key: 'employeeName', width: 26 },
+  { header: 'Leave Type', key: 'leaveType', width: 14 },
+  { header: 'Start Date', key: 'startDate', format: 'date' },
+  { header: 'End Date', key: 'endDate', format: 'date' },
+  { header: 'Duration (days)', key: 'durationDays', format: 'decimal', total: true },
+  { header: 'Half Day', key: 'halfDay', width: 12 },
+  { header: 'Time From', key: 'timeFrom', width: 11 },
+  { header: 'Time To', key: 'timeTo', width: 11 },
+  { header: 'Reason', key: 'reason', width: 34 },
+  { header: 'Status', key: 'status', width: 12 },
+  { header: 'Reviewed By', key: 'reviewer', width: 24 },
+  { header: 'Reviewed At', key: 'reviewedAt', format: 'date' },
+  { header: 'Applied On', key: 'appliedOn', format: 'date' },
+  { header: 'Admin Note', key: 'adminNote', width: 40 },
+];
+
+// ─── new builders ─────────────────────────────────────────
+
+export function buildAttendanceSummaryWorkbook(
+  period: Period,
+  rows: AttendanceSummaryRow[],
+): Workbook {
+  const wb = createWorkbook();
+  wb.title = `Attendance Summary - ${period.label}`;
+
+  const sheet = addSheet(wb, 'Daily Attendance', ATTENDANCE_SUMMARY_COLS);
+  addRows(sheet, rows);
+  addTotalsRow(sheet, ATTENDANCE_SUMMARY_COLS);
+
+  return wb;
+}
+
+export function buildEmployeeSummaryWorkbook(rows: EmployeeDirectoryRow[]): Workbook {
+  const wb = createWorkbook();
+  wb.title = 'Employee Summary - Company Directory';
+
+  const sheet = addSheet(wb, 'Employee Summary', EMPLOYEE_DIRECTORY_COLS);
+  addRows(sheet, rows);
+  addTotalsRow(sheet, EMPLOYEE_DIRECTORY_COLS);
+
+  return wb;
+}
+
+export function buildPerformanceLeaveSummaryWorkbook(
+  employee: Identity,
+  period: Period,
+  data: PerformanceLeaveSummaryData,
+): Workbook {
+  const wb = createWorkbook();
+  wb.title = `Performance & Leave Summary - ${employee.fullName} - ${period.label}`;
+
+  const b = data.balance;
+  const p = data.performance;
+  const lineManager = data.lineManagerName;
+
+  // Sheet 1: Performance Summary
+  addSummarySheet(wb, 'Performance Summary', [
+    {
+      heading: 'Report',
+      rows: [
+        ['Report Type', 'Performance summary'],
+        ['Period', period.label],
+        ['Generated on', generatedOn()],
+        ['Source', 'TRACE HRMS'],
+      ],
+    },
+    {
+      heading: 'Employee Information',
+      rows: [
+        ['Employee ID', employee.employeeIdCode ?? '-'],
+        ['Name', employee.fullName],
+        ['Email', employee.email],
+        ['Department', employee.department ?? '-'],
+        ['Designation', employee.designation ?? '-'],
+        ['Line Manager', lineManager],
+      ],
+    },
+    {
+      heading: `Attendance - ${period.label}`,
+      rows: [
+        ['Working Days', p.workingDays],
+        ['Half Days', p.halfDays],
+        ['Leave Days', p.leaveDays],
+        ['Hours worked', p.hoursWorked],
+        ['Overtime Hours', p.overtimeHours],
+        ['Days with off-site work', p.offsiteDays],
+      ],
+    },
+  ]);
+
+  // Sheet 2: Leave History Summary
+  addSummarySheet(wb, 'Leave History Summary', [
+    {
+      heading: 'Report',
+      rows: [
+        ['Report', 'Leave history'],
+        ['Period', period.label],
+        ['Generated on', generatedOn()],
+        ['Source', 'TRACE HRMS'],
+      ],
+    },
+    {
+      heading: 'Employee',
+      rows: [
+        ['Employee ID', employee.employeeIdCode ?? '-'],
+        ['Name', employee.fullName],
+        ['Email', employee.email],
+        ['Department', employee.department ?? '-'],
+        ['Designation', employee.designation ?? '-'],
+        ['Line Manager', lineManager],
+      ],
+    },
+    {
+      heading: 'Leave balance',
+      rows: [
+        ['Casual - Entitled', b.casualTotal],
+        ['Casual - Used', b.casualUsed],
+        ['Casual - Remaining', round2(b.casualTotal - b.casualUsed - b.casualPending)],
+        ['Sick - Entitled', b.sickTotal],
+        ['Sick - Used', b.sickUsed],
+        ['Sick - Remaining', round2(b.sickTotal - b.sickUsed - b.sickPending)],
+        ['Replacement Leave Balance', b.replacementBalance],
+        ['Replacement Leave - Used', b.replacementUsed ?? 0],
+      ],
+    },
+    {
+      heading: 'Requests this cycle',
+      rows: [
+        ['Approved', data.requestCounts.approved],
+        ['Pending', data.requestCounts.pending],
+        ['Rejected', data.requestCounts.rejected],
+      ],
+    },
+  ]);
+
+  // Sheet 3: Leave Request table
+  const leaveSheet = addSheet(wb, 'Leave Request', PERF_LEAVE_REQUEST_COLS);
+  addRows(leaveSheet, data.leaveRequests);
+  addTotalsRow(leaveSheet, PERF_LEAVE_REQUEST_COLS);
+
+  return wb;
 }

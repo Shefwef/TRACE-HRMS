@@ -13,10 +13,12 @@ import { AllEmployeesReport, type EmployeeRow } from '@/lib/reports/AllEmployees
 import {
   getAttendanceReportData, getCompanyReportData, getLeaveReportData,
   getOffsiteRows, getSummaryReportData, monthPeriod, yearPeriod,
+  getAttendanceSummaryRows, getEmployeeDirectoryRows, getPerformanceLeaveSummaryData,
 } from '@/lib/reports/data';
 import {
   buildAttendanceWorkbook, buildCompanyWorkbook, buildLeavesWorkbook,
   buildOffsiteWorkbook, buildSummaryWorkbook,
+  buildAttendanceSummaryWorkbook, buildEmployeeSummaryWorkbook, buildPerformanceLeaveSummaryWorkbook,
 } from '@/lib/reports/builders';
 import { xlsxResponse } from '@/lib/reports/workbook';
 
@@ -82,13 +84,15 @@ export async function GET(
   const now = new Date();
   const year = Number(url.searchParams.get('year') ?? now.getFullYear());
   const month = Number(url.searchParams.get('month') ?? now.getMonth() + 1);
-  const format = url.searchParams.get('format') === 'pdf' ? 'pdf' : 'xlsx';
+  const formatParam = url.searchParams.get('format');
+  const format = formatParam === 'pdf' ? 'pdf' : formatParam === 'preview' ? 'preview' : 'xlsx';
   const employeeId = url.searchParams.get('employeeId');
 
   if (!Number.isFinite(year) || year < 2000 || year > 2100)
     return err(400, 'BAD_YEAR', 'Invalid year.');
   const usesMonth = type === 'attendance' || type === 'summary'
-    || type === 'all-employees' || type === 'offsite';
+    || type === 'all-employees' || type === 'offsite'
+    || type === 'attendance-summary' || type === 'performance-leave-summary';
   if (usesMonth) {
     if (!Number.isFinite(month) || month < 1 || month > 12)
       return err(400, 'BAD_MONTH', 'Invalid month.');
@@ -112,7 +116,8 @@ export async function GET(
   }
 
   try {
-    if (format === 'xlsx') return await renderXlsx(user, subject, type, year, month);
+    if (format === 'preview') return await renderPreview(user, subject, type, year, month, url, callerIsAdmin, callerIsManager);
+    if (format === 'xlsx') return await renderXlsx(user, subject, type, year, month, url, callerIsAdmin, callerIsManager);
 
     const logoDataUrl = await getLogoDataUrl();
     const generatedAt = fmtGeneratedAt();
@@ -161,6 +166,9 @@ async function renderXlsx(
   type: string,
   year: number,
   month: number,
+  url: URL,
+  callerIsAdmin: boolean,
+  callerIsManager: boolean,
 ): Promise<Response> {
   const slug = (subject.employeeIdCode ?? subject.fullName).replace(/\s+/g, '-').toLowerCase();
 
@@ -220,6 +228,67 @@ async function renderXlsx(
       );
     }
 
+    case 'attendance-summary': {
+      if (!callerIsManager)
+        return err(403, 'FORBIDDEN', 'You do not have permission to export attendance summaries.');
+      const period = monthPeriod(year, month);
+      const empIdsParam = url.searchParams.get('employeeIds')?.split(',').filter(Boolean) ?? [];
+      let empIds: string[];
+      if (empIdsParam.length === 0) {
+        if (callerIsManager) {
+          empIds = await allActiveIds();
+        } else {
+          empIds = [user.id];
+        }
+      } else {
+        if (callerIsAdmin) {
+          empIds = empIdsParam;
+        } else {
+          // Line manager: restrict to direct reports
+          const directReports = await prisma.user.findMany({
+            where: { lineManagerId: user.id, isActive: true },
+            select: { id: true },
+          });
+          const directIds = new Set(directReports.map((r) => r.id));
+          empIds = empIdsParam.filter((id) => directIds.has(id));
+        }
+      }
+      const rows = await getAttendanceSummaryRows(empIds, period);
+      return xlsxResponse(
+        buildAttendanceSummaryWorkbook(period, rows),
+        `attendance-summary-${period.fileRange}.xlsx`,
+      );
+    }
+
+    case 'employee-summary': {
+      if (!callerIsManager)
+        return err(403, 'FORBIDDEN', 'You do not have permission to export employee summaries.');
+      const rows = await getEmployeeDirectoryRows();
+      return xlsxResponse(
+        buildEmployeeSummaryWorkbook(rows),
+        `employee-summary.xlsx`,
+      );
+    }
+
+    case 'performance-leave-summary': {
+      const period = monthPeriod(year, month);
+      const identity = {
+        id: subject.id,
+        fullName: subject.fullName,
+        email: subject.email,
+        role: subject.role,
+        employeeIdCode: subject.employeeIdCode ?? null,
+        department: subject.department ?? null,
+        designation: subject.designation ?? null,
+      };
+      const data = await getPerformanceLeaveSummaryData(identity, period);
+      const subjectSlug = (subject.employeeIdCode ?? subject.fullName).replace(/\s+/g, '-').toLowerCase();
+      return xlsxResponse(
+        buildPerformanceLeaveSummaryWorkbook(identity, period, data),
+        `performance-leave-summary-${subjectSlug}-${period.fileRange}.xlsx`,
+      );
+    }
+
     default:
       return err(404, 'UNKNOWN_REPORT', `Unknown report type "${type}".`);
   }
@@ -231,6 +300,120 @@ async function allActiveIds(): Promise<string[]> {
     select: { id: true },
   });
   return rows.map((r) => r.id);
+}
+
+// ─── preview ───────────────────────────────────────────────
+
+function fmtDate(d: Date | null): string {
+  if (!d) return '';
+  return d.toISOString().slice(0, 10);
+}
+
+function fmtNum(n: number | null | undefined): number | string {
+  return n ?? '';
+}
+
+async function renderPreview(
+  user: ApiUser,
+  subject: ApiUser,
+  type: string,
+  year: number,
+  month: number,
+  url: URL,
+  callerIsAdmin: boolean,
+  callerIsManager: boolean,
+): Promise<Response> {
+  const json = (body: unknown) =>
+    NextResponse.json(body, { status: 200, headers: { 'cache-control': 'no-store' } });
+
+  switch (type) {
+    case 'attendance-summary': {
+      if (!callerIsManager)
+        return err(403, 'FORBIDDEN', 'You do not have permission to preview attendance summaries.');
+      const period = monthPeriod(year, month);
+      const empIdsParam = url.searchParams.get('employeeIds')?.split(',').filter(Boolean) ?? [];
+      let empIds: string[];
+      if (empIdsParam.length === 0) {
+        empIds = callerIsManager ? await allActiveIds() : [user.id];
+      } else if (callerIsAdmin) {
+        empIds = empIdsParam;
+      } else {
+        const directReports = await prisma.user.findMany({
+          where: { lineManagerId: user.id, isActive: true },
+          select: { id: true },
+        });
+        const directIds = new Set(directReports.map((r) => r.id));
+        empIds = empIdsParam.filter((id) => directIds.has(id));
+      }
+      const rows = await getAttendanceSummaryRows(empIds, period);
+      const columns = [
+        'Employee ID', 'Employee Name', 'Designation', 'Date', 'Day',
+        'Clock In', 'Clock Out', 'Total Hours', 'Overtime Hours', 'Deficit Hours',
+        'Attendance Status', 'Initial Location', 'Final Location', 'Off-site Work Place',
+      ];
+      const tableRows = rows.slice(0, 50).map((r) => [
+        r.employeeIdCode, r.employeeName, r.designation,
+        fmtDate(r.date), r.weekday,
+        r.clockIn ? fmtDate(r.clockIn) : '',
+        r.clockOut ? fmtDate(r.clockOut) : '',
+        fmtNum(r.totalHours), fmtNum(r.overtimeHours), fmtNum(r.deficitHours),
+        r.status, r.initialLocation, r.finalLocation, r.offsiteWorkPlace,
+      ]);
+      return json({ columns, rows: tableRows });
+    }
+
+    case 'employee-summary': {
+      if (!callerIsManager)
+        return err(403, 'FORBIDDEN', 'You do not have permission to preview employee summaries.');
+      const rows = await getEmployeeDirectoryRows();
+      const columns = [
+        'Employee ID', 'Employee Name', 'Email', 'Phone Number',
+        'Department', 'Designation', 'Line Manager', 'Joining Date', 'Departure Date',
+      ];
+      const tableRows = rows.map((r) => [
+        r.employeeIdCode, r.employeeName, r.email, r.phone,
+        r.department, r.designation, r.lineManager,
+        fmtDate(r.joiningDate), fmtDate(r.departureDate),
+      ]);
+      return json({ columns, rows: tableRows });
+    }
+
+    case 'performance-leave-summary': {
+      const period = monthPeriod(year, month);
+      const identity = {
+        id: subject.id,
+        fullName: subject.fullName,
+        email: subject.email,
+        role: subject.role,
+        employeeIdCode: subject.employeeIdCode ?? null,
+        department: subject.department ?? null,
+        designation: subject.designation ?? null,
+      };
+      const data = await getPerformanceLeaveSummaryData(identity, period);
+      const leaveColumns = [
+        'Sl', 'Employee ID', 'Employee Name', 'Leave Type', 'Start Date', 'End Date',
+        'Duration (days)', 'Half Day', 'Time From', 'Time To', 'Reason', 'Status',
+        'Reviewed By', 'Reviewed At', 'Applied On', 'Admin Note',
+      ];
+      const leaveRows = data.leaveRequests.slice(0, 20).map((r) => [
+        r.sl, r.employeeIdCode, r.employeeName, r.leaveType,
+        fmtDate(r.startDate), fmtDate(r.endDate),
+        fmtNum(r.durationDays), r.halfDay, r.timeFrom, r.timeTo,
+        r.reason, r.status, r.reviewer,
+        fmtDate(r.reviewedAt), fmtDate(r.appliedOn), r.adminNote,
+      ]);
+      return json({
+        performance: data.performance,
+        balance: data.balance,
+        counts: data.requestCounts,
+        leaveColumns,
+        leaveRows,
+      });
+    }
+
+    default:
+      return err(404, 'UNKNOWN_REPORT', `Unknown report type "${type}".`);
+  }
 }
 
 // ─── attendance ────────────────────────────────────────────────
