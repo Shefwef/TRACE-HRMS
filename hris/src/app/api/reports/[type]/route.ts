@@ -10,6 +10,7 @@ import { AttendanceReport, type AttendanceRecord } from '@/lib/reports/Attendanc
 import { LeavesReport, type LeaveRecord } from '@/lib/reports/LeavesReport';
 import { SummaryReport } from '@/lib/reports/SummaryReport';
 import { AllEmployeesReport, type EmployeeRow } from '@/lib/reports/AllEmployeesReport';
+import { AttendanceSummaryReport, type AttSummaryPdfEmployee } from '@/lib/reports/AttendanceSummaryReport';
 import {
   getAttendanceReportData, getCompanyReportData, getLeaveReportData,
   getOffsiteRows, getSummaryReportData, monthPeriod, yearPeriod,
@@ -163,7 +164,7 @@ export async function GET(
       case 'attendance-summary':
         if (!callerIsManager)
           return err(403, 'FORBIDDEN', 'You do not have permission to export attendance summaries.');
-        return await renderAllEmployees(year, month, logoDataUrl, generatedAt);
+        return await renderAttendanceSummaryPdf(user, year, month, url, callerIsAdmin, callerIsManager, logoDataUrl, generatedAt);
       case 'employee-summary':
         if (!callerIsManager)
           return err(403, 'FORBIDDEN', 'You do not have permission to export employee summaries.');
@@ -336,6 +337,14 @@ function fmtDate(d: Date | null): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Format a clock-in/out Date (already shifted by excelInstant) as HH:MM for preview. */
+function fmtPreviewTime(d: Date | null): string {
+  if (!d) return '';
+  const h = d.getUTCHours().toString().padStart(2, '0');
+  const m = d.getUTCMinutes().toString().padStart(2, '0');
+  return `${h}:${m}`;
+}
+
 function fmtNum(n: number | null | undefined): number | string {
   return n ?? '';
 }
@@ -378,11 +387,11 @@ async function renderPreview(
         'Clock In', 'Clock Out', 'Total Hours', 'Overtime Hours', 'Deficit Hours',
         'Attendance Status', 'Initial Location', 'Final Location', 'Off-site Workplace',
       ];
-      const tableRows = rows.slice(0, 50).map((r) => [
+      const tableRows = rows.slice(0, 100).map((r) => [
         r.employeeIdCode, r.employeeName, r.designation,
         fmtDate(r.date), r.weekday,
-        r.clockIn ? fmtDate(r.clockIn) : '',
-        r.clockOut ? fmtDate(r.clockOut) : '',
+        fmtPreviewTime(r.clockIn),
+        fmtPreviewTime(r.clockOut),
         fmtNum(r.totalHours), fmtNum(r.overtimeHours), fmtNum(r.deficitHours),
         r.status, r.initialLocation, r.finalLocation, r.offsiteWorkPlace,
       ]);
@@ -498,6 +507,73 @@ async function renderPreview(
     default:
       return err(404, 'UNKNOWN_REPORT', `Unknown report type "${type}".`);
   }
+}
+
+// ─── attendance summary (PDF) ─────────────────────────────────
+
+async function renderAttendanceSummaryPdf(
+  user: ApiUser,
+  year: number,
+  month: number,
+  url: URL,
+  callerIsAdmin: boolean,
+  callerIsManager: boolean,
+  logoDataUrl: string,
+  generatedAt: string,
+): Promise<Response> {
+  const period = resolvePeriod(url, year, month);
+  const empIdsParam = url.searchParams.get('employeeIds')?.split(',').filter(Boolean) ?? [];
+  let empIds: string[];
+  if (empIdsParam.length === 0) {
+    empIds = callerIsManager ? await allActiveIds() : [user.id];
+  } else if (callerIsAdmin) {
+    empIds = empIdsParam;
+  } else {
+    const directReports = await prisma.user.findMany({
+      where: { lineManagerId: user.id, isActive: true },
+      select: { id: true },
+    });
+    const directIds = new Set(directReports.map((r) => r.id));
+    empIds = empIdsParam.filter((id) => directIds.has(id));
+  }
+
+  const rows = await getAttendanceSummaryRows(empIds, period);
+
+  // Group rows by employee (preserve the sorted order from data layer)
+  const empMap = new Map<string, AttSummaryPdfEmployee>();
+  for (const r of rows) {
+    const key = `${r.employeeIdCode}:${r.employeeName}`;
+    if (!empMap.has(key)) {
+      empMap.set(key, {
+        employeeIdCode: r.employeeIdCode,
+        employeeName: r.employeeName,
+        designation: r.designation,
+        rows: [],
+      });
+    }
+    empMap.get(key)!.rows.push({
+      date: (r.date as Date).toISOString().slice(0, 10),
+      weekday: r.weekday,
+      clockIn: r.clockIn ? (r.clockIn as Date).toISOString() : null,
+      clockOut: r.clockOut ? (r.clockOut as Date).toISOString() : null,
+      totalHours: r.totalHours,
+      overtimeHours: r.overtimeHours,
+      deficitHours: r.deficitHours,
+      status: r.status,
+      initialLocation: r.initialLocation,
+      finalLocation: r.finalLocation,
+    });
+  }
+
+  const buf = await renderToBuffer(
+    AttendanceSummaryReport({
+      period: period.label,
+      employees: [...empMap.values()],
+      logoDataUrl,
+      generatedAt,
+    }),
+  );
+  return pdfResponse(buf, `attendance-summary-${period.fileRange}.pdf`);
 }
 
 // ─── attendance ────────────────────────────────────────────────
