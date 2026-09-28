@@ -597,71 +597,147 @@ export async function getAttendanceSummaryRows(
 ): Promise<AttendanceSummaryRow[]> {
   if (employeeIds.length === 0) return [];
 
-  const records = await prisma.attendanceRecord.findMany({
-    where: {
-      employeeId: { in: employeeIds },
-      date: { gte: period.from, lt: period.to },
-    },
-    include: {
-      employee: {
-        select: { fullName: true, employeeIdCode: true, designation: true },
+  // Fetch all data in parallel
+  const [employees, records, holidays, approvedLeaves] = await Promise.all([
+    prisma.user.findMany({
+      where: { id: { in: employeeIds } },
+      select: { id: true, fullName: true, employeeIdCode: true, designation: true },
+      orderBy: { fullName: 'asc' },
+    }),
+    prisma.attendanceRecord.findMany({
+      where: {
+        employeeId: { in: employeeIds },
+        date: { gte: period.from, lt: period.to },
       },
-      locationEvents: {
-        where: {
-          eventType: {
-            in: ['OFFSITE_STARTED', 'OFFSITE_LOCATION_CHANGED', 'RETURNED_TO_OFFICE'],
+      include: {
+        locationEvents: {
+          where: {
+            eventType: { in: ['OFFSITE_STARTED', 'OFFSITE_LOCATION_CHANGED', 'RETURNED_TO_OFFICE'] },
           },
+          orderBy: { startedAt: 'asc' },
+          select: { eventType: true, placeName: true },
         },
-        orderBy: { startedAt: 'asc' },
-        select: { eventType: true, placeName: true },
       },
-    },
-    orderBy: [{ employeeId: 'asc' }, { date: 'asc' }],
-  });
+    }),
+    prisma.holiday.findMany({
+      where: { date: { gte: period.from, lt: period.to } },
+      select: { date: true },
+    }),
+    prisma.leaveRequest.findMany({
+      where: {
+        employeeId: { in: employeeIds },
+        status: 'APPROVED',
+        startDate: { lt: period.to },
+        endDate: { gte: period.from },
+      },
+      select: { employeeId: true, startDate: true, endDate: true },
+    }),
+  ]);
 
-  return records.map((r) => {
-    const events = r.locationEvents;
+  // Index holidays by date string
+  const holidaySet = new Set(holidays.map((h) => h.date.toISOString().slice(0, 10)));
 
-    // initialLocation: always "Office" when clocked in
-    const initialLocation = r.clockInTime ? 'Office' : '';
+  // Index approved leaves as "employeeId:yyyy-mm-dd"
+  const leaveSet = new Set<string>();
+  for (const lr of approvedLeaves) {
+    let cur = new Date(lr.startDate.getTime());
+    while (cur.getTime() <= lr.endDate.getTime()) {
+      leaveSet.add(`${lr.employeeId}:${cur.toISOString().slice(0, 10)}`);
+      cur = new Date(cur.getTime() + 86_400_000);
+    }
+  }
 
-    // finalLocation: "Office" unless the LAST relevant event is OFFSITE with no RETURNED_TO_OFFICE after it
-    let finalLocation = r.clockInTime ? 'Office' : '';
-    if (r.clockInTime && events.length > 0) {
-      const lastEvent = events[events.length - 1];
-      if (
-        lastEvent.eventType === 'OFFSITE_STARTED' ||
-        lastEvent.eventType === 'OFFSITE_LOCATION_CHANGED'
-      ) {
-        finalLocation = lastEvent.placeName ?? 'Off-site';
+  // Index attendance records by "employeeId:yyyy-mm-dd"
+  const recordMap = new Map<string, typeof records[0]>();
+  for (const r of records) {
+    recordMap.set(`${r.employeeId}:${r.date.toISOString().slice(0, 10)}`, r);
+  }
+
+  // Enumerate every calendar day in the period
+  const days: Date[] = [];
+  {
+    let d = new Date(period.from.getTime());
+    while (d.getTime() < period.to.getTime()) {
+      days.push(new Date(d.getTime()));
+      d = new Date(d.getTime() + 86_400_000);
+    }
+  }
+
+  const rows: AttendanceSummaryRow[] = [];
+
+  for (const emp of employees) {
+    for (const day of days) {
+      const dateStr = day.toISOString().slice(0, 10);
+      const key = `${emp.id}:${dateStr}`;
+      const r = recordMap.get(key);
+
+      if (r) {
+        const events = r.locationEvents;
+        const initialLocation = r.clockInTime ? 'Office' : '';
+        let finalLocation = r.clockInTime ? 'Office' : '';
+        if (r.clockInTime && events.length > 0) {
+          const last = events[events.length - 1];
+          if (last.eventType === 'OFFSITE_STARTED' || last.eventType === 'OFFSITE_LOCATION_CHANGED') {
+            finalLocation = last.placeName ?? 'Off-site';
+          }
+        }
+        const offsitePlaces = events
+          .filter((e) => e.eventType === 'OFFSITE_STARTED' || e.eventType === 'OFFSITE_LOCATION_CHANGED')
+          .map((e) => e.placeName ?? '')
+          .filter(Boolean);
+        const offsiteWorkPlace = [...new Set(offsitePlaces)].join(', ');
+
+        rows.push({
+          employeeIdCode: emp.employeeIdCode ?? '-',
+          employeeName: emp.fullName,
+          designation: emp.designation ?? '',
+          date: excelDateOnly(r.date),
+          weekday: WEEKDAY_SHORT[r.date.getUTCDay()],
+          clockIn: r.clockInTime ? excelInstant(r.clockInTime) : null,
+          clockOut: r.clockOutTime ? excelInstant(r.clockOutTime) : null,
+          totalHours: round2(r.totalWorkedMinutes / 60),
+          overtimeHours: round2(r.overtimeMinutes / 60),
+          deficitHours: round2(r.deficitMinutes / 60),
+          status: titleCase(r.status),
+          initialLocation,
+          finalLocation,
+          offsiteWorkPlace,
+        });
+      } else {
+        // Synthesize a row: classify the day without an attendance record
+        const dow = day.getUTCDay(); // 0=Sun, 5=Fri, 6=Sat
+        let status: string;
+        if (dow === 5 || dow === 6) {          // Bangladesh weekend: Fri + Sat
+          status = 'Weekend';
+        } else if (holidaySet.has(dateStr)) {
+          status = 'Holiday';
+        } else if (leaveSet.has(key)) {
+          status = 'Leave';
+        } else {
+          status = 'Absent';
+        }
+
+        rows.push({
+          employeeIdCode: emp.employeeIdCode ?? '-',
+          employeeName: emp.fullName,
+          designation: emp.designation ?? '',
+          date: excelDateOnly(day),
+          weekday: WEEKDAY_SHORT[dow],
+          clockIn: null,
+          clockOut: null,
+          totalHours: 0,
+          overtimeHours: 0,
+          deficitHours: 0,
+          status,
+          initialLocation: '',
+          finalLocation: '',
+          offsiteWorkPlace: '',
+        });
       }
     }
+  }
 
-    // offsiteWorkPlace: comma-joined place names from OFFSITE_STARTED + OFFSITE_LOCATION_CHANGED
-    const offsitePlaces = events
-      .filter((e) => e.eventType === 'OFFSITE_STARTED' || e.eventType === 'OFFSITE_LOCATION_CHANGED')
-      .map((e) => e.placeName ?? '')
-      .filter(Boolean);
-    const uniquePlaces = [...new Set(offsitePlaces)];
-    const offsiteWorkPlace = uniquePlaces.join(', ');
-
-    return {
-      employeeIdCode: r.employee.employeeIdCode ?? '-',
-      employeeName: r.employee.fullName,
-      designation: r.employee.designation ?? '',
-      date: excelDateOnly(r.date),
-      weekday: WEEKDAY_SHORT[r.date.getUTCDay()],
-      clockIn: r.clockInTime ? excelInstant(r.clockInTime) : null,
-      clockOut: r.clockOutTime ? excelInstant(r.clockOutTime) : null,
-      totalHours: round2(r.totalWorkedMinutes / 60),
-      overtimeHours: round2(r.overtimeMinutes / 60),
-      deficitHours: round2(r.deficitMinutes / 60),
-      status: titleCase(r.status),
-      initialLocation,
-      finalLocation,
-      offsiteWorkPlace,
-    };
-  });
+  return rows;
 }
 
 /**
