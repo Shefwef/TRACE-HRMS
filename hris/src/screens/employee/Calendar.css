@@ -108,25 +108,34 @@
 .calpg-cell-holiday:hover { background: color-mix(in srgb, var(--color-brand-secondary) 22%, transparent); }
 .calpg-cell-holiday .calpg-cell-head { color: var(--color-brand-primary); }
 
-/* Holiday label: no separate pill background - inherit the red-tinted cell
-   so the badge blends into the box. Long names clamp to 2 lines with an
-   ellipsis so a cell never overflows. */
+/* Holiday label: transparent, square (no border-radius), 3-line clamp. */
 .calpg-cell-holiday .badge {
   background: transparent;
   border-color: transparent;
+  border-radius: 0;
   color: var(--color-brand-primary);
   padding: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: normal;
-  line-height: 1.2;
+  line-height: 1.25;
   min-width: 0;
   max-width: 100%;
   word-break: break-word;
+}
+.calpg-cell-holiday .badge.holiday-long { font-size: 10px; }
+.calpg-cell-holiday .badge.holiday-xlong { font-size: 9px; }
+
+/* Leave badge: blend transparent into the purple cell tint, no pill. */
+.calpg-cell-leave .badge {
+  background: transparent;
+  border-color: transparent;
+  border-radius: 0;
+  padding: 0;
 }
 
 /* Bangladesh weekend cells (Fri + Sat) get a subtle red tint too. */
@@ -190,7 +199,7 @@
 .calpg-legend-leave { background: color-mix(in srgb, var(--color-leave-casual) 22%, transparent); border: 1px solid color-mix(in srgb, var(--color-leave-casual) 40%, transparent); }
 .calpg-legend-holiday { background: color-mix(in srgb, var(--color-brand-secondary) 22%, transparent); border: 1px solid color-mix(in srgb, var(--color-brand-secondary) 45%, transparent); }
 .calpg-legend-halfday { background: color-mix(in srgb, var(--color-warning) 22%, transparent); border: 1px solid color-mix(in srgb, var(--color-warning) 40%, transparent); }
-.calpg-legend-weekend { background: var(--color-bg-muted); border: 1px solid var(--color-border-default); }
+.calpg-legend-weekend { background: color-mix(in srgb, var(--color-danger) 12%, transparent); border: 1px solid color-mix(in srgb, var(--color-danger) 28%, transparent); }
 
 .calpg-upcoming {
   padding: var(--space-5);

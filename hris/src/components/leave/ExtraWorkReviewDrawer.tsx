@@ -59,11 +59,6 @@ export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
   const [rejectReason, setRejectReason] = useState('');
   const [slotOverride, setSlotOverride] = useState<WorkType | null>(null);
 
-  // The biometric pipeline sets source='AUTO' when it auto-files a log.
-  // Only AUTO logs get the Full/Half AM/Half PM picker; MANUAL logs keep
-  // the workType the employee explicitly selected in the Apply form.
-  const isAutoDetected = log?.source === 'AUTO';
-
   useEffect(() => {
     if (!logId) {
       setNote(''); setRejectReason(''); setShowApprove(false); setShowReject(false);
@@ -72,11 +67,12 @@ export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
   }, [logId]);
 
   // Seed slot picker with the currently-recorded workType so HR can just
-  // click Approve if the default is already right.
+  // click Approve if the default is already right (works for both AUTO and
+  // manually-filed requests).
   useEffect(() => {
-    if (log && isAutoDetected) setSlotOverride(log.workType);
+    if (log) setSlotOverride(log.workType);
     else setSlotOverride(null);
-  }, [log?.id, isAutoDetected, log]);
+  }, [log?.id, log]);
 
   if (!logId || !log || !log.employee) {
     return <Drawer open={!!logId} onClose={onClose}>{null}</Drawer>;
@@ -161,9 +157,7 @@ export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
             </div>
           )}
 
-          {/* Slot picker - only for auto-detected requests. Manually-filed
-              logs keep the workType the employee explicitly selected. */}
-          {log.status === 'PENDING' && isAutoDetected && (
+          {log.status === 'PENDING' && (
             <div className="lrd-card">
               <div className="lrd-card-title">Credit as</div>
               <div className="lrd-slot-picker">
@@ -263,9 +257,7 @@ export function ExtraWorkReviewDrawer({ logId, onClose }: Props) {
                   {
                     id: log.id,
                     note: note || undefined,
-                    // Only send an override when HR actually changed it - avoids
-                    // clobbering a manual submission with the picker default.
-                    workType: isAutoDetected ? effectiveWorkType : undefined,
+                    workType: effectiveWorkType,
                   },
                   {
                     onSuccess: () => { setShowApprove(false); onClose(); },

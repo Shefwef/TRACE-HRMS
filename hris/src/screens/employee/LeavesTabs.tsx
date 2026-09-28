@@ -21,7 +21,7 @@ export function LeavesTabs() {
         aria-selected={active === 'general'}
         className={cx('lvtabs-tab', active === 'general' && 'lvtabs-tab-active')}
       >
-        General Leave
+        Leave Requests
       </Link>
       <Link
         href="/leaves/replacement"

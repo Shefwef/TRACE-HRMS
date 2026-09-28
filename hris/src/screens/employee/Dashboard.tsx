@@ -114,7 +114,7 @@ export function EmployeeDashboard() {
           leadingIcon={<Plus size={16} />}
           onClick={() => router.push('/leaves/apply')}
         >
-          Apply for Leave
+          Request Leave
         </Button>
       </div>
 

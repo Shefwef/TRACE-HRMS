@@ -384,9 +384,8 @@ async function handleBundle(
     return rows;
   });
 
-  // Notifications + email - one per created row, matching the legacy path.
-  // Admin review UI is untouched this iteration; bundling for the reviewer's
-  // inbox is a follow-up.
+  // One notification and one email for the whole bundle, regardless of how
+  // many leave types it contains.
   const allUsers = await prisma.user.findMany({ where: { isActive: true } });
   const { to, cc } = await approvalRecipients(user, allUsers, 'notifications.leave_pending');
   const settings = await prisma.systemSettings.upsert({
@@ -396,56 +395,50 @@ async function handleBundle(
   });
   const reviewUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/admin/requests`;
 
-  for (const row of created) {
-    const alloc = row.perDayAllocation as AllocationEntryInput[] | null;
-    const period = alloc
-      ? formatAllocationPeriod(alloc)
-      : formatLeavePeriod(
-          row.startDate.toISOString().slice(0, 10),
-          row.endDate.toISOString().slice(0, 10),
-          row.isHalfDay,
-          row.halfDaySlot,
-          row.timeFrom,
-          row.timeTo,
-        );
-    const durationLabel = `${Number(row.durationDays)} day${Number(row.durationDays) === 1 ? '' : 's'}`;
+  const bundleTypes = created.map((r) => leaveTypeLabel(r.leaveType)).join(' · ');
+  const bundlePeriod = formatLeavePeriod(
+    bundleMin.toISOString().slice(0, 10),
+    bundleMax.toISOString().slice(0, 10),
+    false, null, null, null,
+  );
+  const bundleTotalDays = created.reduce((s, r) => s + Number(r.durationDays), 0);
+  const bundleDurationLabel = `${bundleTotalDays} day${bundleTotalDays === 1 ? '' : 's'}`;
 
-    await notifyMany(
-      [...to, ...cc].map((rid) => ({
-        recipientId: rid.id,
-        type: 'LEAVE_PENDING' as const,
-        title: `Leave request from ${user.fullName}`,
-        body: `${leaveTypeLabel(row.leaveType)} · ${period} · ${durationLabel}`,
-        referenceType: 'leave_request',
-        referenceId: row.id,
-      })),
+  await notifyMany(
+    [...to, ...cc].map((rid) => ({
+      recipientId: rid.id,
+      type: 'LEAVE_PENDING' as const,
+      title: `Leave request from ${user.fullName}`,
+      body: `${bundleTypes} · ${bundlePeriod} · ${bundleDurationLabel}`,
+      referenceType: 'leave_request',
+      referenceId: created[0].id,
+    })),
+  );
+
+  if (input.channels.includes('EMAIL') && to.length > 0) {
+    const reviewerName = to.length === 1 ? to[0].fullName : 'team';
+    const { subject, html } = leaveSubmittedEmail(
+      {
+        senderName: settings.senderName,
+        employeeName: user.fullName,
+        reviewerName,
+        leaveType: bundleTypes,
+        period: bundlePeriod,
+        duration: bundleDurationLabel,
+        reason: input.reason,
+        description: input.description,
+        reviewUrl,
+      },
+      { senderName: settings.senderName },
     );
-
-    if (input.channels.includes('EMAIL') && to.length > 0) {
-      const reviewerName = to.length === 1 ? to[0].fullName : 'team';
-      const { subject, html } = leaveSubmittedEmail(
-        {
-          senderName: settings.senderName,
-          employeeName: user.fullName,
-          reviewerName,
-          leaveType: leaveTypeLabel(row.leaveType),
-          period,
-          duration: durationLabel,
-          reason: input.reason,
-          description: input.description,
-          reviewUrl,
-        },
-        { senderName: settings.senderName },
-      );
-      void sendEmail({
-        to: to.map((u) => u.email),
-        cc: cc.map((u) => u.email),
-        subject,
-        html,
-        referenceType: 'leave_request',
-        referenceId: row.id,
-      });
-    }
+    void sendEmail({
+      to: to.map((u) => u.email),
+      cc: cc.map((u) => u.email),
+      subject,
+      html,
+      referenceType: 'leave_request',
+      referenceId: created[0].id,
+    });
   }
 
   return NextResponse.json({ bundleId, items: created.map(serialize) }, { status: 201 });

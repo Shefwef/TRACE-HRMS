@@ -220,7 +220,7 @@ ${user.employeeIdCode || ''} · ${user.department || ''}`;
             >
               <header className="laf-header">
                 <div>
-                  <h2>Apply for Leave</h2>
+                  <h2>Request Leave</h2>
                   <p>Fill out a few quick details - you can review everything before sending.</p>
                 </div>
                 <button className="laf-close" onClick={handleClose} aria-label="Close">

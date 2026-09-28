@@ -97,7 +97,13 @@ export function CalendarPage() {
                 <span>{d.getDate()}</span>
               </div>
               <div className="calpg-cell-body">
-                {holiday && <Badge variant="holiday">{holiday.name}</Badge>}
+                {holiday && (
+                  <Badge
+                    variant="holiday"
+                    className={holiday.name.length > 22 ? 'holiday-xlong' : holiday.name.length > 14 ? 'holiday-long' : undefined}
+                    title={holiday.name}
+                  >{holiday.name}</Badge>
+                )}
                 {leave && !holiday && <Badge variant="casual">{leave.leaveType.toLowerCase()}</Badge>}
                 {isWeekend && !holiday && !leave && !att && <span className="calpg-cell-weekend">Weekend</span>}
               </div>
