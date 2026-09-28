@@ -89,5 +89,6 @@ export const clerkAppearance = {
     },
     dividerLine: { background: '#e2e8f0' },
     dividerText: { color: '#718096' },
+    alternativeMethods: { display: 'none' },
   },
 } as const;
