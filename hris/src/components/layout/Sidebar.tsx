@@ -30,13 +30,13 @@ const employeeNav = [
   { to: '/leaves', label: 'My Leaves', icon: <ClipboardList size={18} /> },
   { to: '/attendance', label: 'Attendance', icon: <Clock size={18} /> },
   { to: '/calendar', label: 'Calendar', icon: <Calendar size={18} /> },
-  { to: '/reports', label: 'Reports', icon: <FileText size={18} /> },
 ];
 
 const adminNav = [
   { to: '/admin', label: 'Admin Home', icon: <Home size={18} /> },
   { to: '/admin/requests', label: 'Requests', icon: <Inbox size={18} /> },
   { to: '/admin/employees', label: 'Employees', icon: <Users size={18} /> },
+  { to: '/reports', label: 'Reports', icon: <FileText size={18} /> },
   { to: '/admin/locations', label: 'Work Locations', icon: <MapPin size={18} /> },
   { to: '/admin/holidays', label: 'Holiday Manager', icon: <CalendarDays size={18} /> },
   { to: '/admin/biometric', label: 'Biometric', icon: <Fingerprint size={18} /> },
@@ -51,6 +51,7 @@ const adminNav = [
  */
 const lineManagerNav = [
   { to: '/admin/requests', label: 'Team Requests', icon: <Inbox size={18} /> },
+  { to: '/reports', label: 'Reports', icon: <FileText size={18} /> },
   { to: '/admin/locations', label: 'Team Locations', icon: <MapPin size={18} /> },
   { to: '/admin/audit', label: 'Audit Logs', icon: <ScrollText size={18} /> },
   { to: '/admin/permissions', label: 'Permissions', icon: <Shield size={18} /> },

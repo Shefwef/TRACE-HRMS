@@ -83,6 +83,7 @@ export async function GET(
   const year = Number(url.searchParams.get('year') ?? now.getFullYear());
   const month = Number(url.searchParams.get('month') ?? now.getMonth() + 1);
   const format = url.searchParams.get('format') === 'pdf' ? 'pdf' : 'xlsx';
+  const employeeId = url.searchParams.get('employeeId');
 
   if (!Number.isFinite(year) || year < 2000 || year > 2100)
     return err(400, 'BAD_YEAR', 'Invalid year.');
@@ -93,18 +94,35 @@ export async function GET(
       return err(400, 'BAD_MONTH', 'Invalid month.');
   }
 
+  // Resolve the report subject: the requesting user, or a specified employee.
+  const callerRoles: string[] = user.roles?.length ? user.roles : [user.role];
+  const callerIsAdmin = callerRoles.some((r) => r === 'HR' || r === 'SUPER_ADMIN');
+  const callerIsManager = callerIsAdmin || callerRoles.includes('LINE_MANAGER');
+
+  let subject: ApiUser = user;
+  if (employeeId && employeeId !== user.id) {
+    if (!callerIsManager)
+      return err(403, 'FORBIDDEN', 'You do not have permission to view another employee\'s reports.');
+    const target = await prisma.user.findUnique({ where: { id: employeeId, deletedAt: null } });
+    if (!target)
+      return err(404, 'NOT_FOUND', 'Employee not found.');
+    if (!callerIsAdmin && target.lineManagerId !== user.id)
+      return err(403, 'FORBIDDEN', 'You can only view reports for your direct reports.');
+    subject = target;
+  }
+
   try {
-    if (format === 'xlsx') return await renderXlsx(user, type, year, month);
+    if (format === 'xlsx') return await renderXlsx(user, subject, type, year, month);
 
     const logoDataUrl = await getLogoDataUrl();
     const generatedAt = fmtGeneratedAt();
     switch (type) {
       case 'attendance':
-        return await renderAttendance(user, year, month, logoDataUrl, generatedAt);
+        return await renderAttendance(subject, year, month, logoDataUrl, generatedAt);
       case 'leaves':
-        return await renderLeaves(user, year, logoDataUrl, generatedAt);
+        return await renderLeaves(subject, year, logoDataUrl, generatedAt);
       case 'summary':
-        return await renderSummary(user, year, month, logoDataUrl, generatedAt);
+        return await renderSummary(subject, year, month, logoDataUrl, generatedAt);
       case 'all-employees':
         // Reads the runtime permission matrix rather than the denormalised
         // primary role: a COO holding ADMIN + EMPLOYEE has EMPLOYEE nowhere in
@@ -133,43 +151,43 @@ export async function GET(
 // ─── Excel ─────────────────────────────────────────────────
 
 /**
- * The Excel path. Each report resolves its own scope: the three personal
- * reports are always the caller's own data, and the two team-wide ones go
- * through the permission matrix. No branch here reads an employee id from the
- * query string, so there is nothing for a caller to tamper with.
+ * `user` is the authenticated requester (used for permission checks).
+ * `subject` is the employee whose data to export — defaults to `user` when
+ * no ?employeeId= is provided; resolved and validated in the GET handler.
  */
 async function renderXlsx(
   user: ApiUser,
+  subject: ApiUser,
   type: string,
   year: number,
   month: number,
 ): Promise<Response> {
-  const slug = (user.employeeIdCode ?? user.fullName).replace(/\s+/g, '-').toLowerCase();
+  const slug = (subject.employeeIdCode ?? subject.fullName).replace(/\s+/g, '-').toLowerCase();
 
   switch (type) {
     case 'attendance': {
       const period = monthPeriod(year, month);
-      const data = await getAttendanceReportData(user, period);
+      const data = await getAttendanceReportData(subject, period);
       return xlsxResponse(
-        buildAttendanceWorkbook(user, period, data),
+        buildAttendanceWorkbook(subject, period, data),
         `attendance-report-${slug}-${period.fileRange}.xlsx`,
       );
     }
 
     case 'leaves': {
       const period = yearPeriod(year);
-      const data = await getLeaveReportData(user, year);
+      const data = await getLeaveReportData(subject, year);
       return xlsxResponse(
-        buildLeavesWorkbook(user, period, data),
+        buildLeavesWorkbook(subject, period, data),
         `leave-history-${slug}-${period.fileRange}.xlsx`,
       );
     }
 
     case 'summary': {
       const period = monthPeriod(year, month);
-      const data = await getSummaryReportData(user, period);
+      const data = await getSummaryReportData(subject, period);
       return xlsxResponse(
-        buildSummaryWorkbook(user, period, data),
+        buildSummaryWorkbook(subject, period, data),
         `performance-summary-${slug}-${period.fileRange}.xlsx`,
       );
     }

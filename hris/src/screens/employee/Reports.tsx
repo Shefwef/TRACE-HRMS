@@ -279,7 +279,7 @@ export function ReportsPage() {
           </Button>
         </div>
 
-        {isAdmin && (
+        {isManager && (
           <>
             <span className="rpts-period-sep" />
             <div className="rpts-period-label">
