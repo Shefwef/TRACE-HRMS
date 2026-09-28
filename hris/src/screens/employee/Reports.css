@@ -102,6 +102,93 @@
   .rpts-period-controls { flex-wrap: wrap; }
 }
 
+/* Vertical separator between period and employee filter */
+.rpts-period-sep {
+  width: 1px;
+  height: 24px;
+  background: var(--color-border-default);
+  flex-shrink: 0;
+}
+
+/* Searchable employee picker */
+.rpts-emp-picker { position: relative; }
+.rpts-emp-input {
+  height: 34px;
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  outline: none;
+  box-shadow: var(--shadow-sm);
+  width: 200px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.rpts-emp-input:focus {
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.15);
+}
+.rpts-emp-input::placeholder { color: var(--color-text-muted); }
+.rpts-emp-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.rpts-emp-clear:hover { color: var(--color-text-primary); }
+.rpts-emp-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 240px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.rpts-emp-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-border-default);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.rpts-emp-option:last-child { border-bottom: none; }
+.rpts-emp-option:hover { background: var(--color-bg-subtle); }
+.rpts-emp-option-active { background: var(--color-info-light); color: var(--color-brand-primary); }
+.rpts-emp-dept {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+.rpts-emp-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
 /* ── Report cards grid ─────────────────────────────────────── */
 .rpts-grid {
   display: grid;

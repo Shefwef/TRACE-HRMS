@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   FileSpreadsheet, FileText, TrendingUp, Users, CalendarClock, Navigation,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useCurrentUser } from '@/lib/session';
 import { useStore } from '@/lib/store';
+import { useUsers, type UserSummary } from '@/lib/hooks';
 import { Button } from '../../components/ui/Button';
 import { type DatePreset, makeDateRange, type DateRange } from '../../components/ui/DateRangePicker';
 import './Reports.css';
@@ -115,6 +116,30 @@ export function ReportsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
+  const [selectedEmp, setSelectedEmp] = useState<UserSummary | null>(null);
+  const [empSearch, setEmpSearch] = useState('');
+  const [showEmpDrop, setShowEmpDrop] = useState(false);
+  const empRef = useRef<HTMLDivElement>(null);
+
+  const { data: allUsers = [] } = useUsers();
+
+  useEffect(() => {
+    if (!showEmpDrop) return;
+    function handleClick(e: MouseEvent) {
+      if (empRef.current && !empRef.current.contains(e.target as Node)) {
+        setShowEmpDrop(false);
+        setEmpSearch('');
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showEmpDrop]);
+
+  const filteredEmps = allUsers
+    .filter((u) => u.isActive)
+    .filter((u) => !empSearch || u.fullName.toLowerCase().includes(empSearch.toLowerCase()) || (u.department ?? '').toLowerCase().includes(empSearch.toLowerCase()))
+    .slice(0, 20);
+
   if (!user) return null;
 
   const roles = user.roles.length > 0 ? user.roles : [user.role];
@@ -163,6 +188,7 @@ export function ReportsPage() {
     try {
       const q = new URLSearchParams({ year: String(year), format });
       if (r.usesMonth) q.set('month', String(month));
+      if (selectedEmp) q.set('employeeId', selectedEmp.id);
       const res = await fetch(`/api/reports/${r.id}?${q.toString()}`);
       if (!res.ok) {
         let msg = `Request failed (${res.status})`;
@@ -252,6 +278,57 @@ export function ReportsPage() {
             Apply
           </Button>
         </div>
+
+        {isAdmin && (
+          <>
+            <span className="rpts-period-sep" />
+            <div className="rpts-period-label">
+              <Users size={15} />
+              <span>Employee</span>
+            </div>
+            <div className="rpts-emp-picker" ref={empRef}>
+              <input
+                className="rpts-emp-input"
+                placeholder="All employees"
+                value={showEmpDrop ? empSearch : (selectedEmp?.fullName ?? '')}
+                onFocus={() => { setEmpSearch(''); setShowEmpDrop(true); }}
+                onChange={(e) => setEmpSearch(e.target.value)}
+              />
+              {selectedEmp && !showEmpDrop && (
+                <button
+                  type="button"
+                  className="rpts-emp-clear"
+                  onClick={() => { setSelectedEmp(null); setEmpSearch(''); }}
+                  title="Clear"
+                >×</button>
+              )}
+              {showEmpDrop && (
+                <div className="rpts-emp-dropdown">
+                  {filteredEmps.length === 0 ? (
+                    <div className="rpts-emp-empty">No employees found</div>
+                  ) : (
+                    filteredEmps.map((u) => (
+                      <button
+                        key={u.id}
+                        type="button"
+                        className={`rpts-emp-option${selectedEmp?.id === u.id ? ' rpts-emp-option-active' : ''}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setSelectedEmp(u);
+                          setShowEmpDrop(false);
+                          setEmpSearch('');
+                        }}
+                      >
+                        <span>{u.fullName}</span>
+                        {u.department && <span className="rpts-emp-dept">{u.department}</span>}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="rpts-grid">
