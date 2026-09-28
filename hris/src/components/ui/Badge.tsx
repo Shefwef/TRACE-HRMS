@@ -19,11 +19,13 @@ interface Props {
   soft?: boolean;
   className?: string;
   leadingIcon?: ReactNode;
+  title?: string;
 }
 
-export function Badge({ children, variant = 'default', soft = true, className, leadingIcon }: Props) {
+export function Badge({ children, variant = 'default', soft = true, className, leadingIcon, title }: Props) {
   return (
     <span
+      title={title}
       className={cx(
         'badge',
         `badge-${variant}`,
