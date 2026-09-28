@@ -1,11 +1,9 @@
 'use client';
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
-import { CheckCircle2, Coffee, Zap, Plus, Building2, MapPin, ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
-import { useAttendanceHistory, useBalance, type AttendanceRecordData, type LocationEventSummary } from '@/lib/hooks';
+import { CheckCircle2, Coffee, Zap, Building2, MapPin, ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
+import { useAttendanceHistory, type AttendanceRecordData, type LocationEventSummary } from '@/lib/hooks';
 import { AttendanceWidget } from '../../components/attendance/AttendanceWidget';
 import { StatCard } from '../../components/ui/StatCard';
-import { Button } from '../../components/ui/Button';
 import { LogExtraWorkModal } from '../../components/attendance/LogExtraWorkModal';
 import { fmtDate, fmtDuration, fmtTime } from '../../lib/utils';
 import './Attendance.css';
@@ -22,7 +20,6 @@ export function AttendancePage() {
   const todayDate = now.getDate();
 
   const { data } = useAttendanceHistory(year, month);
-  const { data: balance } = useBalance();
 
   // Employee joining date: pre-joining days are not counted as absent and
   // are hidden from the daily breakdown entirely.
@@ -68,36 +65,9 @@ export function AttendancePage() {
           <h1>Attendance</h1>
           <p className="muted">Your working hours, breaks and overtime this month.</p>
         </div>
-        <Button variant="secondary" leadingIcon={<Plus size={16} />} onClick={() => setExtraOpen(true)}>
-          Apply for replacement leave
-        </Button>
       </div>
 
-      <div className="atpg-top">
-        <AttendanceWidget />
-        <div className="card atpg-extra-card">
-          <div className="atpg-extra-head">
-            <h3>Replacement leave</h3>
-            <span className="mono">{balance?.replacementBalance ?? 0} days</span>
-          </div>
-          <p className="muted" style={{ fontSize: 14, lineHeight: 1.55 }}>
-            Worked on a weekend or holiday? Log it here to earn replacement leave - a full day = +1,
-            a half day (9-1 or 1-5) = +0.5. HR or Admin approves.
-          </p>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Button
-              variant="primary"
-              leadingIcon={<Plus size={16} />}
-              onClick={() => setExtraOpen(true)}
-            >
-              Apply for replacement leave
-            </Button>
-            <Link href="/leaves/replacement" style={{ textDecoration: 'none' }}>
-              <Button variant="secondary">View history</Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+      <AttendanceWidget />
 
       <div className="atpg-stats">
         <StatCard label="Present days" value={present} hint="This month" icon={<CheckCircle2 size={16} />} accent="success" />
