@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { CalendarCheck, Clock, TrendingUp, Info, Plus, X, MessageCircle } from 'lucide-react';
+import { CalendarCheck, Clock, TrendingUp, Plus, X, MessageCircle } from 'lucide-react';
 import { useBalance, useMyExtraWork, type ExtraWorkSummary } from '@/lib/hooks';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -37,8 +37,6 @@ export function ReplacementLeavePage() {
     latestApproved && Date.now() - new Date(latestApproved.reviewedAt!).getTime() < 7 * 86_400_000
       ? latestApproved
       : null;
-
-  const previousBalance = Math.max(0, current - earnedThisMonth);
 
   return (
     <div className="rlp">
@@ -90,92 +88,70 @@ export function ReplacementLeavePage() {
         </div>
       )}
 
-      <div className="rlp-grid">
-        <section className="card rlp-history">
-          <header className="rlp-history-head">
-            <h2>Replacement leave history</h2>
-          </header>
-          {isLoading ? (
-            <div className="rlp-loading">Loading&hellip;</div>
-          ) : extraWork.length === 0 ? (
-            <EmptyState
-              title="No extra work logged yet"
-              body="Worked on a weekend or holiday? Log it and HR will convert it into replacement leave."
-            />
-          ) : (
-            <div className="rlp-table-wrap">
-              <table className="rlp-table">
-                <thead>
-                  <tr>
-                    <th>Work date</th>
-                    <th>Day</th>
-                    <th>Slot</th>
-                    <th className="rlp-num">Leave credited</th>
-                    <th>Status</th>
-                    <th>Reason</th>
-                    <th>Note</th>
-                    <th aria-hidden="true"></th>
+      <section className="card rlp-history">
+        <header className="rlp-history-head">
+          <h2>Replacement leave history</h2>
+        </header>
+        {isLoading ? (
+          <div className="rlp-loading">Loading&hellip;</div>
+        ) : extraWork.length === 0 ? (
+          <EmptyState
+            title="No extra work logged yet"
+            body="Worked on a weekend or holiday? Log it and HR will convert it into replacement leave."
+          />
+        ) : (
+          <div className="rlp-table-wrap">
+            <table className="rlp-table">
+              <thead>
+                <tr>
+                  <th>Work date</th>
+                  <th>Day</th>
+                  <th>Slot</th>
+                  <th className="rlp-num">Leave credited</th>
+                  <th>Status</th>
+                  <th>Reason</th>
+                  <th>Note</th>
+                  <th aria-hidden="true"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {extraWork.map((x) => (
+                  <tr key={x.id}>
+                    <td className="mono">{fmtDate(x.workDate, 'd MMM yyyy')}</td>
+                    <td>{fmtDate(x.workDate, 'EEEE')}</td>
+                    <td>{slotLabelOf(x.workType)}</td>
+                    <td className="rlp-num mono">
+                      {x.status === 'APPROVED' ? (
+                        <strong>+{formatDays(creditOf(x.workType))}</strong>
+                      ) : x.status === 'PENDING' ? (
+                        <span className="muted">&mdash; pending &mdash;</span>
+                      ) : (
+                        <span className="muted">&mdash;</span>
+                      )}
+                    </td>
+                    <td>
+                      <Badge variant={statusVariantOf(x.status)}>{x.status.toLowerCase()}</Badge>
+                    </td>
+                    <td className="rlp-truncate" title={x.reason}>{x.reason}</td>
+                    <td className="rlp-truncate rlp-note" title={x.adminNote ?? undefined}>
+                      {x.adminNote ?? <span className="muted">&mdash;</span>}
+                    </td>
+                    <td className="rlp-details-cell">
+                      <button
+                        type="button"
+                        className="myleaves-details-btn"
+                        onClick={() => setDetail(x)}
+                      >
+                        Details
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {extraWork.map((x) => (
-                    <tr key={x.id}>
-                      <td className="mono">{fmtDate(x.workDate, 'd MMM yyyy')}</td>
-                      <td>{fmtDate(x.workDate, 'EEEE')}</td>
-                      <td>{slotLabelOf(x.workType)}</td>
-                      <td className="rlp-num mono">
-                        {x.status === 'APPROVED' ? (
-                          <strong>+{formatDays(creditOf(x.workType))}</strong>
-                        ) : x.status === 'PENDING' ? (
-                          <span className="muted">&mdash; pending &mdash;</span>
-                        ) : (
-                          <span className="muted">&mdash;</span>
-                        )}
-                      </td>
-                      <td>
-                        <Badge variant={statusVariantOf(x.status)}>{x.status.toLowerCase()}</Badge>
-                      </td>
-                      <td className="rlp-truncate" title={x.reason}>{x.reason}</td>
-                      <td className="rlp-truncate rlp-note" title={x.adminNote ?? undefined}>
-                        {x.adminNote ?? <span className="muted">&mdash;</span>}
-                      </td>
-                      <td className="rlp-details-cell">
-                        <button
-                          type="button"
-                          className="myleaves-details-btn"
-                          onClick={() => setDetail(x)}
-                        >
-                          Details
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
-        <aside className="card rlp-calc">
-          <h2>Balance calculation</h2>
-          <div className="rlp-calc-row">
-            <span>Previous balance</span>
-            <strong>{formatDays(previousBalance)} day{previousBalance === 1 ? '' : 's'}</strong>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <div className="rlp-calc-row rlp-calc-row-plus">
-            <span>+ Approved this month</span>
-            <strong>{formatDays(earnedThisMonth)} day{earnedThisMonth === 1 ? '' : 's'}</strong>
-          </div>
-          <div className="rlp-calc-total">
-            <span>Current balance</span>
-            <strong>{formatDays(current)} <span className="rlp-calc-unit">day{current === 1 ? '' : 's'}</span></strong>
-          </div>
-          <div className="rlp-info-note">
-            <Info size={12} />
-            <span>HR reviews each entry and decides Full or Half day eligibility based on the hours you worked.</span>
-          </div>
-        </aside>
-      </div>
+        )}
+      </section>
 
       <LogExtraWorkModal open={logOpen} onClose={() => setLogOpen(false)} />
 
