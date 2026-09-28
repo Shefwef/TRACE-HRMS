@@ -147,11 +147,10 @@
 .lreq-thead > *[data-label="Period"],
 .lreq-row > *[data-label="Period"] { white-space: nowrap; }
 
-/* Extra-work tab uses a different set of columns:
-   Employee · Date · Slot · Credit · Reason · Submitted · Status. */
+/* Extra-work tab: Employee · Date · Slot · Credit · Reason · Submitted · Status · Details */
 .lreq-table-extra .lreq-thead,
 .lreq-table-extra .lreq-row {
-  grid-template-columns: minmax(220px, 2fr) 130px 130px 70px minmax(160px, 2fr) 110px 110px;
+  grid-template-columns: minmax(200px, 2fr) 120px 130px 70px minmax(120px, 1.5fr) 100px 100px 90px;
 }
 .lreq-serial {
   color: var(--color-text-muted);

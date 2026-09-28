@@ -293,6 +293,7 @@ export function LeaveRequestsPage() {
                 <span>Reason</span>
                 <span>Submitted</span>
                 <span>Status</span>
+                <span aria-hidden="true"></span>
               </div>
               <AnimatePresence initial={false}>
                 {extraWork.map((x) => {
@@ -303,10 +304,9 @@ export function LeaveRequestsPage() {
                     x.status === 'PENDING' ? 'warning' :
                     x.status === 'APPROVED' ? 'success' : 'danger';
                   return (
-                    <motion.button
+                    <motion.div
                       key={x.id}
                       className="lreq-row"
-                      onClick={() => setReviewExtraId(x.id)}
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
@@ -325,7 +325,16 @@ export function LeaveRequestsPage() {
                       <span className="lreq-reason" data-label="Reason" title={x.reason}>{x.reason}</span>
                       <span className="muted" data-label="Submitted">{fmtRelative(x.createdAt)}</span>
                       <span data-label="Status"><Badge variant={statusVar}>{x.status.toLowerCase()}</Badge></span>
-                    </motion.button>
+                      <span data-label="Details">
+                        <button
+                          type="button"
+                          className="lreq-details-btn"
+                          onClick={() => setReviewExtraId(x.id)}
+                        >
+                          Details
+                        </button>
+                      </span>
+                    </motion.div>
                   );
                 })}
               </AnimatePresence>

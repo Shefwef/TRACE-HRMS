@@ -1,10 +1,10 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CalendarCheck, Clock, TrendingUp, Plus, X } from 'lucide-react';
+import { CalendarCheck, Clock, TrendingUp, Info, Plus, X, MessageCircle } from 'lucide-react';
 import { useBalance, useMyExtraWork, type ExtraWorkSummary } from '@/lib/hooks';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { Modal } from '../../components/ui/Modal';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { LogExtraWorkModal } from '../../components/attendance/LogExtraWorkModal';
 import { cx, fmtDate } from '../../lib/utils';
@@ -12,21 +12,12 @@ import { LeavesTabs } from './LeavesTabs';
 import './MyLeaves.css';
 import './ReplacementLeave.css';
 
-/**
- * Employee's Replacement Leave page. Shows:
- *   * Balance headline cards (current / pending / earned this month)
- *   * Recent credit banner when the most recent approval is fresh
- *   * Full history of submitted extra-work logs, styled to match the
- *     General Leave list (grid rows, hover, status badges).
- *
- * All data comes from existing endpoints (useBalance + useMyExtraWork);
- * no new backend is required for this page.
- */
 export function ReplacementLeavePage() {
   const { data: balance } = useBalance();
   const { data: extraWork = [], isLoading } = useMyExtraWork();
   const [logOpen, setLogOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [detail, setDetail] = useState<ExtraWorkSummary | null>(null);
 
   const current = Number(balance?.replacementBalance ?? 0);
 
@@ -39,8 +30,6 @@ export function ReplacementLeavePage() {
   );
   const earnedThisMonth = monthApprovedLogs.reduce((s, x) => s + creditOf(x.workType), 0);
 
-  // The freshest approved log (any month), only shown as a banner if it was
-  // decided in the last 7 days. Auto-hides once the user dismisses it.
   const latestApproved = extraWork
     .filter((x) => x.status === 'APPROVED' && x.reviewedAt)
     .sort((a, b) => (a.reviewedAt! < b.reviewedAt! ? 1 : -1))[0];
@@ -48,6 +37,8 @@ export function ReplacementLeavePage() {
     latestApproved && Date.now() - new Date(latestApproved.reviewedAt!).getTime() < 7 * 86_400_000
       ? latestApproved
       : null;
+
+  const previousBalance = Math.max(0, current - earnedThisMonth);
 
   return (
     <div className="rlp">
@@ -90,7 +81,7 @@ export function ReplacementLeavePage() {
           <div className="rlp-banner-body">
             <strong>Replacement leave credited</strong>
             <p>
-              {formatDays(creditOf(freshApproval.workType))} day{creditOf(freshApproval.workType) === 1 ? '' : 's'} added to your balance for {fmtDate(freshApproval.workDate, 'd MMM yyyy')} - approved by {freshApproval.reviewer?.fullName ?? 'HR'}.
+              {formatDays(creditOf(freshApproval.workType))} day{creditOf(freshApproval.workType) === 1 ? '' : 's'} added to your balance for {fmtDate(freshApproval.workDate, 'd MMM yyyy')} &mdash; approved by {freshApproval.reviewer?.fullName ?? 'HR'}.
             </p>
           </div>
           <button className="rlp-banner-close" onClick={() => setBannerDismissed(true)} aria-label="Dismiss">
@@ -99,61 +90,158 @@ export function ReplacementLeavePage() {
         </div>
       )}
 
-      {isLoading ? (
-        <div className="card myleaves-loading">Loading…</div>
-      ) : extraWork.length === 0 ? (
-        <div className="card" style={{ padding: 0 }}>
-          <EmptyState
-            title="No extra work logged yet"
-            body="Worked on a weekend or holiday? Apply for replacement leave and HR will convert it into a leave day."
-          />
-        </div>
-      ) : (
-        <div className="myleaves-table rlp-hist">
-          <div className="myleaves-thead rlp-hist-row">
-            <span>#</span>
-            <span>Work date</span>
-            <span>Day</span>
-            <span>Slot</span>
-            <span>Credit</span>
-            <span>Status</span>
-            <span>Reason</span>
+      <div className="rlp-grid">
+        <section className="card rlp-history">
+          <header className="rlp-history-head">
+            <h2>Replacement leave history</h2>
+          </header>
+          {isLoading ? (
+            <div className="rlp-loading">Loading&hellip;</div>
+          ) : extraWork.length === 0 ? (
+            <EmptyState
+              title="No extra work logged yet"
+              body="Worked on a weekend or holiday? Log it and HR will convert it into replacement leave."
+            />
+          ) : (
+            <div className="rlp-table-wrap">
+              <table className="rlp-table">
+                <thead>
+                  <tr>
+                    <th>Work date</th>
+                    <th>Day</th>
+                    <th>Slot</th>
+                    <th className="rlp-num">Leave credited</th>
+                    <th>Status</th>
+                    <th>Reason</th>
+                    <th>Note</th>
+                    <th aria-hidden="true"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {extraWork.map((x) => (
+                    <tr key={x.id}>
+                      <td className="mono">{fmtDate(x.workDate, 'd MMM yyyy')}</td>
+                      <td>{fmtDate(x.workDate, 'EEEE')}</td>
+                      <td>{slotLabelOf(x.workType)}</td>
+                      <td className="rlp-num mono">
+                        {x.status === 'APPROVED' ? (
+                          <strong>+{formatDays(creditOf(x.workType))}</strong>
+                        ) : x.status === 'PENDING' ? (
+                          <span className="muted">&mdash; pending &mdash;</span>
+                        ) : (
+                          <span className="muted">&mdash;</span>
+                        )}
+                      </td>
+                      <td>
+                        <Badge variant={statusVariantOf(x.status)}>{x.status.toLowerCase()}</Badge>
+                      </td>
+                      <td className="rlp-truncate" title={x.reason}>{x.reason}</td>
+                      <td className="rlp-truncate rlp-note" title={x.adminNote ?? undefined}>
+                        {x.adminNote ?? <span className="muted">&mdash;</span>}
+                      </td>
+                      <td className="rlp-details-cell">
+                        <button
+                          type="button"
+                          className="myleaves-details-btn"
+                          onClick={() => setDetail(x)}
+                        >
+                          Details
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <aside className="card rlp-calc">
+          <h2>Balance calculation</h2>
+          <div className="rlp-calc-row">
+            <span>Previous balance</span>
+            <strong>{formatDays(previousBalance)} day{previousBalance === 1 ? '' : 's'}</strong>
           </div>
-          <AnimatePresence initial={false}>
-            {extraWork.map((x, idx) => (
-              <motion.div
-                key={x.id}
-                className="myleaves-row rlp-hist-row"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                layout
-              >
-                <span className="myleaves-serial mono" data-label="#">{idx + 1}</span>
-                <span className="mono" data-label="Work date">{fmtDate(x.workDate, 'd MMM yyyy')}</span>
-                <span data-label="Day">{fmtDate(x.workDate, 'EEEE')}</span>
-                <span data-label="Slot">{slotLabelOf(x.workType)}</span>
-                <span className="mono" data-label="Credit">
-                  {x.status === 'APPROVED'
-                    ? <strong>+{formatDays(creditOf(x.workType))}</strong>
-                    : <span className="muted">{x.status === 'PENDING' ? 'pending' : '-'}</span>}
-                </span>
-                <span data-label="Status">
-                  <Badge variant={statusVariantOf(x.status)}>{x.status.toLowerCase()}</Badge>
-                </span>
-                <span className="rlp-hist-reason" data-label="Reason" title={x.reason}>{x.reason}</span>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
+          <div className="rlp-calc-row rlp-calc-row-plus">
+            <span>+ Approved this month</span>
+            <strong>{formatDays(earnedThisMonth)} day{earnedThisMonth === 1 ? '' : 's'}</strong>
+          </div>
+          <div className="rlp-calc-total">
+            <span>Current balance</span>
+            <strong>{formatDays(current)} <span className="rlp-calc-unit">day{current === 1 ? '' : 's'}</span></strong>
+          </div>
+          <div className="rlp-info-note">
+            <Info size={12} />
+            <span>HR reviews each entry and decides Full or Half day eligibility based on the hours you worked.</span>
+          </div>
+        </aside>
+      </div>
 
       <LogExtraWorkModal open={logOpen} onClose={() => setLogOpen(false)} />
+
+      <Modal
+        open={!!detail}
+        onClose={() => setDetail(null)}
+        title={detail ? `${fmtDate(detail.workDate, 'd MMM yyyy')} · ${slotLabelOf(detail.workType)}` : ''}
+        size="lg"
+        footer={<Button variant="ghost" onClick={() => setDetail(null)}>Close</Button>}
+      >
+        {detail && (
+          <div className="myleaves-detail">
+            <div className="myleaves-detail-row">
+              <span className="myleaves-detail-label">Work date</span>
+              <span>{fmtDate(detail.workDate, 'EEEE, d MMM yyyy')}</span>
+            </div>
+            <div className="myleaves-detail-row">
+              <span className="myleaves-detail-label">Slot</span>
+              <span>{slotLabelOf(detail.workType)}</span>
+            </div>
+            <div className="myleaves-detail-row">
+              <span className="myleaves-detail-label">Reason</span>
+              <span>{detail.reason}</span>
+            </div>
+            {detail.description && (
+              <div className="myleaves-detail-row">
+                <span className="myleaves-detail-label">Description</span>
+                <span>{detail.description}</span>
+              </div>
+            )}
+            <div className="myleaves-detail-row">
+              <span className="myleaves-detail-label">Submitted</span>
+              <span className="muted">{fmtDate(detail.createdAt, 'd MMM yyyy · h:mm a')}</span>
+            </div>
+            {detail.status !== 'PENDING' && (detail.reviewer || detail.reviewedAt || detail.adminNote) && (
+              <div className={cx('myleaves-detail-decision', `myleaves-detail-decision-${detail.status.toLowerCase()}`)}>
+                <div className="myleaves-detail-decision-head">
+                  <Badge variant={statusVariantOf(detail.status)}>{detail.status.toLowerCase()}</Badge>
+                  {detail.reviewer && (
+                    <span className="myleaves-detail-decision-by">
+                      by <strong>{detail.reviewer.fullName}</strong>
+                    </span>
+                  )}
+                  {detail.reviewedAt && (
+                    <span className="muted myleaves-detail-decision-when">
+                      {fmtDate(detail.reviewedAt, 'd MMM yyyy · h:mm a')}
+                    </span>
+                  )}
+                </div>
+                {detail.adminNote && (
+                  <div className="myleaves-detail-note">
+                    <MessageCircle size={14} />
+                    <div>
+                      <strong>Note from reviewer</strong>
+                      <p>{detail.adminNote}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
-
-// ─── Sub-components ────────────────────────────────────────
 
 function StatCard({
   icon, label, value, tone,
@@ -174,14 +262,12 @@ function StatCard({
   );
 }
 
-// ─── Helpers ───────────────────────────────────────────────
-
 function creditOf(workType: ExtraWorkSummary['workType']): number {
   return workType === 'FULL_DAY' ? 1 : 0.5;
 }
 
 function slotLabelOf(workType: ExtraWorkSummary['workType']): string {
-  return workType === 'FULL_DAY' ? 'Full day' : workType === 'HALF_DAY_MORNING' ? 'Half - morning' : 'Half - afternoon';
+  return workType === 'FULL_DAY' ? 'Full day' : workType === 'HALF_DAY_MORNING' ? 'Half – morning' : 'Half – afternoon';
 }
 
 function statusVariantOf(s: ExtraWorkSummary['status']): 'warning' | 'success' | 'danger' {
