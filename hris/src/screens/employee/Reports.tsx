@@ -126,12 +126,20 @@ function PeriodPicker({
   dateRange, customStart, customEnd,
   onPresetChange, onCustomStartChange, onCustomEndChange, onApply,
 }: PeriodPickerProps) {
+  const [applied, setApplied] = useState(false);
+
+  function handleApply() {
+    onApply();
+    setApplied(true);
+    setTimeout(() => setApplied(false), 1800);
+  }
+
   return (
     <div className="rpts-period-controls">
       <select
         className="rpts-period-select"
         value={dateRange.preset}
-        onChange={(e) => onPresetChange(e.target.value as DatePreset)}
+        onChange={(e) => { onPresetChange(e.target.value as DatePreset); setApplied(false); }}
       >
         {PRESETS.map((p) => (
           <option key={p.key} value={p.key}>{p.label}</option>
@@ -144,7 +152,7 @@ function PeriodPicker({
         value={customStart}
         max={customEnd || undefined}
         disabled={dateRange.preset !== 'custom'}
-        onChange={(e) => onCustomStartChange(e.target.value)}
+        onChange={(e) => { onCustomStartChange(e.target.value); setApplied(false); }}
       />
       <span className="rpts-period-custom-sep">–</span>
       <span className="rpts-period-custom-label">To</span>
@@ -154,15 +162,16 @@ function PeriodPicker({
         value={customEnd}
         min={customStart || undefined}
         disabled={dateRange.preset !== 'custom'}
-        onChange={(e) => onCustomEndChange(e.target.value)}
+        onChange={(e) => { onCustomEndChange(e.target.value); setApplied(false); }}
       />
       <Button
         size="sm"
-        variant="primary"
-        disabled={dateRange.preset !== 'custom' || !customStart || !customEnd || customStart > customEnd}
-        onClick={onApply}
+        variant={applied ? 'secondary' : 'primary'}
+        leadingIcon={applied ? <Check size={13} /> : undefined}
+        disabled={!applied && (dateRange.preset !== 'custom' || !customStart || !customEnd || customStart > customEnd)}
+        onClick={handleApply}
       >
-        Apply
+        {applied ? 'Applied' : 'Apply'}
       </Button>
     </div>
   );
