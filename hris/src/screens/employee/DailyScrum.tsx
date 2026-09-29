@@ -13,7 +13,6 @@ import {
 import { useCurrentUser, initials, avatarColorFor } from '@/lib/session';
 import { useStore } from '@/lib/store';
 import { Avatar } from '../../components/ui/Avatar';
-import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -22,12 +21,6 @@ import { cx, fmtDate, todayISO } from '../../lib/utils';
 import './DailyScrum.css';
 
 type ScrumStatus = 'ON_TRACK' | 'ATTENTION_NEEDED' | 'BLOCKED';
-
-const statusVariant: Record<ScrumStatus, 'success' | 'warning' | 'danger'> = {
-  ON_TRACK: 'success',
-  ATTENTION_NEEDED: 'warning',
-  BLOCKED: 'danger',
-};
 
 const statusLabel: Record<ScrumStatus, string> = {
   ON_TRACK: 'On track',
@@ -884,14 +877,11 @@ function MyTasksTab() {
       )}
 
       {!isLoading && visibleDates.length > 0 && (
-        <div className="dscrum-list-table dscrum-list-table-mytasks">
+        <div className="dscrum-list-table">
           <div className="dscrum-list-head">
             <div>SL#</div>
             <div>Date</div>
             <div>Day</div>
-            <div>Today</div>
-            <div>Yesterday</div>
-            <div>Status</div>
             <div />
           </div>
           {visibleDates.map((d, i) => (
@@ -938,24 +928,11 @@ function MyTasksRow({ date, serial, userId, searchQ, onDetails }: MyTasksRowProp
     if (!matches) return null;
   }
 
-  const todayCount = myEntry?.tasks.filter((t) => t.type === 'TODAY').length ?? 0;
-  const yesterdayCount = myEntry?.tasks.filter((t) => t.type === 'COMPLETED').length ?? 0;
-  const status = (myEntry?.status ?? 'ON_TRACK') as ScrumStatus;
-
   return (
     <div className="dscrum-list-row">
       <div>{serial}</div>
       <div>{fmtDate(date, 'd MMM yyyy')}</div>
       <div>{fmtDate(date, 'EEEE')}</div>
-      <div>{myEntry ? todayCount : '—'}</div>
-      <div>{myEntry ? yesterdayCount : '—'}</div>
-      <div>
-        {myEntry ? (
-          <Badge variant={statusVariant[status]}>{statusLabel[status]}</Badge>
-        ) : (
-          <span className="dscrum-list-muted">—</span>
-        )}
-      </div>
       <div className="dscrum-list-action">
         <Button size="sm" variant="secondary" onClick={onDetails}>Details</Button>
       </div>
@@ -971,8 +948,8 @@ export function DailyScrumPage() {
   return (
     <div className="dscrum">
       <div className="dscrum-head">
-        <h1>Daily Scrum</h1>
-        <p className="muted">Track daily standups and task progress.</p>
+        <h1>Daily Task Tracker</h1>
+        <p className="muted">Track daily standups and individual task progress.</p>
       </div>
 
       <div className="dscrum-tabs">
