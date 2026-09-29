@@ -143,9 +143,8 @@ export function AdminSettings() {
               <Info size={18} />
             </div>
             <h3>Roles</h3>
-            <p>The five roles available across the system.</p>
+            <p>The four roles available across the system.</p>
             <div className="stg-row"><span>Super Admin</span></div>
-            <div className="stg-row"><span>Admin</span></div>
             <div className="stg-row"><span>Line Manager</span></div>
             <div className="stg-row"><span>HR</span></div>
             <div className="stg-row"><span>Employee</span></div>

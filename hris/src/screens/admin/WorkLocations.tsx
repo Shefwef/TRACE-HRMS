@@ -97,7 +97,7 @@ export function WorkLocations() {
 
       <div className="wloc-stats">
         <StatCard
-          label="On the board"
+          label="Total Employee"
           value={data?.totals.employees ?? '-'}
           icon={<Users size={15} />}
           accent="muted"

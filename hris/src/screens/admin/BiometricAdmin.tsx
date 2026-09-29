@@ -28,7 +28,7 @@ interface SyncLogRow {
 interface SessionRow {
   date: string;
   employeeId: string; employeeName: string;
-  employeeIdCode: string | null; department: string | null;
+  employeeIdCode: string | null; department: string | null; designation: string | null;
   clockInTime: string | null; clockOutTime: string | null;
   totalWorkedMinutes: number; overtimeMinutes: number; deficitMinutes: number; status: string;
 }
@@ -244,7 +244,7 @@ function MappingTab({ canManage }: { canManage: boolean }) {
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
         <thead>
           <tr style={{ background: 'var(--color-bg-subtle)', textAlign: 'left' }}>
-            {['Employee', 'Department', 'Device ID (emp_code)', ...(canManage ? [''] : [])].map((h) => (
+            {['Employee', 'Designation', 'Device ID (emp_code)', ...(canManage ? [''] : [])].map((h) => (
               <th key={h} style={{ padding: '10px 16px', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--color-text-muted)', fontWeight: 600 }}>{h}</th>
             ))}
           </tr>
@@ -261,7 +261,7 @@ function MappingTab({ canManage }: { canManage: boolean }) {
                   <div style={{ fontWeight: 500 }}>{e.fullName}</div>
                   {e.employeeIdCode && <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{e.employeeIdCode}</div>}
                 </td>
-                <td style={{ padding: '10px 16px', color: 'var(--color-text-secondary)' }}>{e.department ?? '-'}</td>
+                <td style={{ padding: '10px 16px', color: 'var(--color-text-secondary)' }}>{e.designation ?? '-'}</td>
                 <td style={{ padding: '10px 16px' }}>
                   {canManage ? (
                     <input
@@ -424,8 +424,8 @@ function PunchesTab() {
 
   const showDateCol = from !== to;
   const cols = showDateCol
-    ? ['Date', 'Name', 'Employee ID', 'Department', 'Clock In', 'Clock Out', 'Total Work', 'Overtime', 'Deficit']
-    : ['Name', 'Employee ID', 'Department', 'Clock In', 'Clock Out', 'Total Work', 'Overtime', 'Deficit'];
+    ? ['Date', 'Name', 'Employee ID', 'Designation', 'Clock In', 'Clock Out', 'Total Work', 'Overtime', 'Deficit']
+    : ['Name', 'Employee ID', 'Designation', 'Clock In', 'Clock Out', 'Total Work', 'Overtime', 'Deficit'];
 
   const headerLabel = from === to
     ? fmtDate(`${from}T12:00:00`, 'EEEE · d MMM yyyy')
@@ -576,7 +576,7 @@ function PunchesTab() {
                 {s.employeeIdCode ?? <span style={{ color: 'var(--color-text-muted)' }}>-</span>}
               </td>
               <td style={{ padding: '10px 16px', color: 'var(--color-text-secondary)' }}>
-                {s.department ?? <span style={{ color: 'var(--color-text-muted)' }}>-</span>}
+                {s.designation ?? <span style={{ color: 'var(--color-text-muted)' }}>-</span>}
               </td>
               <td style={{ padding: '10px 16px', fontFamily: 'var(--font-mono)', color: s.clockInTime ? 'var(--color-success)' : 'var(--color-text-muted)' }}>
                 {s.clockInTime ? fmtTime(s.clockInTime) : '-'}

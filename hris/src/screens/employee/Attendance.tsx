@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { CheckCircle2, Coffee, Zap, Building2, MapPin, ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Coffee, Building2, MapPin, ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAttendanceHistory, type AttendanceRecordData, type LocationEventSummary } from '@/lib/hooks';
 import { AttendanceWidget } from '../../components/attendance/AttendanceWidget';
 import { StatCard } from '../../components/ui/StatCard';
@@ -72,7 +72,6 @@ export function AttendancePage() {
       <div className="atpg-stats">
         <StatCard label="Present days" value={present} hint="This month" icon={<CheckCircle2 size={16} />} accent="success" />
         <StatCard label="Leaves taken" value={onLeave} icon={<Coffee size={16} />} accent="info" />
-        <StatCard label="Total overtime" value={fmtDuration(overtimeMin)} icon={<Zap size={16} />} accent="warning" />
       </div>
 
       <DailyBreakdown allDays={allDays} />
@@ -90,15 +89,15 @@ export function AttendancePage() {
  * `''`, every row for the month renders (existing behavior).
  */
 function DailyBreakdown({ allDays }: { allDays: DayEntry[] }) {
-  const [dateFilter, setDateFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [locFilter, setLocFilter] = useState<'ALL' | 'OFFICE' | 'OFFSITE'>('ALL');
 
   const filtered = useMemo(() => {
     return allDays.filter((entry) => {
-      if (dateFilter) {
-        const d = entry.kind === 'record' ? entry.record.date : entry.date;
-        if (d !== dateFilter) return false;
-      }
+      const d = entry.kind === 'record' ? entry.record.date : entry.date;
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo && d > dateTo) return false;
       if (locFilter !== 'ALL') {
         if (entry.kind !== 'record') return false;
         const evs = entry.record.locationEvents ?? [];
@@ -108,7 +107,9 @@ function DailyBreakdown({ allDays }: { allDays: DayEntry[] }) {
       }
       return true;
     });
-  }, [allDays, dateFilter, locFilter]);
+  }, [allDays, dateFrom, dateTo, locFilter]);
+
+  const hasFilter = dateFrom || dateTo || locFilter !== 'ALL';
 
   return (
     <div className="card atpg-table-card">
@@ -116,12 +117,23 @@ function DailyBreakdown({ allDays }: { allDays: DayEntry[] }) {
         <h3>Daily breakdown</h3>
         <div className="atpg-filters">
           <label className="atpg-filter">
-            <span className="atpg-filter-label">Date</span>
+            <span className="atpg-filter-label">From</span>
             <input
               type="date"
               className="atpg-filter-input"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
+              value={dateFrom}
+              max={dateTo || undefined}
+              onChange={(e) => setDateFrom(e.target.value)}
+            />
+          </label>
+          <label className="atpg-filter">
+            <span className="atpg-filter-label">To</span>
+            <input
+              type="date"
+              className="atpg-filter-input"
+              value={dateTo}
+              min={dateFrom || undefined}
+              onChange={(e) => setDateTo(e.target.value)}
             />
           </label>
           <label className="atpg-filter">
@@ -136,11 +148,11 @@ function DailyBreakdown({ allDays }: { allDays: DayEntry[] }) {
               <option value="OFFSITE">Off-site</option>
             </select>
           </label>
-          {(dateFilter || locFilter !== 'ALL') && (
+          {hasFilter && (
             <button
               type="button"
               className="atpg-filter-clear"
-              onClick={() => { setDateFilter(''); setLocFilter('ALL'); }}
+              onClick={() => { setDateFrom(''); setDateTo(''); setLocFilter('ALL'); }}
             >
               Clear
             </button>

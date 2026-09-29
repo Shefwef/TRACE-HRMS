@@ -46,7 +46,7 @@ export async function GET(req: Request) {
     include: {
       employee: {
         select: {
-          id: true, fullName: true, employeeIdCode: true, department: true,
+          id: true, fullName: true, employeeIdCode: true, department: true, designation: true,
         },
       },
     },
@@ -67,6 +67,7 @@ export async function GET(req: Request) {
         employeeName: r.employee.fullName,
         employeeIdCode: r.employee.employeeIdCode,
         department: r.employee.department,
+        designation: r.employee.designation,
         clockInTime: r.clockInTime?.toISOString() ?? null,
         clockOutTime: r.clockOutTime?.toISOString() ?? null,
         totalWorkedMinutes: worked,

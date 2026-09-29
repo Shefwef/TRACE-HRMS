@@ -127,14 +127,6 @@ export function Sidebar() {
         )}
       </nav>
 
-      <div className="sidebar-foot">
-        <div className="sidebar-help">
-          <div className="sidebar-help-title">Need help?</div>
-          <div className="sidebar-help-body">
-            Reach out to <a href="mailto:contact@traceconsultingltd.com">contact@traceconsultingltd.com</a>
-          </div>
-        </div>
-      </div>
     </>
   );
 

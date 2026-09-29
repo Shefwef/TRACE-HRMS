@@ -2,8 +2,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Inbox, Users, PlaneTakeoff, CalendarClock, ArrowRight, Send } from 'lucide-react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { Inbox, Users, CalendarClock, ArrowRight, Send } from 'lucide-react';
 import { useCurrentUser, initials, avatarColorFor } from '@/lib/session';
 import { useAllLeaves, useUsers, useHolidays, useSendHolidayNotice } from '@/lib/hooks';
 import { StatCard } from '../../components/ui/StatCard';
@@ -46,30 +45,6 @@ export function AdminDashboard() {
     return approvedLeaves.filter((r) => r.startDate <= today && r.endDate >= today).length;
   }, [approvedLeaves]);
 
-  const usageByType = ['CASUAL', 'SICK', 'REPLACEMENT'].map((t) => ({
-    name: t,
-    value: approvedLeaves
-      .filter((r) => r.leaveType === t)
-      .reduce((sum, r) => sum + r.durationDays, 0),
-    fill: t === 'CASUAL' ? '#805AD5' : t === 'SICK' ? '#DD6B20' : '#319795',
-  }));
-
-  const departmentUsage = useMemo(
-    () =>
-      Array.from(
-        users.reduce((map, u) => {
-          if (u.role === 'SUPER_ADMIN' || !u.department) return map;
-          const total = approvedLeaves
-            .filter((r) => r.employeeId === u.id)
-            .reduce((sum, r) => sum + r.durationDays, 0);
-          map.set(u.department, (map.get(u.department) ?? 0) + total);
-          return map;
-        }, new Map<string, number>()),
-        ([name, value]) => ({ name, value })
-      ),
-    [users, approvedLeaves]
-  );
-
   if (!user) return null;
 
   return (
@@ -104,13 +79,6 @@ export function AdminDashboard() {
           hint={`${onLeaveToday} on leave`}
           icon={<Users size={16} />}
           accent="success"
-        />
-        <StatCard
-          label="Approved this cycle"
-          value={approvedLeaves.reduce((s, r) => s + r.durationDays, 0)}
-          hint="Total leave days approved"
-          icon={<PlaneTakeoff size={16} />}
-          accent="info"
         />
         <StatCard
           label="Next holiday"
@@ -219,72 +187,6 @@ export function AdminDashboard() {
           )}
         </motion.section>
 
-        <motion.section
-          className="adash-chart card"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <header className="adash-panel-head">
-            <h3>Leave usage by type</h3>
-            <span className="muted">Approved this cycle</span>
-          </header>
-          <div className="adash-chart-body">
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={usageByType}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={45}
-                  outerRadius={80}
-                  paddingAngle={3}
-                >
-                  {usageByType.map((d, i) => (
-                    <Cell key={i} fill={d.fill} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ borderRadius: 8, border: '1px solid var(--color-border-default)', fontSize: 12 }}
-                  formatter={(v, name) => [`${v} days`, String(name).toLowerCase()]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="adash-chart-legend">
-              {usageByType.map((d) => (
-                <div key={d.name}>
-                  <span style={{ background: d.fill }} />
-                  <span className="adash-chart-legend-name">{d.name.toLowerCase()}</span>
-                  <strong>{d.value}d</strong>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.section>
-
-        <motion.section
-          className="adash-chart card"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
-          <header className="adash-panel-head">
-            <h3>Leave usage by department</h3>
-            <span className="muted">Approved days</span>
-          </header>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={departmentUsage} margin={{ top: 10, right: 20, bottom: 0, left: -10 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-bg-muted)" />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} axisLine={false} tickLine={false} />
-              <Tooltip
-                cursor={{ fill: 'var(--color-bg-subtle)' }}
-                contentStyle={{ borderRadius: 8, border: '1px solid var(--color-border-default)', fontSize: 12 }}
-              />
-              <Bar dataKey="value" fill="#3182CE" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </motion.section>
       </div>
 
       <LeaveReviewDrawer requestId={reviewId} onClose={() => setReviewId(null)} />

@@ -20,15 +20,11 @@ export function ReplacementLeavePage() {
   const [detail, setDetail] = useState<ExtraWorkSummary | null>(null);
 
   const current = Number(balance?.replacementBalance ?? 0);
+  const replacementUsed = Number(balance?.replacementUsed ?? 0);
+  const replacementTotal = current + replacementUsed;
 
   const pendingLogs = useMemo(() => extraWork.filter((x) => x.status === 'PENDING'), [extraWork]);
   const pendingDaysCredit = pendingLogs.reduce((s, x) => s + creditOf(x.workType), 0);
-
-  const now = new Date();
-  const monthApprovedLogs = extraWork.filter(
-    (x) => x.status === 'APPROVED' && sameMonth(new Date(x.reviewedAt ?? x.workDate), now),
-  );
-  const earnedThisMonth = monthApprovedLogs.reduce((s, x) => s + creditOf(x.workType), 0);
 
   const latestApproved = extraWork
     .filter((x) => x.status === 'APPROVED' && x.reviewedAt)
@@ -55,21 +51,21 @@ export function ReplacementLeavePage() {
       <div className="rlp-stats">
         <StatCard
           icon={<CalendarCheck size={16} />}
-          label="Current balance"
-          value={<>{formatDays(current)} <span className="rlp-stat-unit">day{current === 1 ? '' : 's'}</span></>}
+          label="Total"
+          value={<>{formatDays(replacementTotal)} <span className="rlp-stat-unit">day{replacementTotal === 1 ? '' : 's'}</span></>}
           tone="brand"
         />
         <StatCard
-          icon={<Clock size={16} />}
-          label="Pending approval"
-          value={<>{formatDays(pendingDaysCredit)} <span className="rlp-stat-unit">day{pendingDaysCredit === 1 ? '' : 's'}</span></>}
-          tone="warning"
+          icon={<TrendingUp size={16} />}
+          label="Used"
+          value={<>{formatDays(replacementUsed)} <span className="rlp-stat-unit">day{replacementUsed === 1 ? '' : 's'}</span></>}
+          tone="success"
         />
         <StatCard
-          icon={<TrendingUp size={16} />}
-          label="Earned this month"
-          value={<>+{formatDays(earnedThisMonth)} <span className="rlp-stat-unit">day{earnedThisMonth === 1 ? '' : 's'}</span></>}
-          tone="success"
+          icon={<Clock size={16} />}
+          label="Pending"
+          value={<>{formatDays(pendingDaysCredit)} <span className="rlp-stat-unit">day{pendingDaysCredit === 1 ? '' : 's'}</span></>}
+          tone="warning"
         />
       </div>
 
@@ -254,6 +250,3 @@ function formatDays(n: number): string {
   return n.toFixed(1).replace(/\.0$/, '');
 }
 
-function sameMonth(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
-}

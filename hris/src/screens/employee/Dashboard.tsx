@@ -125,10 +125,6 @@ export function EmployeeDashboard() {
           <section className="edash-section">
             <div className="edash-section-head">
               <h3>Your leave balances</h3>
-              <span className="edash-section-hint">
-                Cycle: {fmtDateShort(balance.cycleStartDate)} -{' '}
-                {fmtDateShort(balance.cycleEndDate)}
-              </span>
             </div>
             <LeaveBalanceCards balance={balance} />
           </section>
@@ -218,10 +214,6 @@ export function EmployeeDashboard() {
               This month, at a glance
             </div>
             <ul>
-              <li>
-                <span>Attendance rate</span>
-                <strong>{monthStats.attendanceRate}%</strong>
-              </li>
               <li>
                 <span>Days worked</span>
                 <strong>{monthStats.daysWorked}</strong>
