@@ -70,8 +70,8 @@ export function AttendancePage() {
       <AttendanceWidget />
 
       <div className="atpg-stats">
-        <StatCard label="Present days" value={present} hint="This month" icon={<CheckCircle2 size={16} />} accent="success" />
-        <StatCard label="Leaves taken" value={onLeave} icon={<Coffee size={16} />} accent="info" />
+        <StatCard label="Present days" value={present} hint="This month" icon={<CheckCircle2 size={24} />} accent="success" />
+        <StatCard label="Leaves taken" value={onLeave} icon={<Coffee size={24} />} accent="info" />
       </div>
 
       <DailyBreakdown allDays={allDays} />

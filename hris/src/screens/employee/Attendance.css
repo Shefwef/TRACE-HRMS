@@ -12,8 +12,7 @@
 
 .atpg-stats {
   display: grid;
-  /* 3 equal columns fill the whole row now that the absent-days card is gone. */
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--space-4);
 }
 @media (max-width: 900px) { .atpg-stats { grid-template-columns: repeat(2, 1fr); } }
