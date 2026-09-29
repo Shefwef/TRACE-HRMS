@@ -37,9 +37,9 @@
 }
 
 .perm-table th {
-  background: var(--color-bg-subtle);
+  background: #305496;
   font-weight: var(--weight-semibold);
-  color: var(--color-text-secondary);
+  color: #fff;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 11px;

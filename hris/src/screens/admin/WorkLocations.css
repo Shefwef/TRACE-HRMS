@@ -98,12 +98,12 @@
 }
 .wloc-row:last-child { border-bottom: none; }
 .wloc-row-head {
-  background: var(--color-bg-subtle);
+  background: #305496;
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--color-text-secondary);
+  color: #fff;
 }
 .wloc-row > span { min-width: 0; justify-self: start; }
 

@@ -27,19 +27,23 @@ export async function POST(req: Request) {
     select: { id: true },
   });
 
-  let created = 0;
+  // Run all upserts in parallel — one per (day, user) pair.
+  const ops: Promise<{ createdAt: Date; updatedAt: Date }>[] = [];
   for (let offset = 0; offset < 5; offset++) {
     const date = new Date(start.getTime() + offset * 86_400_000);
     for (const u of activeUsers) {
-      const result = await prisma.dailyScrumEntry.upsert({
-        where: { date_employeeId: { date, employeeId: u.id } },
-        create: { date, employeeId: u.id },
-        update: {},
-        select: { createdAt: true, updatedAt: true },
-      });
-      if (result.createdAt.getTime() === result.updatedAt.getTime()) created++;
+      ops.push(
+        prisma.dailyScrumEntry.upsert({
+          where: { date_employeeId: { date, employeeId: u.id } },
+          create: { date, employeeId: u.id },
+          update: {},
+          select: { createdAt: true, updatedAt: true },
+        }),
+      );
     }
   }
+  const results = await Promise.all(ops);
+  const created = results.filter((r) => r.createdAt.getTime() === r.updatedAt.getTime()).length;
 
   return NextResponse.json({ ok: true, created });
 }

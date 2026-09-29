@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Calendar, Search, Plus, Pencil, Trash2, ArrowRight, ClipboardList,
-  Download, Sparkles, Check, AlertTriangle, Save,
+  Download, Sparkles, Check, AlertTriangle, Save, X,
 } from 'lucide-react';
 import {
   useDailyScrumDay, useDailyScrumDates, useUpsertScrumEntry,
@@ -19,14 +19,6 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { TextInput, TextArea } from '../../components/ui/Field';
 import { cx, fmtDate, todayISO } from '../../lib/utils';
 import './DailyScrum.css';
-
-type ScrumStatus = 'ON_TRACK' | 'ATTENTION_NEEDED' | 'BLOCKED';
-
-const statusLabel: Record<ScrumStatus, string> = {
-  ON_TRACK: 'On track',
-  ATTENTION_NEEDED: 'Attention needed',
-  BLOCKED: 'Blocked',
-};
 
 function sundayOf(dayKey: string): string {
   const [y, m, d] = dayKey.split('-').map(Number);
@@ -578,46 +570,46 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
 
   const memberCount = entries.length + missing.length;
   const taskCount = entries.reduce((sum, e) => sum + e.tasks.length, 0);
+  const [exporting, setExporting] = useState(false);
 
-  function exportCSV() {
-    const rows: string[][] = [[
-      'SL#', 'Employee', 'Department', 'Designation',
-      'Yesterday', 'Today', 'Decisions', 'Status',
-    ]];
-    entries.forEach((e, i) => {
-      const yesterday = e.tasks
-        .filter((t) => t.type === 'COMPLETED')
-        .map((t) => t.text)
-        .join(' | ');
-      const today = e.tasks
-        .filter((t) => t.type === 'TODAY')
-        .map((t) => t.text)
-        .join(' | ');
-      const decisions = e.tasks
-        .filter((t) => t.type === 'TODAY' && t.isDecision)
-        .map((t) => t.decisionNote?.trim() || t.text)
-        .join(' | ');
-      rows.push([
-        String(i + 1),
-        e.employee.fullName,
-        e.employee.department ?? '',
-        e.employee.designation ?? '',
-        yesterday,
-        today,
-        decisions,
-        statusLabel[e.status as ScrumStatus],
-      ]);
-    });
-    const csv = rows
-      .map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(','))
-      .join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `daily-scrum-${date}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  async function exportExcel() {
+    setExporting(true);
+    try {
+      const { createWorkbook, addSheet, addRows, XLSX_MIME } = await import('@/lib/reports/workbook');
+      const wb = createWorkbook();
+      const cols = [
+        { header: 'SL#', key: 'sl', width: 6 },
+        { header: 'Employee', key: 'name', width: 26 },
+        { header: 'Department', key: 'dept', width: 20 },
+        { header: 'Designation', key: 'desig', width: 22 },
+        { header: 'Yesterday (Completed)', key: 'yesterday', width: 60 },
+        { header: "Today's Tasks", key: 'today', width: 60 },
+        { header: 'Decisions Needed', key: 'decisions', width: 40 },
+      ];
+      const sheet = addSheet(wb, `Scrum ${date}`, cols);
+      addRows(sheet, entries.map((e, i) => ({
+        sl: i + 1,
+        name: e.employee.fullName,
+        dept: e.employee.department ?? '',
+        desig: e.employee.designation ?? '',
+        yesterday: e.tasks.filter((t) => t.type === 'COMPLETED').map((t) => t.text).join(' | '),
+        today: e.tasks.filter((t) => t.type === 'TODAY').map((t) => t.text).join(' | '),
+        decisions: e.tasks
+          .filter((t) => t.type === 'TODAY' && t.isDecision)
+          .map((t) => t.decisionNote?.trim() || t.text)
+          .join(' | '),
+      })));
+      const buf = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buf as ArrayBuffer], { type: XLSX_MIME });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `daily-scrum-${date}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
@@ -627,25 +619,35 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
         onClose={onClose}
         size="full"
         widthOverride="min(1600px, calc(100vw - 48px))"
-        title="Daily Scrum"
+        hideHeader
         footer={
           <div className="dscrum-footer-actions">
             <Button
               variant="secondary"
               size="sm"
               leadingIcon={<Download size={14} />}
-              onClick={exportCSV}
+              loading={exporting}
+              onClick={exportExcel}
             >
-              Export CSV
+              Export Excel
             </Button>
             <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
           </div>
         }
       >
-        <div className="dscrum-modal-head">
-          <span className="dscrum-modal-subtitle">
-            {fmtDate(date, 'EEEE, d MMMM yyyy')} · {memberCount} {memberCount === 1 ? 'member' : 'members'} · {taskCount} {taskCount === 1 ? 'task' : 'tasks'}
-          </span>
+        <div className="dscrum-modal-hero">
+          <div className="dscrum-modal-hero-text">
+            <p className="dscrum-modal-hero-title">Daily Scrum</p>
+            <p className="dscrum-modal-hero-date">{fmtDate(date, 'EEEE, d MMMM yyyy')}</p>
+            <p className="dscrum-modal-hero-meta">
+              {memberCount} {memberCount === 1 ? 'member' : 'members'} · {taskCount} {taskCount === 1 ? 'task' : 'tasks'}
+            </p>
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/Trace Consulting Logo White.png" alt="TRACE HRMS" className="dscrum-modal-hero-logo" />
+          <button type="button" className="dscrum-modal-hero-close" onClick={onClose} aria-label="Close">
+            <X size={18} />
+          </button>
         </div>
 
         <div className="dscrum-modal-search">
@@ -709,6 +711,7 @@ function DailyScrumTab() {
   const ensureWeek = useEnsureScrumWeek();
   const [dateFilter, setDateFilter] = useState('');
   const [activeDate, setActiveDate] = useState<string | null>(null);
+  const [manualEnsuring, setManualEnsuring] = useState(false);
   const autoRunRef = useRef(false);
 
   const roles = currentUser?.roles ?? [];
@@ -719,22 +722,27 @@ function DailyScrumTab() {
     ? allDates.filter((d) => d === dateFilter)
     : allDates;
 
+  const ensureWeekRef = useRef(ensureWeek);
+  ensureWeekRef.current = ensureWeek;
+
+  // Auto-run silently on mount — does not affect the button's loading state.
   useEffect(() => {
     if (!isHr) return;
     if (autoRunRef.current) return;
     autoRunRef.current = true;
     const today = todayISO();
     const thisSun = sundayOf(today);
-    ensureWeek.mutate(thisSun);
+    ensureWeekRef.current.mutate(thisSun);
     const dow = dowOf(today);
     if (dow === 5 || dow === 6) {
       const nextSun = addDaysISO(thisSun, 7);
-      ensureWeek.mutate(nextSun);
+      ensureWeekRef.current.mutate(nextSun);
     }
-  }, [isHr, ensureWeek]);
+  }, [isHr]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleEnsureWeek() {
     const sun = sundayOf(todayISO());
+    setManualEnsuring(true);
     ensureWeek.mutate(sun, {
       onSuccess: (r) => {
         addToast({
@@ -743,6 +751,7 @@ function DailyScrumTab() {
           body: `${r.created} new ${r.created === 1 ? 'entry' : 'entries'} created for the week of ${fmtDate(sun, 'd MMM yyyy')}.`,
         });
       },
+      onSettled: () => setManualEnsuring(false),
     });
   }
 
@@ -772,7 +781,7 @@ function DailyScrumTab() {
             size="sm"
             variant="secondary"
             leadingIcon={<Sparkles size={14} />}
-            loading={ensureWeek.isPending}
+            loading={manualEnsuring}
             onClick={handleEnsureWeek}
           >
             Ensure this week

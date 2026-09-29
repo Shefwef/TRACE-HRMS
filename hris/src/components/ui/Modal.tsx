@@ -11,9 +11,10 @@ interface Props {
   footer?: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   widthOverride?: number | string;
+  hideHeader?: boolean;
 }
 
-export function Modal({ open, onClose, title, children, footer, size = 'md', widthOverride }: Props) {
+export function Modal({ open, onClose, title, children, footer, size = 'md', widthOverride, hideHeader }: Props) {
   const widths: Record<string, number | string> = {
     sm: 360, md: 480, lg: 640, xl: 780,
     full: 'min(1200px, calc(100vw - 48px))',
@@ -43,12 +44,14 @@ export function Modal({ open, onClose, title, children, footer, size = 'md', wid
               role="dialog"
               aria-modal="true"
             >
-              <header className="modal-header">
-                <h3>{title}</h3>
-                <button className="modal-close" onClick={onClose} aria-label="Close">
-                  <X size={18} />
-                </button>
-              </header>
+              {!hideHeader && (
+                <header className="modal-header">
+                  <h3>{title}</h3>
+                  <button className="modal-close" onClick={onClose} aria-label="Close">
+                    <X size={18} />
+                  </button>
+                </header>
+              )}
               <div className="modal-body">{children}</div>
               {footer && <footer className="modal-footer">{footer}</footer>}
             </motion.div>

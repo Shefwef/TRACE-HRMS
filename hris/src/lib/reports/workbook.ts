@@ -11,8 +11,8 @@ import { Workbook, type Worksheet } from 'exceljs';
 export const XLSX_MIME =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
-/** Excel header blue matched to hris/public/Excel Format/Attendance Summary.xlsx */
-const BRAND_ARGB = 'FF31859C';
+/** Excel header blue matched to design system brand colour #305496 */
+const BRAND_ARGB = 'FF305496';
 const HEADER_TEXT_ARGB = 'FFFFFFFF';
 const TOTAL_FILL_ARGB = 'FFEDF2F7';
 

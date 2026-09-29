@@ -124,8 +124,8 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: var(--weight-semibold);
-  color: var(--color-text-muted);
-  background: var(--color-bg-subtle);
+  color: #fff;
+  background: #305496;
 }
 .atpg-row {
   border-top: 1px solid var(--color-border-default);

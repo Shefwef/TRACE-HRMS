@@ -4,9 +4,84 @@
   flex-direction: column;
   gap: var(--space-5);
 }
+
+/* ─── Page header ─── */
 .dscrum-head h1 {
   font-size: var(--text-3xl);
   letter-spacing: -0.02em;
+}
+
+/* ─── Branded hero inside the scrum detail modal ─── */
+.dscrum-modal-hero {
+  margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) var(--space-4);
+  padding: 22px 36px;
+  background: linear-gradient(120deg, #305496 0%, #243f7a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.dscrum-modal-hero::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: 160px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  pointer-events: none;
+}
+.dscrum-modal-hero-text { display: flex; flex-direction: column; gap: 2px; }
+.dscrum-modal-hero-title {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: #fff;
+  margin: 0 0 6px;
+  letter-spacing: -0.015em;
+}
+.dscrum-modal-hero-date {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0;
+}
+.dscrum-modal-hero-meta {
+  font-size: var(--text-xs);
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0;
+}
+.dscrum-modal-hero-logo {
+  height: 54px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+  opacity: 0.95;
+  position: relative;
+  z-index: 1;
+}
+.dscrum-modal-hero-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.75);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  z-index: 2;
+}
+.dscrum-modal-hero-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 
 /* ─── Tabs ─── */
@@ -100,13 +175,13 @@
   font-size: var(--text-sm);
 }
 .dscrum-list-head {
-  background: var(--color-bg-subtle);
+  background: #305496;
   border-bottom: 1px solid var(--color-border-default);
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--color-text-muted);
+  color: #fff;
   padding-top: 10px;
   padding-bottom: 10px;
 }
@@ -129,14 +204,6 @@
   text-align: center;
 }
 
-/* ─── Modal head ─── */
-.dscrum-modal-head {
-  margin-bottom: var(--space-4);
-}
-.dscrum-modal-subtitle {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-}
 
 /* ─── Search bar (inside modal) ─── */
 .dscrum-modal-search {
@@ -175,28 +242,28 @@
 .dscrum-board {
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow: clip;
   background: var(--color-bg-surface);
 }
 .dscrum-board-head,
 .dscrum-board-row {
   display: grid;
-  grid-template-columns: 260px 1.4fr 1.4fr 1fr;
+  grid-template-columns: 240px 2fr 2fr 0.6fr;
   align-items: stretch;
 }
 .dscrum-board-head {
-  background: var(--color-bg-subtle);
+  background: #305496;
   border-bottom: 1px solid var(--color-border-default);
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--color-text-muted);
+  color: #fff;
   font-weight: var(--weight-semibold);
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 10;
 }
-.dscrum-board-head > div { padding: 12px 16px; }
+.dscrum-board-head > div { padding: 12px 16px; white-space: nowrap; }
 
 .dscrum-board-row {
   border-bottom: 1px solid var(--color-border-default);
@@ -578,17 +645,19 @@
 @media (max-width: 1100px) {
   .dscrum-board-head,
   .dscrum-board-row {
-    grid-template-columns: 220px 1.3fr 1.3fr 1fr;
+    grid-template-columns: 200px 2fr 2fr 0.6fr;
   }
 }
 @media (max-width: 900px) {
   .dscrum-board-head,
   .dscrum-board-row {
-    grid-template-columns: 180px 1.2fr 1.2fr 220px;
+    grid-template-columns: 160px 1.8fr 1.8fr 0.8fr;
   }
 }
 @media (max-width: 640px) {
   .dscrum-head h1 { font-size: var(--text-2xl); }
+  .dscrum-modal-hero { padding: 16px 20px; }
+  .dscrum-modal-hero-logo { display: none; }
 
   .dscrum-list-head,
   .dscrum-list-row {
