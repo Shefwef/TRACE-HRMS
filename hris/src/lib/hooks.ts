@@ -1293,3 +1293,15 @@ export function useMoveTaskNextDay() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-scrum'] }),
   });
 }
+
+export function useEnsureScrumWeek() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (weekStart: string) =>
+      api<{ ok: boolean; created: number }>('/api/daily-scrum/ensure-week', {
+        method: 'POST',
+        body: JSON.stringify({ weekStart }),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-scrum'] }),
+  });
+}
