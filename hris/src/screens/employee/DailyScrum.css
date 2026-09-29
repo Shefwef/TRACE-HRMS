@@ -22,6 +22,7 @@
   gap: 20px;
   position: relative;
   overflow: hidden;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 .dscrum-modal-hero::before {
   content: '';
@@ -242,7 +243,6 @@
 .dscrum-board {
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-lg);
-  overflow: clip;
   background: var(--color-bg-surface);
 }
 .dscrum-board-head,
@@ -262,13 +262,14 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 .dscrum-board-head > div { padding: 12px 16px; white-space: nowrap; }
 
 .dscrum-board-row {
   border-bottom: 1px solid var(--color-border-default);
 }
-.dscrum-board-row:last-child { border-bottom: none; }
+.dscrum-board-row:last-child { border-bottom: none; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
 
 .dscrum-board-cell {
   padding: 16px;

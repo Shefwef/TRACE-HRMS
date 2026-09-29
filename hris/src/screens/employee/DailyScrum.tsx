@@ -784,7 +784,7 @@ function DailyScrumTab() {
             loading={manualEnsuring}
             onClick={handleEnsureWeek}
           >
-            Ensure this week
+            Sync Team Members
           </Button>
         )}
       </div>

@@ -25,7 +25,6 @@
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  overflow: clip;
 }
 @media (max-width: 480px) {
   .modal { width: 100% !important; }
