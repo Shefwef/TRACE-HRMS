@@ -252,12 +252,12 @@
   align-items: stretch;
 }
 .dscrum-board-head {
-  background: #305496;
+  background: var(--color-bg-subtle);
   border-bottom: 1px solid var(--color-border-default);
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #fff;
+  color: var(--color-text-muted);
   font-weight: var(--weight-semibold);
   position: sticky;
   top: 0;

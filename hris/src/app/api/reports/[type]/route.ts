@@ -11,6 +11,8 @@ import { LeavesReport, type LeaveRecord } from '@/lib/reports/LeavesReport';
 import { SummaryReport } from '@/lib/reports/SummaryReport';
 import { AllEmployeesReport, type EmployeeRow } from '@/lib/reports/AllEmployeesReport';
 import { AttendanceSummaryReport, type AttSummaryPdfEmployee } from '@/lib/reports/AttendanceSummaryReport';
+import { EmployeeSummaryReport } from '@/lib/reports/EmployeeSummaryReport';
+import { PerformanceLeaveSummaryReport } from '@/lib/reports/PerformanceLeaveSummaryReport';
 import {
   getAttendanceReportData, getCompanyReportData, getLeaveReportData,
   getOffsiteRows, getSummaryReportData, monthPeriod, yearPeriod,
@@ -160,7 +162,7 @@ export async function GET(
           'The off-site work report is Excel-only - 14 columns of coordinates do not fit a page.',
         );
       case 'performance-leave-summary':
-        return await renderSummary(subject, year, month, logoDataUrl, generatedAt);
+        return await renderPerformanceLeaveSummaryPdf(subject, year, month, logoDataUrl, generatedAt);
       case 'attendance-summary':
         if (!callerIsManager)
           return err(403, 'FORBIDDEN', 'You do not have permission to export attendance summaries.');
@@ -168,7 +170,7 @@ export async function GET(
       case 'employee-summary':
         if (!callerIsManager)
           return err(403, 'FORBIDDEN', 'You do not have permission to export employee summaries.');
-        return await renderAllEmployees(year, month, logoDataUrl, generatedAt);
+        return await renderEmployeeSummaryPdf(logoDataUrl, generatedAt);
       default:
         return err(404, 'UNKNOWN_REPORT', `Unknown report type "${type}".`);
     }
@@ -574,6 +576,68 @@ async function renderAttendanceSummaryPdf(
     }),
   );
   return pdfResponse(buf, `attendance-summary-${period.fileRange}.pdf`);
+}
+
+// ─── employee summary (PDF) ────────────────────────────────────
+
+async function renderEmployeeSummaryPdf(
+  logoDataUrl: string,
+  generatedAt: string,
+): Promise<Response> {
+  const rows = await getEmployeeDirectoryRows();
+  const buf = await renderToBuffer(
+    EmployeeSummaryReport({ rows, logoDataUrl, generatedAt }),
+  );
+  return pdfResponse(buf, `employee-summary.pdf`);
+}
+
+// ─── performance & leave summary (PDF) ────────────────────────
+
+async function renderPerformanceLeaveSummaryPdf(
+  subject: ApiUser,
+  year: number,
+  month: number,
+  logoDataUrl: string,
+  generatedAt: string,
+): Promise<Response> {
+  const period = monthPeriod(year, month);
+  const identity = {
+    id: subject.id,
+    fullName: subject.fullName,
+    email: subject.email,
+    role: subject.role,
+    employeeIdCode: subject.employeeIdCode ?? null,
+    department: subject.department ?? null,
+    designation: subject.designation ?? null,
+  };
+
+  const [userWithManager, data] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: subject.id },
+      select: { lineManager: { select: { fullName: true } } },
+    }),
+    getPerformanceLeaveSummaryData(identity, period),
+  ]);
+
+  const lineManagerName = userWithManager?.lineManager?.fullName ?? '';
+  const buf = await renderToBuffer(
+    PerformanceLeaveSummaryReport({
+      employee: {
+        fullName: subject.fullName,
+        employeeIdCode: subject.employeeIdCode ?? null,
+        department: subject.department ?? null,
+        designation: subject.designation ?? null,
+        email: subject.email,
+      },
+      lineManagerName,
+      period: period.label,
+      generatedAt,
+      logoDataUrl,
+      data,
+    }),
+  );
+  const slug = (subject.employeeIdCode ?? subject.fullName).replace(/\s+/g, '-').toLowerCase();
+  return pdfResponse(buf, `performance-leave-summary-${slug}-${period.fileRange}.pdf`);
 }
 
 // ─── attendance ────────────────────────────────────────────────

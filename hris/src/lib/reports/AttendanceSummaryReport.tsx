@@ -1,12 +1,12 @@
-import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
-import { BrandHeader, BrandFooter, styles as shared, statusBadgeStyle, brand } from './theme';
+import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
+import { brand, statusBadgeStyle } from './theme';
 
 // ─── input types ──────────────────────────────────────────
 
 export interface AttSummaryPdfRow {
-  date: string;           // ISO "yyyy-mm-dd"
-  weekday: string;        // "Mon", "Tue", …
-  clockIn: string | null; // ISO instant (UTC = local wall clock after excelInstant shift)
+  date: string;
+  weekday: string;
+  clockIn: string | null;
   clockOut: string | null;
   totalHours: number;
   overtimeHours: number;
@@ -44,8 +44,7 @@ function fmtTime(iso: string | null): string {
   const h = d.getUTCHours();
   const m = d.getUTCMinutes().toString().padStart(2, '0');
   const ampm = h >= 12 ? 'PM' : 'AM';
-  const h12 = (h % 12 || 12).toString();
-  return `${h12}:${m} ${ampm}`;
+  return `${(h % 12 || 12)}:${m} ${ampm}`;
 }
 
 function fmtHours(n: number): string {
@@ -55,162 +54,175 @@ function fmtHours(n: number): string {
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
-function statusColor(s: string): { color: string; bg: string } {
-  const badge = statusBadgeStyle(s.toUpperCase());
-  return { color: badge.color, bg: badge.backgroundColor };
-}
-
-// ─── column layout (landscape A4 content ≈ 769pt) ─────────
+// ─── column layout (A4 landscape, 769pt usable) ───────────
 
 const COLS = [
-  { label: 'Date',         w: '12%' },
-  { label: 'Day',          w: '5%'  },
-  { label: 'Clock In',     w: '9%'  },
-  { label: 'Clock Out',    w: '9%'  },
-  { label: 'Worked',       w: '8%'  },
-  { label: 'Overtime',     w: '8%'  },
-  { label: 'Deficit',      w: '8%'  },
-  { label: 'Status',       w: '13%' },
-  { label: 'Initial Loc.', w: '14%' },
-  { label: 'Final Loc.',   w: '14%' },
+  { label: 'Emp ID',       w: '7%'  },
+  { label: 'Name',         w: '11%' },
+  { label: 'Designation',  w: '9%'  },
+  { label: 'Date',         w: '8%'  },
+  { label: 'Day',          w: '4%'  },
+  { label: 'Clock In',     w: '6%'  },
+  { label: 'Clock Out',    w: '6%'  },
+  { label: 'Total Hrs',    w: '5%'  },
+  { label: 'OT Hrs',       w: '5%'  },
+  { label: 'Deficit Hrs',  w: '5%'  },
+  { label: 'Status',       w: '9%'  },
+  { label: 'Init. Loc.',   w: '10%' },
+  { label: 'Final Loc.',   w: '10%' },
+  { label: 'Off-site',     w: '5%'  },
 ];
 
 // ─── local styles ──────────────────────────────────────────
 
 const s = StyleSheet.create({
-  empHeader: {
+  page: {
+    fontSize: 9,
+    color: brand.text,
+    fontFamily: 'Helvetica',
+    backgroundColor: '#ffffff',
+  },
+  brandBlock: {
+    backgroundColor: '#305496',
+    paddingVertical: 18,
+    paddingHorizontal: 32,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: brand.primary,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    marginTop: 10,
-    borderRadius: 3,
+    justifyContent: 'space-between',
   },
-  empName: {
-    color: '#ffffff',
-    fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
-    marginRight: 10,
+  brandLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  logo: { width: 38, height: 38, objectFit: 'contain' },
+  brandWordmark: { color: 'rgba(255,255,255,0.72)', fontSize: 7, letterSpacing: 1.2, marginBottom: 3 },
+  brandTitle: { color: '#fff', fontSize: 16, fontFamily: 'Helvetica-Bold' },
+  brandRight: { alignItems: 'flex-end' },
+  brandMetaLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 7, letterSpacing: 0.8, marginBottom: 2 },
+  brandMetaValue: { color: '#fff', fontSize: 10, fontFamily: 'Helvetica-Bold' },
+  brandGenerated: { color: 'rgba(255,255,255,0.55)', fontSize: 7, marginTop: 4 },
+  accentStripe: { height: 3, backgroundColor: '#7baed4' },
+  body: { paddingHorizontal: 28, paddingTop: 16, paddingBottom: 20 },
+  table: { borderWidth: 1, borderColor: brand.border, borderRadius: 3 },
+  thead: {
+    flexDirection: 'row',
+    backgroundColor: brand.bgSoft,
+    borderBottomWidth: 1,
+    borderBottomColor: brand.border,
+    paddingVertical: 7,
+    paddingHorizontal: 6,
   },
-  empMeta: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 8,
+  trow: {
+    flexDirection: 'row',
+    borderBottomWidth: 0.5,
+    borderBottomColor: brand.border,
+    paddingVertical: 5,
+    paddingHorizontal: 6,
   },
-  th: {
-    fontSize: 7,
-    fontFamily: 'Helvetica-Bold',
-    color: brand.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
+  trowAlt: { backgroundColor: '#FAFBFC' },
+  th: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: brand.muted, textTransform: 'uppercase', letterSpacing: 0.4 },
+  td: { fontSize: 7, color: brand.text },
+  tdMuted: { fontSize: 7, color: brand.soft },
+  badge: {
+    paddingHorizontal: 3, paddingVertical: 1, borderRadius: 2,
+    fontSize: 6, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.3,
+    alignSelf: 'flex-start',
   },
-  td: {
-    fontSize: 8,
-    color: brand.text,
-  },
-  tdMuted: {
-    fontSize: 8,
-    color: brand.soft,
-  },
-  statusBadge: {
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 3,
-    fontSize: 7,
-    fontFamily: 'Helvetica-Bold',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
+  summary: { flexDirection: 'row', gap: 12, marginBottom: 12, marginTop: 4 },
+  summaryCard: { flex: 1, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 10, backgroundColor: '#fff' },
+  summaryLabel: { fontSize: 7, color: brand.soft, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 },
+  summaryValue: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: '#305496' },
 });
 
 // ─── component ────────────────────────────────────────────
 
 export function AttendanceSummaryReport(input: AttendanceSummaryReportInput) {
   const totalEmployees = input.employees.length;
-  const totalRows = input.employees.reduce((sum, e) => sum + e.rows.length, 0);
+  const totalDataRows = input.employees.reduce((sum, e) => sum + e.rows.length, 0);
 
   return (
     <Document title={`Attendance Summary - ${input.period}`} author="TRACE HRMS">
-      <Page size="A4" orientation="landscape" style={shared.page}>
-        <BrandHeader
-          title="Attendance Summary"
-          metaLabel="Period"
-          metaValue={input.period}
-          logoDataUrl={input.logoDataUrl}
-        />
+      <Page size="A4" orientation="landscape" style={s.page}>
 
-        <View style={[shared.body, { paddingBottom: 70 }]}>
-          {/* Summary stats */}
-          <View style={[shared.statsRow, { marginBottom: 12, marginTop: 4 }]}>
-            <View style={shared.statCard}>
-              <Text style={shared.statLabel}>Employees</Text>
-              <Text style={shared.statValue}>{totalEmployees}</Text>
+        {/* One-time brand block — not fixed, appears only on page 1 */}
+        <View style={s.brandBlock}>
+          <View style={s.brandLeft}>
+            {input.logoDataUrl ? <Image src={input.logoDataUrl} style={s.logo} /> : null}
+            <View>
+              <Text style={s.brandWordmark}>TRACE HRMS</Text>
+              <Text style={s.brandTitle}>Attendance Summary</Text>
             </View>
-            <View style={shared.statCard}>
-              <Text style={shared.statLabel}>Total Rows</Text>
-              <Text style={shared.statValue}>{totalRows}</Text>
+          </View>
+          <View style={s.brandRight}>
+            <Text style={s.brandMetaLabel}>PERIOD</Text>
+            <Text style={s.brandMetaValue}>{input.period}</Text>
+            <Text style={s.brandGenerated}>Generated {input.generatedAt}</Text>
+          </View>
+        </View>
+        <View style={s.accentStripe} />
+
+        <View style={s.body}>
+          {/* Summary cards */}
+          <View style={s.summary}>
+            <View style={s.summaryCard}>
+              <Text style={s.summaryLabel}>Employees</Text>
+              <Text style={s.summaryValue}>{totalEmployees}</Text>
+            </View>
+            <View style={s.summaryCard}>
+              <Text style={s.summaryLabel}>Total Records</Text>
+              <Text style={s.summaryValue}>{totalDataRows}</Text>
             </View>
           </View>
 
-          {/* Per-employee tables */}
-          {input.employees.map((emp) => (
-            <View key={emp.employeeIdCode + emp.employeeName} wrap={false}>
-              {/* Employee header */}
-              <View style={s.empHeader}>
-                <Text style={s.empName}>{emp.employeeName}</Text>
-                <Text style={s.empMeta}>
-                  {emp.employeeIdCode !== '-' ? `ID: ${emp.employeeIdCode}` : ''}
-                  {emp.designation ? `  ·  ${emp.designation}` : ''}
-                </Text>
-              </View>
-
-              {/* Table header */}
-              <View style={shared.tableHeaderRow}>
-                {COLS.map((c) => (
-                  <Text key={c.label} style={[s.th, { width: c.w }]}>{c.label}</Text>
-                ))}
-              </View>
-
-              {/* Daily rows */}
-              {emp.rows.map((r, i) => {
-                const sc = statusColor(r.status);
+          {/* Flat table */}
+          <View style={s.table}>
+            <View style={s.thead}>
+              {COLS.map((c) => (
+                <Text key={c.label} style={[s.th, { width: c.w }]}>{c.label}</Text>
+              ))}
+            </View>
+            {input.employees.map((emp) =>
+              emp.rows.map((r, rowIdx) => {
+                const badge = statusBadgeStyle(r.status);
                 const isDim = r.status === 'Weekend' || r.status === 'Holiday';
+                const isFirst = rowIdx === 0;
                 return (
                   <View
-                    key={r.date}
-                    style={[
-                      shared.tableRow,
-                      i % 2 === 1 ? shared.tableRowAlt : {},
-                      isDim ? { opacity: 0.55 } : {},
-                    ]}
+                    key={`${emp.employeeIdCode}-${r.date}`}
+                    style={[s.trow, rowIdx % 2 === 1 ? s.trowAlt : {}, isDim ? { opacity: 0.5 } : {}]}
                     wrap={false}
                   >
-                    <Text style={[s.td, { width: COLS[0].w }]}>{fmtDate(r.date)}</Text>
-                    <Text style={[s.tdMuted, { width: COLS[1].w }]}>{r.weekday}</Text>
-                    <Text style={[s.td, { width: COLS[2].w }]}>{fmtTime(r.clockIn)}</Text>
-                    <Text style={[s.td, { width: COLS[3].w }]}>{fmtTime(r.clockOut)}</Text>
-                    <Text style={[s.td, { width: COLS[4].w }]}>{fmtHours(r.totalHours)}</Text>
-                    <Text style={[s.td, { width: COLS[5].w, color: r.overtimeHours > 0 ? brand.success : brand.soft }]}>
+                    <Text style={[isFirst ? s.td : s.tdMuted, { width: COLS[0].w }]}>
+                      {isFirst ? emp.employeeIdCode : ''}
+                    </Text>
+                    <Text style={[isFirst ? s.td : s.tdMuted, { width: COLS[1].w, fontFamily: isFirst ? 'Helvetica-Bold' : 'Helvetica' }]}>
+                      {isFirst ? emp.employeeName : ''}
+                    </Text>
+                    <Text style={[isFirst ? s.td : s.tdMuted, { width: COLS[2].w }]}>
+                      {isFirst ? emp.designation : ''}
+                    </Text>
+                    <Text style={[s.td, { width: COLS[3].w }]}>{fmtDate(r.date)}</Text>
+                    <Text style={[s.tdMuted, { width: COLS[4].w }]}>{r.weekday}</Text>
+                    <Text style={[s.td, { width: COLS[5].w }]}>{fmtTime(r.clockIn)}</Text>
+                    <Text style={[s.td, { width: COLS[6].w }]}>{fmtTime(r.clockOut)}</Text>
+                    <Text style={[s.td, { width: COLS[7].w }]}>{fmtHours(r.totalHours)}</Text>
+                    <Text style={[s.td, { width: COLS[8].w, color: r.overtimeHours > 0 ? brand.success : brand.soft }]}>
                       {fmtHours(r.overtimeHours)}
                     </Text>
-                    <Text style={[s.td, { width: COLS[6].w, color: r.deficitHours > 0 ? brand.danger : brand.soft }]}>
+                    <Text style={[s.td, { width: COLS[9].w, color: r.deficitHours > 0 ? brand.danger : brand.soft }]}>
                       {fmtHours(r.deficitHours)}
                     </Text>
-                    <View style={{ width: COLS[7].w }}>
-                      <Text style={[s.statusBadge, { color: sc.color, backgroundColor: sc.bg }]}>
+                    <View style={{ width: COLS[10].w }}>
+                      <Text style={[s.badge, { color: badge.color, backgroundColor: badge.backgroundColor }]}>
                         {r.status}
                       </Text>
                     </View>
-                    <Text style={[s.tdMuted, { width: COLS[8].w }]}>{r.initialLocation || '-'}</Text>
-                    <Text style={[s.tdMuted, { width: COLS[9].w }]}>{r.finalLocation || '-'}</Text>
+                    <Text style={[s.tdMuted, { width: COLS[11].w }]}>{r.initialLocation || '-'}</Text>
+                    <Text style={[s.tdMuted, { width: COLS[12].w }]}>{r.finalLocation || '-'}</Text>
+                    <Text style={[s.tdMuted, { width: COLS[13].w }]}>-</Text>
                   </View>
                 );
-              })}
-            </View>
-          ))}
+              })
+            )}
+          </View>
         </View>
-
-        <BrandFooter generatedAt={input.generatedAt} />
       </Page>
     </Document>
   );

@@ -780,7 +780,7 @@ function DailyScrumTab() {
           <Button
             size="sm"
             variant="secondary"
-            leadingIcon={<Sparkles size={14} />}
+            // leadingIcon={<Sparkles size={14} />}
             loading={manualEnsuring}
             onClick={handleEnsureWeek}
           >
