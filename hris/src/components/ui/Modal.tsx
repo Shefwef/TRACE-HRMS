@@ -10,13 +10,15 @@ interface Props {
   children: ReactNode;
   footer?: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  widthOverride?: number | string;
 }
 
-export function Modal({ open, onClose, title, children, footer, size = 'md' }: Props) {
+export function Modal({ open, onClose, title, children, footer, size = 'md', widthOverride }: Props) {
   const widths: Record<string, number | string> = {
     sm: 360, md: 480, lg: 640, xl: 780,
     full: 'min(1200px, calc(100vw - 48px))',
   };
+  const finalWidth = widthOverride ?? widths[size];
   return (
     <AnimatePresence>
       {open && (
@@ -32,7 +34,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: P
           <div className="modal-wrap" onClick={onClose}>
             <motion.div
               className={`modal${size === 'full' ? ' modal--full' : ''}`}
-              style={{ width: widths[size] }}
+              style={{ width: finalWidth }}
               initial={{ opacity: 0, scale: 0.96, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 8 }}

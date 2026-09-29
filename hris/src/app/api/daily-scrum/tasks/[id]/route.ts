@@ -43,7 +43,7 @@ export async function PATCH(
 
   const patch = body as {
     text?: unknown; deadline?: unknown; isDecision?: unknown;
-    decisionNote?: unknown; order?: unknown;
+    decisionNote?: unknown; order?: unknown; carryOver?: unknown;
   };
 
   const updated = await prisma.dailyTask.update({
@@ -61,6 +61,7 @@ export async function PATCH(
         : typeof patch.decisionNote === 'string'
           ? { decisionNote: patch.decisionNote }
           : {}),
+      ...(typeof patch.carryOver === 'boolean' ? { carryOver: patch.carryOver } : {}),
       ...(typeof patch.order === 'number' ? { order: patch.order } : {}),
     },
   });
@@ -68,7 +69,8 @@ export async function PATCH(
   return NextResponse.json({
     id: updated.id, entryId: updated.entryId, type: updated.type, text: updated.text,
     deadline: updated.deadline ? updated.deadline.toISOString().slice(0, 10) : null,
-    isDecision: updated.isDecision, decisionNote: updated.decisionNote, order: updated.order,
+    isDecision: updated.isDecision, decisionNote: updated.decisionNote,
+    carryOver: updated.carryOver, order: updated.order,
     createdAt: updated.createdAt.toISOString(), updatedAt: updated.updatedAt.toISOString(),
   });
 }

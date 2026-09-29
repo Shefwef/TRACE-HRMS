@@ -11,8 +11,9 @@ export async function POST(req: Request) {
   let body: unknown;
   try { body = await req.json(); } catch { return err(400, 'BAD_JSON', 'Invalid JSON body.'); }
 
-  const { entryId, type, text, deadline, order } = body as {
+  const { entryId, type, text, deadline, order, isDecision, decisionNote, carryOver } = body as {
     entryId?: unknown; type?: unknown; text?: unknown; deadline?: unknown; order?: unknown;
+    isDecision?: unknown; decisionNote?: unknown; carryOver?: unknown;
   };
 
   if (typeof entryId !== 'string') return err(400, 'BAD_REQUEST', 'entryId is required.');
@@ -37,13 +38,17 @@ export async function POST(req: Request) {
       text: text.trim(),
       deadline: deadlineDate,
       order: typeof order === 'number' ? order : 0,
+      isDecision: typeof isDecision === 'boolean' ? isDecision : false,
+      decisionNote: typeof decisionNote === 'string' ? decisionNote : null,
+      carryOver: typeof carryOver === 'boolean' ? carryOver : false,
     },
   });
 
   return NextResponse.json({
     id: task.id, entryId: task.entryId, type: task.type, text: task.text,
     deadline: task.deadline ? task.deadline.toISOString().slice(0, 10) : null,
-    isDecision: task.isDecision, decisionNote: task.decisionNote, order: task.order,
+    isDecision: task.isDecision, decisionNote: task.decisionNote,
+    carryOver: task.carryOver, order: task.order,
     createdAt: task.createdAt.toISOString(), updatedAt: task.updatedAt.toISOString(),
   }, { status: 201 });
 }

@@ -1,10 +1,11 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Calendar, Search, Plus, Pencil, Trash2, ArrowRight, ClipboardList, Download, Sparkles,
+  Calendar, Search, Plus, Pencil, Trash2, ArrowRight, ClipboardList,
+  Download, Sparkles, Check, AlertTriangle, Save,
 } from 'lucide-react';
 import {
-  useDailyScrumDay, useDailyScrumDates, useUpsertScrumEntry, useUpdateScrumEntry,
+  useDailyScrumDay, useDailyScrumDates, useUpsertScrumEntry,
   useAddScrumTask, useUpdateScrumTask, useDeleteScrumTask, useMoveTaskNextDay,
   useEnsureScrumWeek, useUsers,
   type DailyScrumEntryShape, type DailyTaskShape, type UserSummary,
@@ -16,7 +17,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { Field, TextInput, TextArea } from '../../components/ui/Field';
+import { TextInput, TextArea } from '../../components/ui/Field';
 import { cx, fmtDate, todayISO } from '../../lib/utils';
 import './DailyScrum.css';
 
@@ -34,18 +35,10 @@ const statusLabel: Record<ScrumStatus, string> = {
   BLOCKED: 'Blocked',
 };
 
-const statusColorVar: Record<ScrumStatus, string> = {
-  ON_TRACK: 'var(--color-success)',
-  ATTENTION_NEEDED: 'var(--color-warning)',
-  BLOCKED: 'var(--color-danger)',
-};
-
-/** Return the Sunday of the ISO calendar week that contains `dayKey`. */
 function sundayOf(dayKey: string): string {
   const [y, m, d] = dayKey.split('-').map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));
-  const dow = dt.getUTCDay();
-  dt.setUTCDate(dt.getUTCDate() - dow);
+  dt.setUTCDate(dt.getUTCDate() - dt.getUTCDay());
   return dt.toISOString().slice(0, 10);
 }
 
@@ -56,167 +49,275 @@ function addDaysISO(dayKey: string, days: number): string {
   return dt.toISOString().slice(0, 10);
 }
 
-/** Local weekday index (0 = Sunday) for a YYYY-MM-DD key. */
 function dowOf(dayKey: string): number {
   const [y, m, d] = dayKey.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
 }
 
-// ─── Inline task form ────────────────────────────────────
+// ─── Task modal (add / edit) ─────────────────────────────
 
-interface TaskFormState {
+interface TaskFormValue {
   text: string;
   deadline: string;
   isDecision: boolean;
   decisionNote: string;
+  carryOver: boolean;
 }
 
-const emptyForm = (): TaskFormState => ({
-  text: '', deadline: '', isDecision: false, decisionNote: '',
-});
+const emptyFormValue: TaskFormValue = {
+  text: '', deadline: '', isDecision: false, decisionNote: '', carryOver: false,
+};
 
-interface TaskFormProps {
-  initial?: Partial<TaskFormState>;
-  onSave: (v: TaskFormState) => void;
-  onCancel: () => void;
-  saving?: boolean;
-  submitLabel?: string;
-  showDeadline?: boolean;
-  showDecision?: boolean;
+type TaskModalIntent =
+  | { mode: 'add'; entryId: string; taskType: 'TODAY' | 'COMPLETED' }
+  | { mode: 'edit'; task: DailyTaskShape };
+
+interface TaskModalProps {
+  intent: TaskModalIntent | null;
+  onClose: () => void;
 }
 
-function TaskForm({
-  initial, onSave, onCancel, saving,
-  submitLabel = 'Save',
-  showDeadline = true,
-  showDecision = true,
-}: TaskFormProps) {
-  const [v, setV] = useState<TaskFormState>({ ...emptyForm(), ...initial });
-  return (
-    <div className="dscrum-add-form">
-      <TextArea
-        value={v.text}
-        onChange={(e) => setV((p) => ({ ...p, text: e.target.value }))}
-        placeholder="What needs to be done?"
-        rows={2}
-        autoFocus
-      />
-      {showDeadline && (
-        <Field label="Deadline">
-          <TextInput
-            type="date"
-            value={v.deadline}
-            onChange={(e) => setV((p) => ({ ...p, deadline: e.target.value }))}
-          />
-        </Field>
-      )}
-      {showDecision && (
-        <label className="dscrum-decision-check">
-          <input
-            type="checkbox"
-            checked={v.isDecision}
-            onChange={(e) => setV((p) => ({ ...p, isDecision: e.target.checked }))}
-          />
-          Decision needed
-        </label>
-      )}
-      {showDecision && v.isDecision && (
-        <Field label="Decision note">
-          <TextArea
-            value={v.decisionNote}
-            onChange={(e) => setV((p) => ({ ...p, decisionNote: e.target.value }))}
-            rows={2}
-            placeholder="Describe the decision needed…"
-          />
-        </Field>
-      )}
-      <div className="dscrum-form-actions">
-        <Button size="sm" onClick={() => onSave(v)} loading={saving} disabled={!v.text.trim()}>
-          {submitLabel}
-        </Button>
-        <Button size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>
-      </div>
-    </div>
-  );
-}
+function TaskModal({ intent, onClose }: TaskModalProps) {
+  const addTask = useAddScrumTask();
+  const updateTask = useUpdateScrumTask();
+  const [v, setV] = useState<TaskFormValue>(emptyFormValue);
+  const open = intent !== null;
 
-// ─── Move-to-next-day inline form ───────────────────────
+  const isEdit = intent?.mode === 'edit';
+  const taskType: 'TODAY' | 'COMPLETED' =
+    intent?.mode === 'edit' ? intent.task.type
+      : intent?.mode === 'add' ? intent.taskType
+      : 'TODAY';
+  const showDetails = taskType === 'TODAY';
 
-interface MoveFormProps {
-  taskId: string;
-  onDone: () => void;
-}
+  useEffect(() => {
+    if (!intent) { setV(emptyFormValue); return; }
+    if (intent.mode === 'edit') {
+      setV({
+        text: intent.task.text,
+        deadline: intent.task.deadline ?? '',
+        isDecision: intent.task.isDecision,
+        decisionNote: intent.task.decisionNote ?? '',
+        carryOver: intent.task.carryOver,
+      });
+    } else {
+      setV(emptyFormValue);
+    }
+  }, [intent]);
 
-function MoveForm({ taskId, onDone }: MoveFormProps) {
-  const [deadline, setDeadline] = useState('');
-  const move = useMoveTaskNextDay();
-  return (
-    <div className="dscrum-add-form">
-      <Field label="New deadline (optional)">
-        <TextInput
-          type="date"
-          value={deadline}
-          onChange={(e) => setDeadline(e.target.value)}
-        />
-      </Field>
-      <div className="dscrum-form-actions">
-        <Button
-          size="sm"
-          loading={move.isPending}
-          onClick={() =>
-            move.mutate({ id: taskId, deadline: deadline || undefined }, { onSuccess: onDone })
-          }
-        >
-          Move
-        </Button>
-        <Button size="sm" variant="ghost" onClick={onDone}>Cancel</Button>
-      </div>
-    </div>
-  );
-}
+  const title = isEdit
+    ? 'Edit task'
+    : taskType === 'TODAY' ? 'New task' : 'New yesterday item';
 
-// ─── Yesterday (COMPLETED) task item ─────────────────────
+  const submitLabel = isEdit ? 'Save changes' : 'Add task';
+  const saving = addTask.isPending || updateTask.isPending;
 
-interface YesterdayItemProps {
-  task: DailyTaskShape;
-  index: number;
-  canEdit: boolean;
-}
-
-function YesterdayItem({ task, index, canEdit }: YesterdayItemProps) {
-  const [editing, setEditing] = useState(false);
-  const update = useUpdateScrumTask();
-  const remove = useDeleteScrumTask();
-
-  if (editing) {
-    return (
-      <TaskForm
-        initial={{ text: task.text }}
-        saving={update.isPending}
-        submitLabel="Update"
-        showDeadline={false}
-        showDecision={false}
-        onCancel={() => setEditing(false)}
-        onSave={(v) =>
-          update.mutate(
-            { id: task.id, text: v.text },
-            { onSuccess: () => setEditing(false) },
-          )
-        }
-      />
-    );
+  function submit() {
+    if (!intent || !v.text.trim()) return;
+    if (intent.mode === 'edit') {
+      updateTask.mutate(
+        {
+          id: intent.task.id,
+          text: v.text,
+          ...(showDetails ? {
+            deadline: v.deadline || null,
+            isDecision: v.isDecision,
+            decisionNote: v.isDecision ? (v.decisionNote || null) : null,
+            carryOver: v.carryOver,
+          } : {}),
+        },
+        { onSuccess: onClose },
+      );
+    } else {
+      addTask.mutate(
+        {
+          entryId: intent.entryId,
+          type: intent.taskType,
+          text: v.text,
+          ...(showDetails && v.deadline ? { deadline: v.deadline } : {}),
+          ...(showDetails ? {
+            isDecision: v.isDecision,
+            decisionNote: v.isDecision ? (v.decisionNote || null) : null,
+            carryOver: v.carryOver,
+          } : {}),
+        },
+        { onSuccess: onClose },
+      );
+    }
   }
 
   return (
-    <div className="dscrum-task-item">
-      <span className="dscrum-task-num">{index + 1}.</span>
-      <span className="dscrum-task-text">{task.text}</span>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={title}
+      size="lg"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            leadingIcon={isEdit ? <Save size={14} /> : <Plus size={14} />}
+            loading={saving}
+            disabled={!v.text.trim()}
+            onClick={submit}
+          >
+            {submitLabel}
+          </Button>
+        </>
+      }
+    >
+      <div className="dscrum-form">
+        <div className="dscrum-form-group">
+          <label className="dscrum-form-label">TASK TITLE</label>
+          <TextArea
+            value={v.text}
+            onChange={(e) => setV((p) => ({ ...p, text: e.target.value }))}
+            placeholder="What needs to be done?"
+            rows={2}
+            autoFocus
+          />
+        </div>
+
+        {showDetails && (
+          <>
+            <div className="dscrum-form-group">
+              <label className="dscrum-form-label">BLOCKER</label>
+              <div className="dscrum-toggle-row">
+                <button
+                  type="button"
+                  className={cx('dscrum-toggle', v.isDecision && 'dscrum-toggle--on')}
+                  onClick={() => setV((p) => ({ ...p, isDecision: !p.isDecision }))}
+                  aria-pressed={v.isDecision}
+                >
+                  <span className="dscrum-toggle-track">
+                    <span className="dscrum-toggle-knob" />
+                  </span>
+                  <span className="dscrum-toggle-text">
+                    {v.isDecision ? 'This task is blocked' : 'Not blocked'}
+                  </span>
+                </button>
+              </div>
+              {v.isDecision && (
+                <>
+                  <div className="dscrum-blocker-wrap">
+                    <AlertTriangle size={14} className="dscrum-blocker-icon" />
+                    <TextArea
+                      value={v.decisionNote}
+                      onChange={(e) => setV((p) => ({ ...p, decisionNote: e.target.value }))}
+                      placeholder="What decision is needed to unblock this?"
+                      rows={2}
+                      className="dscrum-blocker-input"
+                    />
+                  </div>
+                  <p className="dscrum-form-hint">Shown highlighted in the scrum board.</p>
+                </>
+              )}
+            </div>
+
+            <div className="dscrum-form-row">
+              <div className="dscrum-form-group">
+                <label className="dscrum-form-label">DEADLINE</label>
+                <TextInput
+                  type="date"
+                  value={v.deadline}
+                  onChange={(e) => setV((p) => ({ ...p, deadline: e.target.value }))}
+                />
+                <p className="dscrum-form-hint">Leave empty for no deadline.</p>
+              </div>
+
+              <div className="dscrum-form-group">
+                <label className="dscrum-form-label">CARRY OVER</label>
+                <label className="dscrum-check-row">
+                  <input
+                    type="checkbox"
+                    checked={v.carryOver}
+                    onChange={(e) => setV((p) => ({ ...p, carryOver: e.target.checked }))}
+                  />
+                  <span>If not completed, move to next day</span>
+                </label>
+                <p className="dscrum-form-hint">Will appear in tomorrow&apos;s Yesterday list.</p>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+// ─── Move-to-next-day modal ──────────────────────────────
+
+interface MoveModalProps {
+  taskId: string | null;
+  onClose: () => void;
+}
+
+function MoveModal({ taskId, onClose }: MoveModalProps) {
+  const [deadline, setDeadline] = useState('');
+  const move = useMoveTaskNextDay();
+  useEffect(() => { if (!taskId) setDeadline(''); }, [taskId]);
+
+  return (
+    <Modal
+      open={!!taskId}
+      onClose={onClose}
+      title="Move task to next day"
+      size="sm"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            leadingIcon={<ArrowRight size={14} />}
+            loading={move.isPending}
+            onClick={() => {
+              if (!taskId) return;
+              move.mutate(
+                { id: taskId, deadline: deadline || undefined },
+                { onSuccess: onClose },
+              );
+            }}
+          >
+            Move
+          </Button>
+        </>
+      }
+    >
+      <div className="dscrum-form">
+        <div className="dscrum-form-group">
+          <label className="dscrum-form-label">NEW DEADLINE</label>
+          <TextInput
+            type="date"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+          />
+          <p className="dscrum-form-hint">Optional — leave blank to clear the deadline for the next day.</p>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ─── Yesterday item ──────────────────────────────────────
+
+function YesterdayItem({
+  task, canEdit, onEdit,
+}: {
+  task: DailyTaskShape;
+  canEdit: boolean;
+  onEdit: () => void;
+}) {
+  const remove = useDeleteScrumTask();
+  return (
+    <div className="dscrum-y-item">
+      <span className="dscrum-y-check"><Check size={12} strokeWidth={3} /></span>
+      <span className="dscrum-y-text">{task.text}</span>
       {canEdit && (
         <div className="dscrum-inline-actions">
-          <button className="dscrum-icon-btn" title="Edit" onClick={() => setEditing(true)}>
+          <button type="button" className="dscrum-icon-btn" title="Edit" onClick={onEdit}>
             <Pencil size={12} />
           </button>
           <button
+            type="button"
             className="dscrum-icon-btn dscrum-icon-btn-danger"
             title="Delete"
             onClick={() => remove.mutate(task.id)}
@@ -229,82 +330,52 @@ function YesterdayItem({ task, index, canEdit }: YesterdayItemProps) {
   );
 }
 
-// ─── Today (TODAY) task item ─────────────────────────────
+// ─── Today item ──────────────────────────────────────────
 
-interface TodayItemProps {
+function TodayItem({
+  task, canEdit, onEdit, onMove,
+}: {
   task: DailyTaskShape;
   canEdit: boolean;
-}
-
-function TodayItem({ task, canEdit }: TodayItemProps) {
-  const [editing, setEditing] = useState(false);
-  const [moving, setMoving] = useState(false);
-  const update = useUpdateScrumTask();
+  onEdit: () => void;
+  onMove: () => void;
+}) {
   const remove = useDeleteScrumTask();
 
-  if (moving) return <MoveForm taskId={task.id} onDone={() => setMoving(false)} />;
-
-  if (editing) {
-    return (
-      <TaskForm
-        initial={{
-          text: task.text,
-          deadline: task.deadline ?? '',
-          isDecision: task.isDecision,
-          decisionNote: task.decisionNote ?? '',
-        }}
-        saving={update.isPending}
-        submitLabel="Update"
-        onCancel={() => setEditing(false)}
-        onSave={(v) =>
-          update.mutate(
-            {
-              id: task.id,
-              text: v.text,
-              deadline: v.deadline || null,
-              isDecision: v.isDecision,
-              decisionNote: v.isDecision ? (v.decisionNote || null) : null,
-            },
-            { onSuccess: () => setEditing(false) },
-          )
-        }
-      />
-    );
-  }
-
   const markerClass = task.isDecision
-    ? 'dscrum-task-marker--decision'
+    ? 'dscrum-t-marker--decision'
     : task.deadline
-      ? 'dscrum-task-marker--deadline'
-      : 'dscrum-task-marker--default';
+      ? 'dscrum-t-marker--deadline'
+      : 'dscrum-t-marker--default';
 
   return (
-    <div className="dscrum-task-item">
-      <span className={cx('dscrum-task-marker', markerClass)} />
-      <div className="dscrum-task-body">
-        {task.isDecision && <span className="dscrum-decision-dot" />}
-        <span className="dscrum-task-text">{task.text}</span>
-        {task.deadline && (
-          <span className="dscrum-task-due">due {fmtDate(task.deadline, 'd MMM')}</span>
-        )}
+    <div className="dscrum-t-item">
+      <span className={cx('dscrum-t-marker', markerClass)} aria-hidden="true" />
+      <div className="dscrum-t-content">
+        <div className="dscrum-t-line">
+          {task.carryOver && (
+            <span className="dscrum-t-carryover" title="Auto-carries to next day if unfinished">↻</span>
+          )}
+          <span className="dscrum-t-text">{task.text}</span>
+          {task.deadline && (
+            <span className="dscrum-t-due">due {fmtDate(task.deadline, 'd MMM')}</span>
+          )}
+        </div>
       </div>
       {canEdit && (
         <div className="dscrum-inline-actions">
-          <button className="dscrum-icon-btn" title="Edit" onClick={() => setEditing(true)}>
+          <button type="button" className="dscrum-icon-btn" title="Edit" onClick={onEdit}>
             <Pencil size={12} />
           </button>
           <button
+            type="button"
             className="dscrum-icon-btn dscrum-icon-btn-danger"
             title="Delete"
             onClick={() => remove.mutate(task.id)}
           >
             <Trash2 size={12} />
           </button>
-          <button
-            className="dscrum-icon-btn"
-            title="Move to next day"
-            onClick={() => setMoving(true)}
-          >
+          <button type="button" className="dscrum-icon-btn" title="Move to next day" onClick={onMove}>
             <ArrowRight size={12} />
           </button>
         </div>
@@ -313,118 +384,82 @@ function TodayItem({ task, canEdit }: TodayItemProps) {
   );
 }
 
-// ─── Board row (one employee) ────────────────────────────
+// ─── Board row (one employee entry) ──────────────────────
 
 interface BoardRowProps {
   entry: DailyScrumEntryShape;
-  serial: number;
   canEdit: boolean;
+  onOpenTask: (intent: TaskModalIntent) => void;
+  onMoveTask: (taskId: string) => void;
 }
 
-function BoardRow({ entry, serial, canEdit }: BoardRowProps) {
-  const [addingToday, setAddingToday] = useState(false);
-  const [addingYesterday, setAddingYesterday] = useState(false);
-  const addTask = useAddScrumTask();
-  const updateTask = useUpdateScrumTask();
-  const updateEntry = useUpdateScrumEntry();
-
+function BoardRow({ entry, canEdit, onOpenTask, onMoveTask }: BoardRowProps) {
   const yesterdayTasks = entry.tasks.filter((t) => t.type === 'COMPLETED');
   const todayTasks = entry.tasks.filter((t) => t.type === 'TODAY');
   const decisions = todayTasks.filter((t) => t.isDecision);
 
   const emp = entry.employee;
-  const status = entry.status as ScrumStatus;
 
   return (
     <div className="dscrum-board-row">
       <div className="dscrum-board-cell dscrum-member-cell">
-        <span className="dscrum-serial">#{serial}</span>
-        <div className="dscrum-member-block">
-          <Avatar
-            initials={initials(emp.fullName)}
-            color={avatarColorFor(emp.id)}
-            imageUrl={emp.avatarUrl}
-            size="sm"
-          />
-          <div className="dscrum-member-info">
-            <span className="dscrum-member-name">{emp.fullName}</span>
-            {emp.designation && (
-              <span className="dscrum-member-role">{emp.designation}</span>
-            )}
-          </div>
+        <Avatar
+          initials={initials(emp.fullName)}
+          color={avatarColorFor(emp.id)}
+          imageUrl={emp.avatarUrl}
+          size="md"
+        />
+        <div className="dscrum-member-info">
+          <span className="dscrum-member-name">{emp.fullName}</span>
+          {emp.designation && (
+            <span className="dscrum-member-role">{emp.designation}</span>
+          )}
         </div>
       </div>
 
       <div className="dscrum-board-cell">
-        {yesterdayTasks.length === 0 && !addingYesterday && (
+        {yesterdayTasks.length === 0 && (
           <span className="dscrum-none">none</span>
         )}
-        {yesterdayTasks.map((t, i) => (
-          <YesterdayItem key={t.id} task={t} index={i} canEdit={canEdit} />
-        ))}
-        {addingYesterday && (
-          <TaskForm
-            saving={addTask.isPending}
-            showDeadline={false}
-            showDecision={false}
-            onCancel={() => setAddingYesterday(false)}
-            onSave={(v) =>
-              addTask.mutate(
-                { entryId: entry.id, type: 'COMPLETED', text: v.text },
-                { onSuccess: () => setAddingYesterday(false) },
-              )
-            }
+        {yesterdayTasks.map((t) => (
+          <YesterdayItem
+            key={t.id}
+            task={t}
+            canEdit={canEdit}
+            onEdit={() => onOpenTask({ mode: 'edit', task: t })}
           />
-        )}
-        {canEdit && !addingYesterday && (
+        ))}
+        {canEdit && (
           <button
+            type="button"
             className="dscrum-add-btn"
-            onClick={() => setAddingYesterday(true)}
+            onClick={() => onOpenTask({ mode: 'add', entryId: entry.id, taskType: 'COMPLETED' })}
           >
-            <Plus size={12} /> Add
+            <Plus size={11} /> Add item
           </button>
         )}
       </div>
 
       <div className="dscrum-board-cell">
-        {todayTasks.length === 0 && !addingToday && (
+        {todayTasks.length === 0 && (
           <span className="dscrum-none">none</span>
         )}
         {todayTasks.map((t) => (
-          <TodayItem key={t.id} task={t} canEdit={canEdit} />
-        ))}
-        {addingToday && (
-          <TaskForm
-            saving={addTask.isPending}
-            onCancel={() => setAddingToday(false)}
-            onSave={(v) => {
-              addTask.mutate(
-                {
-                  entryId: entry.id,
-                  type: 'TODAY',
-                  text: v.text,
-                  ...(v.deadline ? { deadline: v.deadline } : {}),
-                },
-                {
-                  onSuccess: (created) => {
-                    setAddingToday(false);
-                    // Decision flag isn't part of the POST payload — patch it after creation.
-                    if (v.isDecision && created?.id) {
-                      updateTask.mutate({
-                        id: created.id,
-                        isDecision: true,
-                        decisionNote: v.decisionNote || null,
-                      });
-                    }
-                  },
-                },
-              );
-            }}
+          <TodayItem
+            key={t.id}
+            task={t}
+            canEdit={canEdit}
+            onEdit={() => onOpenTask({ mode: 'edit', task: t })}
+            onMove={() => onMoveTask(t.id)}
           />
-        )}
-        {canEdit && !addingToday && (
-          <button className="dscrum-add-btn" onClick={() => setAddingToday(true)}>
-            <Plus size={12} /> Add
+        ))}
+        {canEdit && (
+          <button
+            type="button"
+            className="dscrum-add-btn"
+            onClick={() => onOpenTask({ mode: 'add', entryId: entry.id, taskType: 'TODAY' })}
+          >
+            <Plus size={11} /> Add task
           </button>
         )}
       </div>
@@ -444,58 +479,33 @@ function BoardRow({ entry, serial, canEdit }: BoardRowProps) {
         )}
       </div>
 
-      <div className="dscrum-board-cell dscrum-status-cell">
-        {canEdit ? (
-          <select
-            className="dscrum-status-select"
-            style={{ color: statusColorVar[status] }}
-            value={status}
-            onChange={(e) =>
-              updateEntry.mutate({
-                id: entry.id,
-                status: e.target.value as ScrumStatus,
-              })
-            }
-          >
-            <option value="ON_TRACK">On track</option>
-            <option value="ATTENTION_NEEDED">Attention needed</option>
-            <option value="BLOCKED">Blocked</option>
-          </select>
-        ) : (
-          <Badge variant={statusVariant[status]}>{statusLabel[status]}</Badge>
-        )}
-      </div>
     </div>
   );
 }
 
-// ─── Placeholder row for users without an entry ──────────
+// ─── Placeholder row (user without an entry) ─────────────
 
 interface PlaceholderRowProps {
   user: UserSummary;
-  serial: number;
   date: string;
 }
 
-function PlaceholderRow({ user, serial, date }: PlaceholderRowProps) {
+function PlaceholderRow({ user, date }: PlaceholderRowProps) {
   const upsert = useUpsertScrumEntry();
   return (
     <div className="dscrum-board-row dscrum-board-row-empty">
       <div className="dscrum-board-cell dscrum-member-cell">
-        <span className="dscrum-serial">#{serial}</span>
-        <div className="dscrum-member-block">
-          <Avatar
-            initials={initials(user.fullName)}
-            color={avatarColorFor(user.id)}
-            imageUrl={user.avatarUrl}
-            size="sm"
-          />
-          <div className="dscrum-member-info">
-            <span className="dscrum-member-name">{user.fullName}</span>
-            {user.designation && (
-              <span className="dscrum-member-role">{user.designation}</span>
-            )}
-          </div>
+        <Avatar
+          initials={initials(user.fullName)}
+          color={avatarColorFor(user.id)}
+          imageUrl={user.avatarUrl}
+          size="md"
+        />
+        <div className="dscrum-member-info">
+          <span className="dscrum-member-name">{user.fullName}</span>
+          {user.designation && (
+            <span className="dscrum-member-role">{user.designation}</span>
+          )}
         </div>
       </div>
       <div className="dscrum-board-cell dscrum-placeholder-cell" style={{ gridColumn: 'span 3' }}>
@@ -510,12 +520,11 @@ function PlaceholderRow({ user, serial, date }: PlaceholderRowProps) {
           Create entry
         </Button>
       </div>
-      <div className="dscrum-board-cell" />
     </div>
   );
 }
 
-// ─── Detail modal ───────────────────────────────────────
+// ─── Detail modal (the team board) ───────────────────────
 
 interface DetailModalProps {
   date: string;
@@ -528,6 +537,8 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
   const { data: users } = useUsers();
   const currentUser = useCurrentUser();
   const [searchQ, setSearchQ] = useState('');
+  const [taskIntent, setTaskIntent] = useState<TaskModalIntent | null>(null);
+  const [moveTaskId, setMoveTaskId] = useState<string | null>(null);
 
   const canEditAll = data?.canEditAll ?? false;
   const canEditTeam = data?.canEditTeam ?? false;
@@ -617,81 +628,82 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
   }
 
   return (
-    <Modal
-      open
-      onClose={onClose}
-      size="full"
-      title="Daily Scrum"
-      footer={
-        <div className="dscrum-footer-actions">
-          <Button
-            variant="secondary"
-            size="sm"
-            leadingIcon={<Download size={14} />}
-            onClick={exportCSV}
-          >
-            Export CSV
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
-        </div>
-      }
-    >
-      <div className="dscrum-modal-head">
-        <span className="dscrum-modal-subtitle">
-          {fmtDate(date, 'EEEE, d MMMM yyyy')} · {memberCount} {memberCount === 1 ? 'member' : 'members'} · {taskCount} {taskCount === 1 ? 'task' : 'tasks'}
-        </span>
-      </div>
-
-      <div className="dscrum-modal-search">
-        <Search size={14} className="dscrum-search-icon" />
-        <input
-          className="dscrum-search-input"
-          placeholder="Search tasks or people"
-          value={searchQ}
-          onChange={(e) => setSearchQ(e.target.value)}
-        />
-      </div>
-
-      {isLoading && <div className="dscrum-loading">Loading…</div>}
-
-      {!isLoading && visibleEntries.length === 0 && visibleMissing.length === 0 && (
-        <EmptyState
-          icon={<ClipboardList size={32} />}
-          title="Nothing to show"
-          body={searchQ ? 'Try a different search term.' : 'No scrum entries for this date.'}
-        />
-      )}
-
-      {!isLoading && (visibleEntries.length > 0 || visibleMissing.length > 0) && (
-        <div className="dscrum-board">
-          <div className="dscrum-board-head">
-            <div>Member</div>
-            <div>Yesterday</div>
-            <div>Today</div>
-            <div>Decisions needed</div>
-            <div>Status</div>
+    <>
+      <Modal
+        open
+        onClose={onClose}
+        size="full"
+        widthOverride="min(1600px, calc(100vw - 48px))"
+        title="Daily Scrum"
+        footer={
+          <div className="dscrum-footer-actions">
+            <Button
+              variant="secondary"
+              size="sm"
+              leadingIcon={<Download size={14} />}
+              onClick={exportCSV}
+            >
+              Export CSV
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
           </div>
-
-          {visibleEntries.map((entry, i) => (
-            <BoardRow
-              key={entry.id}
-              entry={entry}
-              serial={i + 1}
-              canEdit={canEditEntry(entry)}
-            />
-          ))}
-
-          {visibleMissing.map((u, i) => (
-            <PlaceholderRow
-              key={u.id}
-              user={u}
-              serial={visibleEntries.length + i + 1}
-              date={date}
-            />
-          ))}
+        }
+      >
+        <div className="dscrum-modal-head">
+          <span className="dscrum-modal-subtitle">
+            {fmtDate(date, 'EEEE, d MMMM yyyy')} · {memberCount} {memberCount === 1 ? 'member' : 'members'} · {taskCount} {taskCount === 1 ? 'task' : 'tasks'}
+          </span>
         </div>
-      )}
-    </Modal>
+
+        <div className="dscrum-modal-search">
+          <Search size={14} className="dscrum-search-icon" />
+          <input
+            className="dscrum-search-input"
+            placeholder="Search tasks or people"
+            value={searchQ}
+            onChange={(e) => setSearchQ(e.target.value)}
+          />
+        </div>
+
+        {isLoading && <div className="dscrum-loading">Loading…</div>}
+
+        {!isLoading && visibleEntries.length === 0 && visibleMissing.length === 0 && (
+          <EmptyState
+            icon={<ClipboardList size={32} />}
+            title="Nothing to show"
+            body={searchQ ? 'Try a different search term.' : 'No scrum entries for this date.'}
+          />
+        )}
+
+        {!isLoading && (visibleEntries.length > 0 || visibleMissing.length > 0) && (
+          <div className="dscrum-board">
+            <div className="dscrum-board-head">
+              <div>Member</div>
+              <div>Yesterday</div>
+              <div>Today</div>
+              <div>Decisions needed</div>
+            </div>
+
+            {visibleEntries.map((entry) => (
+              <BoardRow
+                key={entry.id}
+                entry={entry}
+                canEdit={canEditEntry(entry)}
+                onOpenTask={setTaskIntent}
+                onMoveTask={setMoveTaskId}
+              />
+            ))}
+
+            {visibleMissing.map((u) => (
+              <PlaceholderRow key={u.id} user={u} date={date} />
+            ))}
+          </div>
+        )}
+      </Modal>
+
+      <TaskModal intent={taskIntent} onClose={() => setTaskIntent(null)} />
+      <MoveModal taskId={moveTaskId} onClose={() => setMoveTaskId(null)} />
+    </>
   );
 }
 
@@ -751,13 +763,12 @@ function DailyScrumTab() {
             className="dscrum-date-input"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            placeholder="Filter by date"
           />
           {dateFilter && (
             <button
+              type="button"
               className="dscrum-date-clear"
               onClick={() => setDateFilter('')}
-              type="button"
             >
               Clear
             </button>
@@ -792,48 +803,26 @@ function DailyScrumTab() {
             <div>SL#</div>
             <div>Date</div>
             <div>Day</div>
-            <div>Members</div>
-            <div>Tasks</div>
             <div />
           </div>
           {visibleDates.map((d, i) => (
-            <DateListRow
-              key={d}
-              date={d}
-              serial={i + 1}
-              onDetails={() => setActiveDate(d)}
-            />
+            <div className="dscrum-list-row" key={d}>
+              <div>{i + 1}</div>
+              <div>{fmtDate(d, 'd MMM yyyy')}</div>
+              <div>{fmtDate(d, 'EEEE')}</div>
+              <div className="dscrum-list-action">
+                <Button size="sm" variant="secondary" onClick={() => setActiveDate(d)}>
+                  Details
+                </Button>
+              </div>
+            </div>
           ))}
         </div>
       )}
 
       {activeDate && (
-        <DetailModal
-          date={activeDate}
-          onClose={() => setActiveDate(null)}
-        />
+        <DetailModal date={activeDate} onClose={() => setActiveDate(null)} />
       )}
-    </div>
-  );
-}
-
-interface DateListRowProps {
-  date: string;
-  serial: number;
-  onDetails: () => void;
-}
-
-function DateListRow({ date, serial, onDetails }: DateListRowProps) {
-  return (
-    <div className="dscrum-list-row">
-      <div>{serial}</div>
-      <div>{fmtDate(date, 'EEE, d MMM yyyy')}</div>
-      <div>{fmtDate(date, 'EEEE')}</div>
-      <div className="dscrum-list-muted">—</div>
-      <div className="dscrum-list-muted">—</div>
-      <div className="dscrum-list-action">
-        <Button size="sm" variant="secondary" onClick={onDetails}>Details</Button>
-      </div>
     </div>
   );
 }
@@ -865,9 +854,9 @@ function MyTasksTab() {
           />
           {dateFilter && (
             <button
+              type="button"
               className="dscrum-date-clear"
               onClick={() => setDateFilter('')}
-              type="button"
             >
               Clear
             </button>
@@ -956,7 +945,7 @@ function MyTasksRow({ date, serial, userId, searchQ, onDetails }: MyTasksRowProp
   return (
     <div className="dscrum-list-row">
       <div>{serial}</div>
-      <div>{fmtDate(date, 'EEE, d MMM yyyy')}</div>
+      <div>{fmtDate(date, 'd MMM yyyy')}</div>
       <div>{fmtDate(date, 'EEEE')}</div>
       <div>{myEntry ? todayCount : '—'}</div>
       <div>{myEntry ? yesterdayCount : '—'}</div>

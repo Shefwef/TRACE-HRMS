@@ -1,23 +1,21 @@
+/* ─── Page shell ─── */
 .dscrum {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
 }
-
 .dscrum-head h1 {
   font-size: var(--text-3xl);
   letter-spacing: -0.02em;
 }
 
 /* ─── Tabs ─── */
-
 .dscrum-tabs {
   display: flex;
   gap: 4px;
   border-bottom: 1px solid var(--color-border-default);
   overflow-x: auto;
 }
-
 .dscrum-tab {
   display: inline-flex;
   align-items: center;
@@ -33,16 +31,12 @@
   background: transparent;
   cursor: pointer;
 }
-
 .dscrum-tab:hover { color: var(--color-text-primary); }
-
 .dscrum-tab-active {
   color: var(--color-brand-primary);
   border-color: var(--color-brand-primary);
   font-weight: var(--weight-semibold);
 }
-
-/* ─── Tab content ─── */
 
 .dscrum-tab-content {
   display: flex;
@@ -51,23 +45,18 @@
 }
 
 /* ─── Controls row ─── */
-
 .dscrum-controls {
   display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
 }
-
 .dscrum-date-wrap {
   display: flex;
   align-items: center;
   gap: 8px;
   color: var(--color-text-muted);
 }
-
-.dscrum-date-icon { flex-shrink: 0; }
-
 .dscrum-date-input {
   padding: 8px 12px;
   border-radius: var(--radius-md);
@@ -77,39 +66,23 @@
   color: var(--color-text-primary);
   transition: border var(--transition-fast), box-shadow var(--transition-fast);
 }
-
 .dscrum-date-input:focus {
   outline: none;
   border-color: var(--color-border-focus);
   box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.15);
 }
-
 .dscrum-date-clear {
-  background: transparent;
-  border: none;
-  color: var(--color-text-muted);
+  padding: 4px 10px;
   font-size: var(--text-xs);
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: var(--radius-sm);
-}
-
-.dscrum-date-clear:hover {
-  color: var(--color-text-primary);
-  background: var(--color-bg-subtle);
-}
-
-/* ─── Loading ─── */
-
-.dscrum-loading {
-  padding: 24px;
   color: var(--color-text-muted);
-  font-size: var(--text-sm);
-  text-align: center;
+  background: transparent;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
 }
+.dscrum-date-clear:hover { color: var(--color-text-primary); }
 
 /* ─── Date list table ─── */
-
 .dscrum-list-table {
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border-default);
@@ -117,22 +90,19 @@
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
-
 .dscrum-list-head,
 .dscrum-list-row {
   display: grid;
-  grid-template-columns: 60px 1.4fr 1fr 100px 100px 120px;
+  grid-template-columns: 60px 1fr 1fr 120px;
   align-items: center;
-  padding: 12px 20px;
+  padding: 0 20px;
   gap: 16px;
   font-size: var(--text-sm);
 }
-
 .dscrum-list-table-mytasks .dscrum-list-head,
 .dscrum-list-table-mytasks .dscrum-list-row {
-  grid-template-columns: 60px 1.4fr 1fr 90px 90px 140px 120px;
+  grid-template-columns: 60px 1fr 1fr 80px 80px 140px 120px;
 }
-
 .dscrum-list-head {
   background: var(--color-bg-subtle);
   border-bottom: 1px solid var(--color-border-default);
@@ -141,38 +111,38 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--color-text-muted);
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
-
 .dscrum-list-row {
+  padding-top: 14px;
+  padding-bottom: 14px;
   border-bottom: 1px solid var(--color-border-default);
   transition: background var(--transition-fast);
-  color: var(--color-text-primary);
 }
-
-.dscrum-list-row:nth-child(even) { background: var(--color-bg-subtle); }
 .dscrum-list-row:last-child { border-bottom: none; }
 .dscrum-list-row:hover { background: var(--color-bg-subtle); }
-
+.dscrum-list-action { display: flex; justify-content: flex-end; }
 .dscrum-list-muted { color: var(--color-text-muted); }
 
-.dscrum-list-action { display: flex; justify-content: flex-end; }
+/* ─── Loading / helpers ─── */
+.dscrum-loading {
+  padding: 24px;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
 
 /* ─── Modal head ─── */
-
 .dscrum-modal-head {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-4);
 }
-
 .dscrum-modal-subtitle {
   font-size: var(--text-sm);
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
 }
 
-/* ─── Modal search ─── */
-
+/* ─── Search bar (inside modal) ─── */
 .dscrum-modal-search {
   display: flex;
   align-items: center;
@@ -182,23 +152,19 @@
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-md);
   color: var(--color-text-muted);
-  margin-bottom: 16px;
+  max-width: 420px;
+  margin-bottom: var(--space-4);
   transition: border var(--transition-fast), box-shadow var(--transition-fast);
 }
-
 .dscrum-modal-search-inline {
-  flex: unset;
-  width: 280px;
   margin-bottom: 0;
+  width: 280px;
 }
-
 .dscrum-modal-search:focus-within {
   border-color: var(--color-border-focus);
   box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.15);
 }
-
 .dscrum-search-icon { flex-shrink: 0; }
-
 .dscrum-search-input {
   flex: 1;
   border: none;
@@ -207,26 +173,21 @@
   font-size: var(--text-sm);
   color: var(--color-text-primary);
 }
-
 .dscrum-search-input::placeholder { color: var(--color-text-muted); }
 
-/* ─── Board (5-column) ─── */
-
+/* ─── Team board table ─── */
 .dscrum-board {
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--color-bg-surface);
 }
-
 .dscrum-board-head,
 .dscrum-board-row {
   display: grid;
-  grid-template-columns: 220px 1fr 1fr 200px 130px;
-  gap: 0;
+  grid-template-columns: 260px 1.4fr 1.4fr 1fr;
   align-items: stretch;
 }
-
 .dscrum-board-head {
   background: var(--color-bg-subtle);
   border-bottom: 1px solid var(--color-border-default);
@@ -239,20 +200,12 @@
   top: 0;
   z-index: 1;
 }
-
-.dscrum-board-head > div {
-  padding: 12px 16px;
-}
+.dscrum-board-head > div { padding: 12px 16px; }
 
 .dscrum-board-row {
   border-bottom: 1px solid var(--color-border-default);
 }
-
 .dscrum-board-row:last-child { border-bottom: none; }
-
-.dscrum-board-row:nth-child(even) {
-  background: var(--color-bg-subtle);
-}
 
 .dscrum-board-cell {
   padding: 16px;
@@ -260,136 +213,138 @@
   color: var(--color-text-primary);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
 
-.dscrum-status-cell {
-  align-items: flex-start;
-}
+.dscrum-status-cell { align-items: flex-start; }
 
 /* ─── Member cell ─── */
-
 .dscrum-member-cell {
-  gap: 6px;
-}
-
-.dscrum-serial {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  font-weight: var(--weight-medium);
-}
-
-.dscrum-member-block {
-  display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
-
 .dscrum-member-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
 }
-
 .dscrum-member-name {
   font-weight: var(--weight-semibold);
   color: var(--color-text-primary);
   font-size: var(--text-sm);
   word-break: break-word;
 }
-
 .dscrum-member-role {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
 }
 
-/* ─── Task item (both Yesterday & Today) ─── */
-
-.dscrum-task-item {
+/* ─── Yesterday task item (green checkmark + text) ─── */
+.dscrum-y-item {
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 6px;
-  padding: 4px 6px;
+  gap: 8px;
+  padding: 2px 4px;
   border-radius: var(--radius-sm);
   min-width: 0;
 }
-
-.dscrum-task-item:hover {
-  background: var(--color-bg-surface);
-}
-
-.dscrum-board-row:nth-child(even) .dscrum-task-item:hover {
-  background: var(--color-bg-surface);
-}
-
-.dscrum-task-num {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  font-weight: var(--weight-medium);
+.dscrum-y-item:hover { background: var(--color-bg-subtle); }
+.dscrum-y-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--color-success);
   flex-shrink: 0;
-  min-width: 16px;
+  margin-top: 1px;
 }
-
-.dscrum-task-text {
+.dscrum-y-text {
   font-size: var(--text-sm);
   color: var(--color-text-primary);
   word-break: break-word;
   flex: 1;
   min-width: 0;
+  line-height: 1.45;
 }
 
-.dscrum-task-marker {
-  width: 2px;
+/* ─── Today task item (colored left bar + text + due) ─── */
+.dscrum-t-item {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 4px 6px 4px 0;
+  border-radius: var(--radius-sm);
+  min-width: 0;
+}
+.dscrum-t-item:hover { background: var(--color-bg-subtle); }
+.dscrum-t-marker {
+  width: 3px;
   align-self: stretch;
-  min-height: 16px;
+  min-height: 20px;
   border-radius: 2px;
   flex-shrink: 0;
 }
+.dscrum-t-marker--decision { background: var(--color-danger); }
+.dscrum-t-marker--deadline { background: var(--color-warning); }
+.dscrum-t-marker--default { background: var(--color-border-default); }
 
-.dscrum-task-marker--decision { background: var(--color-danger); }
-.dscrum-task-marker--deadline { background: var(--color-warning); }
-.dscrum-task-marker--default { background: var(--color-border-default); }
-
-.dscrum-task-body {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
+.dscrum-t-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 2px;
+  padding-bottom: 2px;
 }
-
-.dscrum-task-due {
+.dscrum-t-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.dscrum-t-text {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  word-break: break-word;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.45;
+}
+.dscrum-t-due {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-
-.dscrum-decision-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-warning);
+.dscrum-t-carryover {
+  font-size: 12px;
+  color: var(--color-brand-primary);
+  cursor: help;
   flex-shrink: 0;
 }
 
-/* ─── Inline actions ─── */
-
+/* ─── Inline hover actions (edit/delete/move icons) ─── */
 .dscrum-inline-actions {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 2px;
   opacity: 0;
   transition: opacity var(--transition-fast);
   flex-shrink: 0;
+  padding-top: 2px;
 }
-
-.dscrum-task-item:hover .dscrum-inline-actions {
+.dscrum-y-item:hover .dscrum-inline-actions,
+.dscrum-t-item:hover .dscrum-inline-actions {
   opacity: 1;
 }
-
 .dscrum-icon-btn {
   display: inline-flex;
   align-items: center;
@@ -401,22 +356,19 @@
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
-
 .dscrum-icon-btn:hover {
   background: var(--color-bg-surface);
   color: var(--color-text-primary);
   border-color: var(--color-border-default);
 }
-
 .dscrum-icon-btn-danger:hover {
   color: var(--color-danger);
   border-color: var(--color-danger);
 }
 
-/* ─── Add button ─── */
-
+/* ─── Add-item button (dashed inside cell) ─── */
 .dscrum-add-btn {
   display: inline-flex;
   align-items: center;
@@ -431,42 +383,13 @@
   align-self: flex-start;
   transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
 }
-
 .dscrum-add-btn:hover {
   color: var(--color-brand-primary);
   border-color: var(--color-brand-primary);
-  background: var(--color-bg-surface);
+  background: var(--color-bg-subtle);
 }
 
-/* ─── Inline add form ─── */
-
-.dscrum-add-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-md);
-}
-
-.dscrum-decision-check {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-}
-
-.dscrum-form-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-/* ─── Decision list cell ─── */
-
+/* ─── Decision list (right column) ─── */
 .dscrum-decision-list {
   list-style: none;
   padding: 0;
@@ -475,19 +398,20 @@
   flex-direction: column;
   gap: 6px;
 }
-
 .dscrum-decision-item {
   display: flex;
   align-items: flex-start;
   gap: 6px;
   font-size: var(--text-sm);
-  color: var(--color-text-primary);
+  color: var(--color-warning);
+  line-height: 1.4;
 }
-
 .dscrum-decision-diamond {
   color: var(--color-warning);
   flex-shrink: 0;
-  line-height: 1.2;
+  line-height: 1;
+  font-size: 12px;
+  margin-top: 2px;
 }
 
 .dscrum-none {
@@ -496,29 +420,32 @@
   font-style: italic;
 }
 
-/* ─── Status select (inline text-like) ─── */
-
+/* ─── Status cell (colored text) ─── */
+.dscrum-status-text {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
 .dscrum-status-select {
-  padding: 6px 8px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-default);
-  background: var(--color-bg-surface);
-  font-size: var(--text-xs);
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
 }
-
+.dscrum-status-select:hover {
+  background: var(--color-bg-subtle);
+  border-color: var(--color-border-default);
+}
 .dscrum-status-select:focus {
   outline: none;
   border-color: var(--color-border-focus);
 }
 
-/* ─── Placeholder (no-entry) row ─── */
-
-.dscrum-board-row-empty {
-  opacity: 0.85;
-}
-
+/* ─── Placeholder row for users without an entry ─── */
+.dscrum-board-row-empty { opacity: 0.85; }
 .dscrum-placeholder-cell {
   flex-direction: row;
   align-items: center;
@@ -526,7 +453,6 @@
 }
 
 /* ─── Modal footer ─── */
-
 .dscrum-footer-actions {
   display: flex;
   justify-content: flex-end;
@@ -534,25 +460,146 @@
   width: 100%;
 }
 
-/* ─── Responsive ─── */
+/* ─── Task modal form ─── */
+.dscrum-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.dscrum-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+.dscrum-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dscrum-form-label {
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+.dscrum-form-hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
 
+/* ─── Blocker toggle ─── */
+.dscrum-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dscrum-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px 4px 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.dscrum-toggle:hover { background: var(--color-bg-subtle); }
+.dscrum-toggle-track {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--color-border-default);
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+.dscrum-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-bg-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  transition: transform var(--transition-fast);
+}
+.dscrum-toggle--on .dscrum-toggle-track { background: var(--color-danger); }
+.dscrum-toggle--on .dscrum-toggle-knob { transform: translateX(14px); }
+.dscrum-toggle-text {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  font-weight: var(--weight-medium);
+}
+
+/* ─── Blocker textarea with warning icon ─── */
+.dscrum-blocker-wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--color-danger) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 25%, transparent);
+  border-radius: var(--radius-md);
+}
+.dscrum-blocker-icon {
+  color: var(--color-danger);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.dscrum-blocker-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+.dscrum-blocker-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ─── Carry-over checkbox row ─── */
+.dscrum-check-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.dscrum-check-row input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-brand-primary);
+  cursor: pointer;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 1100px) {
+  .dscrum-board-head,
+  .dscrum-board-row {
+    grid-template-columns: 220px 1.3fr 1.3fr 1fr;
+  }
+}
 @media (max-width: 900px) {
   .dscrum-board-head,
   .dscrum-board-row {
-    grid-template-columns: 180px 1fr 1fr 160px 110px;
+    grid-template-columns: 180px 1.2fr 1.2fr 220px;
   }
 }
-
 @media (max-width: 640px) {
   .dscrum-head h1 { font-size: var(--text-2xl); }
 
   .dscrum-list-head,
   .dscrum-list-row {
-    grid-template-columns: 40px 1fr 80px 80px 80px 100px;
+    grid-template-columns: 40px 1fr 80px 100px;
     gap: 8px;
     padding: 10px 12px;
   }
-
   .dscrum-list-table-mytasks .dscrum-list-head,
   .dscrum-list-table-mytasks .dscrum-list-row {
     grid-template-columns: 40px 1fr 60px 60px 60px 100px 100px;
@@ -562,14 +609,10 @@
   .dscrum-board-row {
     grid-template-columns: 1fr;
   }
-
   .dscrum-board-head { display: none; }
-
   .dscrum-board-cell {
     border-bottom: 1px solid var(--color-border-default);
   }
-
-  .dscrum-modal-search-inline {
-    width: 100%;
-  }
+  .dscrum-modal-search-inline { width: 100%; }
+  .dscrum-form-row { grid-template-columns: 1fr; }
 }

@@ -1170,6 +1170,7 @@ export interface DailyTaskShape {
   deadline: string | null;
   isDecision: boolean;
   decisionNote: string | null;
+  carryOver: boolean;
   order: number;
   createdAt: string;
   updatedAt: string;
@@ -1242,7 +1243,11 @@ export function useUpdateScrumEntry() {
 export function useAddScrumTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { entryId: string; type: 'TODAY' | 'COMPLETED'; text: string; deadline?: string; order?: number }) =>
+    mutationFn: (input: {
+      entryId: string; type: 'TODAY' | 'COMPLETED'; text: string;
+      deadline?: string; order?: number;
+      isDecision?: boolean; decisionNote?: string | null; carryOver?: boolean;
+    }) =>
       api<DailyTaskShape>('/api/daily-scrum/tasks', {
         method: 'POST',
         body: JSON.stringify(input),
@@ -1263,6 +1268,7 @@ export function useUpdateScrumTask() {
       deadline?: string | null;
       isDecision?: boolean;
       decisionNote?: string | null;
+      carryOver?: boolean;
       order?: number;
     }) =>
       api<DailyTaskShape>(`/api/daily-scrum/tasks/${id}`, {
