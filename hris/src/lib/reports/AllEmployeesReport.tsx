@@ -41,7 +41,10 @@ const COLS = [
 ];
 
 function fmtHours(m: number): string {
-  return `${(m / 60).toFixed(1)}h`;
+  if (!m) return '0h';
+  const h = Math.floor(m / 60);
+  const rem = m % 60;
+  return rem === 0 ? `${h}h` : `${h}h ${rem}m`;
 }
 
 function truncate(s: string, n: number): string {

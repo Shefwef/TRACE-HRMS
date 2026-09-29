@@ -9,6 +9,7 @@ import { TrendingUp, TrendingDown, Award, Target } from 'lucide-react';
 import { useCurrentUser } from '@/lib/session';
 import { useBalance, useMyLeaves, useAttendanceHistory, useSettings } from '@/lib/hooks';
 import { StatCard } from '../../components/ui/StatCard';
+import { fmtDuration } from '../../lib/utils';
 import { AttendanceHeatmap } from './AttendanceHeatmap';
 import './Analytics.css';
 
@@ -77,7 +78,7 @@ export function AnalyticsPage() {
   const presentDays = records.filter((a) => a.status === 'PRESENT').length;
   const workDays = records.filter((a) => a.status !== 'WEEKEND' && a.status !== 'HOLIDAY').length;
   const rate = workDays === 0 ? 0 : Math.round((presentDays / workDays) * 100);
-  const overtimeHours = records.reduce((sum, a) => sum + a.overtimeMinutes / 60, 0);
+  const overtimeMinutes = records.reduce((sum, a) => sum + a.overtimeMinutes, 0);
   const absentDays = records.filter((a) => a.status === 'ABSENT').length;
 
   const loading = balanceLoading || leavesLoading || historyLoading;
@@ -122,7 +123,7 @@ export function AnalyticsPage() {
         />
         <StatCard
           label="Overtime this month"
-          value={`${overtimeHours.toFixed(1)}h`}
+          value={fmtDuration(overtimeMinutes)}
           hint="Beyond your standard hours"
           icon={<Award size={16} />}
           accent="warning"
