@@ -1159,3 +1159,137 @@ export function useSendHolidayNotice() {
     },
   });
 }
+
+// ─── Daily Scrum ─────────────────────────────────────────
+
+export interface DailyTaskShape {
+  id: string;
+  entryId: string;
+  type: 'TODAY' | 'COMPLETED';
+  text: string;
+  deadline: string | null;
+  isDecision: boolean;
+  decisionNote: string | null;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DailyScrumEntryShape {
+  id: string;
+  date: string;
+  status: 'ON_TRACK' | 'ATTENTION_NEEDED' | 'BLOCKED';
+  employeeId: string;
+  employee: {
+    id: string;
+    fullName: string;
+    department: string | null;
+    designation: string | null;
+    avatarUrl: string | null;
+    employeeIdCode: string | null;
+  };
+  tasks: DailyTaskShape[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DailyScrumDay {
+  date: string;
+  entries: DailyScrumEntryShape[];
+  canEditAll: boolean;
+  canEditTeam: boolean;
+}
+
+export function useDailyScrumDay(date: string) {
+  return useQuery({
+    queryKey: ['daily-scrum', 'day', date],
+    queryFn: () => api<DailyScrumDay>(`/api/daily-scrum?date=${date}`),
+    enabled: !!date,
+  });
+}
+
+export function useDailyScrumDates() {
+  return useQuery({
+    queryKey: ['daily-scrum', 'dates'],
+    queryFn: () => api<{ dates: string[] }>('/api/daily-scrum/dates'),
+  });
+}
+
+export function useUpsertScrumEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { date: string; employeeId?: string }) =>
+      api<DailyScrumEntryShape>('/api/daily-scrum/entries', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-scrum'] }),
+  });
+}
+
+export function useUpdateScrumEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'ON_TRACK' | 'ATTENTION_NEEDED' | 'BLOCKED' }) =>
+      api<{ id: string; status: string }>(`/api/daily-scrum/entries/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-scrum'] }),
+  });
+}
+
+export function useAddScrumTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { entryId: string; type: 'TODAY' | 'COMPLETED'; text: string; deadline?: string; order?: number }) =>
+      api<DailyTaskShape>('/api/daily-scrum/tasks', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-scrum'] }),
+  });
+}
+
+export function useUpdateScrumTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...patch
+    }: {
+      id: string;
+      text?: string;
+      deadline?: string | null;
+      isDecision?: boolean;
+      decisionNote?: string | null;
+      order?: number;
+    }) =>
+      api<DailyTaskShape>(`/api/daily-scrum/tasks/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(patch),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-scrum'] }),
+  });
+}
+
+export function useDeleteScrumTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api(`/api/daily-scrum/tasks/${id}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-scrum'] }),
+  });
+}
+
+export function useMoveTaskNextDay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, deadline }: { id: string; deadline?: string }) =>
+      api<{ newEntryId: string; newTaskId: string }>(
+        `/api/daily-scrum/tasks/${id}/move`,
+        { method: 'POST', body: JSON.stringify({ deadline }) },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-scrum'] }),
+  });
+}

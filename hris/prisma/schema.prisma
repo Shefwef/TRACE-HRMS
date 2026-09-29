@@ -39,6 +39,17 @@ enum HalfDaySlot {
   AFTERNOON
 }
 
+enum DailyScrumStatus {
+  ON_TRACK
+  ATTENTION_NEEDED
+  BLOCKED
+}
+
+enum DailyTaskType {
+  TODAY
+  COMPLETED
+}
+
 enum NotificationChannel {
   EMAIL
   IN_APP
@@ -189,6 +200,7 @@ model User {
   auditLog          AuditLog[]
   locationEvents    WorkLocationEvent[] @relation("EmployeeLocations")
   authoredLocations WorkLocationEvent[] @relation("AuthoredLocations")
+  dailyScrumEntries DailyScrumEntry[]   @relation("DailyScrumEntries")
 
   @@index([role])
   @@index([email])
@@ -556,6 +568,39 @@ model BiometricPunch {
   @@unique([deviceId, deviceUserId, punchedAt])
   @@index([employeeId, punchedAt])
   @@map("biometric_punches")
+}
+
+model DailyScrumEntry {
+  id         String           @id @default(cuid())
+  date       DateTime         @db.Date
+  employeeId String
+  employee   User             @relation("DailyScrumEntries", fields: [employeeId], references: [id])
+  status     DailyScrumStatus @default(ON_TRACK)
+  tasks      DailyTask[]
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([date, employeeId])
+  @@index([date])
+  @@index([employeeId])
+  @@map("daily_scrum_entries")
+}
+
+model DailyTask {
+  id           String          @id @default(cuid())
+  entryId      String
+  entry        DailyScrumEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  type         DailyTaskType
+  text         String
+  deadline     DateTime?       @db.Date
+  isDecision   Boolean         @default(false)
+  decisionNote String?
+  order        Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([entryId])
+  @@map("daily_tasks")
 }
 
 model BiometricSyncLog {

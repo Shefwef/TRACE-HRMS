@@ -18,6 +18,7 @@ import {
   MapPin,
   Fingerprint,
   X,
+  ClipboardCheck,
 } from 'lucide-react';
 import { useCurrentUser } from '@/lib/session';
 import { useMobileNav } from './navContext';
@@ -26,6 +27,7 @@ import './Sidebar.css';
 
 const employeeNav = [
   { to: '/', label: 'Home', icon: <Home size={18} /> },
+  { to: '/daily-scrum', label: 'Daily Scrum', icon: <ClipboardCheck size={18} /> },
   { to: '/leaves', label: 'My Leaves', icon: <ClipboardList size={18} /> },
   { to: '/attendance', label: 'Attendance', icon: <Clock size={18} /> },
   { to: '/calendar', label: 'Calendar', icon: <Calendar size={18} /> },

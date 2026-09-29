@@ -275,11 +275,11 @@
 /* ── Multi-employee picker ───────────────────────────────── */
 .rpts-multi-picker {
   position: relative;
-  flex: 1;
+  flex: 0 1 320px;
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 0;
+  min-width: 200px;
 }
 
 /* Tag-based trigger */
