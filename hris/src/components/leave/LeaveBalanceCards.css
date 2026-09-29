@@ -71,6 +71,10 @@
 .lbc-meta > div {
   text-align: center;
 }
+.lbc-meta-two {
+  justify-content: center;
+  gap: var(--space-8);
+}
 .lbc-meta dt {
   font-size: 10px;
   text-transform: uppercase;

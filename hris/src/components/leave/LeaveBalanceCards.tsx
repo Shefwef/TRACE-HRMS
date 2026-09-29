@@ -45,7 +45,7 @@ export function LeaveBalanceCards({ balance }: Props) {
       bg: 'var(--color-leave-sick-light)',
     },
     {
-      title: 'Replacement',
+      title: 'Replacement Leave',
       code: 'RL',
       value: balance.replacementBalance,
       total: replacementTotal,
@@ -83,20 +83,14 @@ export function LeaveBalanceCards({ balance }: Props) {
               size={128}
             />
           </div>
-          <dl className="lbc-meta">
+          <dl className="lbc-meta lbc-meta-two">
             <div>
               <dt>Used</dt>
               <dd>{c.used}</dd>
             </div>
-            {c.code !== 'RL' && (
-              <div>
-                <dt>Pending</dt>
-                <dd>{c.pending}</dd>
-              </div>
-            )}
             <div>
-              <dt>Total</dt>
-              <dd>{c.code === 'RL' ? replacementTotal : c.total}</dd>
+              <dt>Current Balance</dt>
+              <dd>{c.value}</dd>
             </div>
           </dl>
         </motion.div>
