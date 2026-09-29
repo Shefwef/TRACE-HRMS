@@ -487,7 +487,7 @@ function ReviewedRequestsTab({
                 const latestEnd     = items.reduce((max, i) => (i.endDate > max ? i.endDate : max), items[0].endDate);
                 const totalDays     = items.reduce((s, i) => s + i.durationDays, 0);
                 const stat = e.kind === 'single' ? e.row.status : bundleStatus(e.items);
-                const leaveTypes = items.map((i) => i.leaveType.charAt(0) + i.leaveType.slice(1).toLowerCase()).join(' · ');
+                const leaveTypeLabels = items.map((i) => i.leaveType.charAt(0) + i.leaveType.slice(1).toLowerCase());
                 return (
                   <motion.div
                     key={`leave-${e.kind === 'single' ? e.row.id : e.bundleId}`}
@@ -504,7 +504,11 @@ function ReviewedRequestsTab({
                         <em>{emp.department}</em>
                       </span>
                     </span>
-                    <span data-label="Category"><Badge variant="default">{leaveTypes}</Badge></span>
+                    <span data-label="Category" className="lreq-cat-badges">
+                      {leaveTypeLabels.map((label) => (
+                        <Badge key={label} variant="default">{label}</Badge>
+                      ))}
+                    </span>
                     <span data-label="Period">
                       <strong>{fmtDate(earliestStart)}</strong>
                       {earliestStart !== latestEnd && <> – <strong>{fmtDate(latestEnd)}</strong></>}
@@ -543,7 +547,7 @@ function ReviewedRequestsTab({
                       <em>{emp.department}</em>
                     </span>
                   </span>
-                  <span data-label="Category"><Badge variant="default">Replacement Credit</Badge></span>
+                  <span data-label="Category"><Badge variant="default">Replacement</Badge></span>
                   <span data-label="Period"><strong>{fmtDate(x.workDate, 'd MMM yyyy')}</strong></span>
                   <span className="mono" data-label="Duration">+{credit}d</span>
                   <span data-label="Status"><Badge variant={statusVar}>{x.status.toLowerCase()}</Badge></span>

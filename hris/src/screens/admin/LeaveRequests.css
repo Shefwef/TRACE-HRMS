@@ -156,7 +156,14 @@
 /* Reviewed tab: Employee · Category · Period · Duration · Status · Reviewed by · Details */
 .lreq-table-reviewed .lreq-thead,
 .lreq-table-reviewed .lreq-row {
-  grid-template-columns: minmax(200px, 2fr) 140px minmax(180px, 1fr) 80px 100px minmax(140px, 1fr) 90px;
+  grid-template-columns: minmax(200px, 2fr) minmax(120px, 1fr) minmax(180px, 1fr) 80px 100px minmax(140px, 1fr) 90px;
+}
+
+.lreq-cat-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
 }
 
 .lreq-serial {
