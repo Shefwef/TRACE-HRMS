@@ -7,6 +7,7 @@ interface Props {
   size?: number;
   strokeWidth?: number;
   centerLabel?: string;
+  centerLabelColor?: string;
   centerSublabel?: string;
   delay?: number;
 }
@@ -18,6 +19,7 @@ export function ArcRing({
   size = 120,
   strokeWidth = 8,
   centerLabel,
+  centerLabelColor,
   centerSublabel = 'left',
   delay = 0,
 }: Props) {
@@ -62,7 +64,7 @@ export function ArcRing({
         fontFamily="var(--font-display)"
         fontSize={size * 0.24}
         fontWeight={700}
-        fill="var(--color-text-primary)"
+        fill={centerLabelColor ?? 'var(--color-text-primary)'}
       >
         {centerLabel}
       </text>

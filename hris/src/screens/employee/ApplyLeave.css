@@ -329,6 +329,11 @@
   font-size: var(--text-xs);
   line-height: 1.4;
 }
+.aply-warn-soft {
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-warning) 35%, transparent);
+  color: var(--color-warning-dark, var(--color-warning));
+}
 .aply-actions {
   display: flex; justify-content: flex-end; gap: 8px;
   padding-top: var(--space-3);

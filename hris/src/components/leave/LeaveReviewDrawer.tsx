@@ -350,6 +350,11 @@ export function LeaveReviewDrawer({ requestId, onClose }: Props) {
           {request.status === 'PENDING' && balanceImpact.length > 0 && (
             <div className="lrd-card">
               <div className="lrd-card-title">Balance impact</div>
+              {balanceImpact.some((imp) => imp.after < 0) && (
+                <div className="lrd-negative-warn">
+                  Approving this request will put {employee.fullName.split(' ')[0]}&apos;s balance into negative for {balanceImpact.filter((i) => i.after < 0).map((i) => leaveTypeLabel(i.leaveType).toLowerCase()).join(' and ')}.
+                </div>
+              )}
               <div className="lrd-impact-grid">
                 {balanceImpact.map((imp) => (
                   <div
@@ -363,8 +368,8 @@ export function LeaveReviewDrawer({ requestId, onClose }: Props) {
                         <em>days<br/>before</em>
                       </span>
                       <span className="lrd-impact-arrow">→</span>
-                      <span className="lrd-impact-side">
-                        <strong>{Math.max(0, imp.after)}</strong>
+                      <span className={cx('lrd-impact-side', imp.after < 0 && 'lrd-impact-side-negative')}>
+                        <strong>{imp.after}</strong>
                         <em>days<br/>after</em>
                       </span>
                     </div>
@@ -459,6 +464,11 @@ export function LeaveReviewDrawer({ requestId, onClose }: Props) {
           </>
         }
       >
+        {balanceImpact.some((imp) => imp.after < 0) && (
+          <div className="lrd-negative-warn" style={{ marginBottom: 12 }}>
+            This will put {employee.fullName.split(' ')[0]}&apos;s {balanceImpact.filter((i) => i.after < 0).map((i) => leaveTypeLabel(i.leaveType).toLowerCase()).join(' and ')} balance into negative ({balanceImpact.filter((i) => i.after < 0).map((i) => `${i.after} days`).join(', ')}). You can still approve.
+          </div>
+        )}
         {isBundle ? (
           <p>
             This will approve <strong>{employee.fullName}&apos;s</strong> combined request across{' '}

@@ -143,7 +143,6 @@ export function ApplyLeavePage() {
   const canSubmit =
     anyEnabled &&
     totalDays > 0 &&
-    !overBudget &&
     !dayCollision &&
     reason.trim().length >= 2 &&
     !submit.isPending;
@@ -341,8 +340,8 @@ export function ApplyLeavePage() {
             </div>
           )}
           {overBudget && (
-            <div className="aply-warn">
-              One of the types exceeds your available balance. Reduce the range or switch to half-days.
+            <div className="aply-warn aply-warn-soft">
+              One or more leave types will put your balance into negative. Your manager can still approve this request.
             </div>
           )}
           {error && (
@@ -380,7 +379,7 @@ function TypeCard({
   holidays: Set<string>;
 }) {
   const meta = TYPE_META[type];
-  const remaining = Math.max(0, balance - durationSelected);
+  const remaining = balance - durationSelected;
   const over = durationSelected > balance;
   const days = state.enabled ? daysBetween(state.startDate, state.endDate, holidays) : [];
   const today = new Date().toISOString().slice(0, 10);

@@ -515,3 +515,15 @@
 }
 .lrd-impact-warn { background: var(--color-danger-light); border-color: rgba(229, 62, 62, 0.35); }
 .lrd-impact-warn .lrd-impact-side strong { color: var(--color-danger); }
+.lrd-impact-side-negative strong { color: var(--color-danger); font-weight: var(--weight-bold); }
+
+.lrd-negative-warn {
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 35%, transparent);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  margin-bottom: var(--space-3);
+}

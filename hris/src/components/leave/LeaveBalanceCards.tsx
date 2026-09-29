@@ -76,8 +76,9 @@ export function LeaveBalanceCards({ balance }: Props) {
             <ArcRing
               value={Math.max(0, c.value)}
               total={Math.max(c.total, 1)}
-              color={c.color}
+              color={c.value < 0 ? 'var(--color-danger)' : c.color}
               centerLabel={c.value.toString()}
+              centerLabelColor={c.value < 0 ? 'var(--color-danger)' : undefined}
               centerSublabel={c.value === 1 ? 'day left' : 'days left'}
               delay={i * 0.15}
               size={128}
