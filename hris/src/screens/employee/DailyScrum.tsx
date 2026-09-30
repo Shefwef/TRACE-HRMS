@@ -393,19 +393,21 @@ function EmployeeTasksPopup({
         </button>
       </div>
 
-      {/* System-standard tabs (matches Daily Scrum / My Tasks page tabs) */}
+      {/* System-standard tabs (matches Daily Scrum / My Tasks page tabs).
+          Switching tabs cancels any in-flight edit so the form isn't stuck
+          on a task the viewer can no longer see. */}
       <div className="dscrum-tabs dscrum-etp-tabs">
         <button
           type="button"
           className={cx('dscrum-tab', tab === 'IN_PROGRESS' && 'dscrum-tab-active')}
-          onClick={() => setTab('IN_PROGRESS')}
+          onClick={() => { cancelEdit(); setTab('IN_PROGRESS'); }}
         >
           In Progress <span className="dscrum-etp-count">{inProgress.length}</span>
         </button>
         <button
           type="button"
           className={cx('dscrum-tab', tab === 'DONE' && 'dscrum-tab-active')}
-          onClick={() => setTab('DONE')}
+          onClick={() => { cancelEdit(); setTab('DONE'); }}
         >
           Done <span className="dscrum-etp-count">{done.length}</span>
         </button>
@@ -583,6 +585,7 @@ function EmployeeTasksPopup({
                 />
                 <span>If not completed, move to next day</span>
               </label>
+              <p className="dscrum-form-hint">Doing this moves the task to the next day&apos;s Today list.</p>
             </div>
 
             <div className="dscrum-form-group dscrum-etp-add-actions">
