@@ -46,6 +46,28 @@ const PRIORITY_OPTIONS: { value: TaskPriority; label: string }[] = [
   { value: 'HIGH',   label: 'High' },
 ];
 
+/**
+ * Compact top-of-board legend that maps the coloured task-card border
+ * accents to their priority label. Renders inline so it doesn't take a
+ * whole row for itself.
+ */
+function PriorityLegend() {
+  return (
+    <div className="dscrum-legend" aria-label="Priority legend">
+      <span className="dscrum-legend-title">Priority</span>
+      <span className="dscrum-legend-item">
+        <span className="dscrum-legend-dot dscrum-p-low" aria-hidden="true" /> Low
+      </span>
+      <span className="dscrum-legend-item">
+        <span className="dscrum-legend-dot dscrum-p-medium" aria-hidden="true" /> Medium
+      </span>
+      <span className="dscrum-legend-item">
+        <span className="dscrum-legend-dot dscrum-p-high" aria-hidden="true" /> High
+      </span>
+    </div>
+  );
+}
+
 /** Small class-name helper for the coloured priority chip / border used everywhere. */
 function priorityClass(p: TaskPriority): string {
   return `dscrum-p-${p.toLowerCase()}`;
@@ -414,7 +436,7 @@ function EmployeeTasksPopup({
       </div>
 
       {/* Task list */}
-      <div className="dscrum-etp-list">
+      <div className="dscrum-etp-list" key={tab}>
         {visible.length === 0 && (
           <div className="dscrum-etp-empty">
             {tab === 'IN_PROGRESS' ? 'No tasks in progress.' : 'Nothing marked done yet.'}
@@ -788,14 +810,17 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
           </button>
         </div>
 
-        <div className="dscrum-modal-search">
-          <Search size={14} className="dscrum-search-icon" />
-          <input
-            className="dscrum-search-input"
-            placeholder="Search tasks or people"
-            value={searchQ}
-            onChange={(e) => setSearchQ(e.target.value)}
-          />
+        <div className="dscrum-modal-toolbar">
+          <div className="dscrum-modal-search">
+            <Search size={14} className="dscrum-search-icon" />
+            <input
+              className="dscrum-search-input"
+              placeholder="Search tasks or people"
+              value={searchQ}
+              onChange={(e) => setSearchQ(e.target.value)}
+            />
+          </div>
+          <PriorityLegend />
         </div>
 
         {isLoading && <div className="dscrum-loading">Loading…</div>}

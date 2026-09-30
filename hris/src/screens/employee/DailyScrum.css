@@ -106,11 +106,18 @@
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   white-space: nowrap;
-  transition: color var(--transition-fast), border var(--transition-fast);
+  /* Slightly longer transitions on colour + border give the tab strip a
+     smooth ease when switching between tabs, and translate/scale on
+     :active makes the click feel physical. */
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 120ms ease;
   background: transparent;
   cursor: pointer;
 }
 .dscrum-tab:hover { color: var(--color-text-primary); }
+.dscrum-tab:active { transform: translateY(1px); }
 .dscrum-tab-active {
   color: var(--color-brand-primary);
   border-color: var(--color-brand-primary);
@@ -121,6 +128,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  /* Fade + slight upward slide when tab bodies swap. */
+  animation: dscrum-tab-in 220ms ease both;
+}
+@keyframes dscrum-tab-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ─── Controls row ─── */
@@ -234,6 +247,14 @@
 
 
 /* ─── Search bar (inside modal) ─── */
+.dscrum-modal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
 .dscrum-modal-search {
   display: flex;
   align-items: center;
@@ -244,9 +265,42 @@
   border-radius: var(--radius-md);
   color: var(--color-text-muted);
   max-width: 420px;
-  margin-bottom: var(--space-4);
+  flex: 1;
+  min-width: 220px;
   transition: border var(--transition-fast), box-shadow var(--transition-fast);
 }
+/* Priority legend (top of board) */
+.dscrum-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.dscrum-legend-title {
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.dscrum-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-text-primary);
+}
+.dscrum-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.dscrum-legend-dot.dscrum-p-low    { background: #63b3ed; }
+.dscrum-legend-dot.dscrum-p-medium { background: #ecc94b; }
+.dscrum-legend-dot.dscrum-p-high   { background: #fc8181; }
 .dscrum-modal-search-inline {
   margin-bottom: 0;
   width: 280px;
@@ -829,6 +883,8 @@
   flex-direction: column;
   gap: 6px;
   margin-bottom: var(--space-4);
+  /* Fade + subtle slide when switching In Progress <-> Done tab. */
+  animation: dscrum-tab-in 200ms ease both;
 }
 .dscrum-etp-empty {
   padding: 24px;

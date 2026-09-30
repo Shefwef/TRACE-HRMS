@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/auto-clockout",
       "schedule": "55 17 * * *"
+    },
+    {
+      "path": "/api/cron/generate-next-day-scrum",
+      "schedule": "5 18 * * *"
     }
   ]
 }
