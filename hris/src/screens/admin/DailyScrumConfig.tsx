@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import { Save, Sparkles, Search, Users, Calendar } from 'lucide-react';
+import { Save, Sparkles, Search, Users, Calendar, Trash2 } from 'lucide-react';
 import {
-  useDailyScrumConfig, useSaveDailyScrumConfig, useGenerateScrumDay,
+  useDailyScrumConfig, useSaveDailyScrumConfig, useGenerateScrumDay, usePruneScrumEntries,
 } from '@/lib/hooks';
 import { useStore } from '@/lib/store';
 import { Button } from '../../components/ui/Button';
@@ -17,6 +17,7 @@ export function DailyScrumConfig() {
   const { data, isLoading } = useDailyScrumConfig();
   const save = useSaveDailyScrumConfig();
   const generate = useGenerateScrumDay();
+  const prune = usePruneScrumEntries();
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [q, setQ] = useState('');
@@ -99,6 +100,27 @@ export function DailyScrumConfig() {
     });
   }
 
+  function handlePrune() {
+    const confirmed = window.confirm(
+      'Permanently delete scrum entries + tasks for every employee who is currently excluded from the roster? This cannot be undone.',
+    );
+    if (!confirmed) return;
+    prune.mutate(undefined, {
+      onSuccess: (r) => {
+        addToast({
+          kind: 'success',
+          title: 'Cleanup complete',
+          body: r.removed === 0
+            ? 'Nothing to clean up — no stale entries were found.'
+            : `Removed ${r.removed} scrum ${r.removed === 1 ? 'entry' : 'entries'} for excluded employees.`,
+        });
+      },
+      onError: (e: Error) => {
+        addToast({ kind: 'error', title: 'Cleanup failed', body: e.message });
+      },
+    });
+  }
+
   return (
     <div className="dsconf">
       <div className="dsconf-head">
@@ -150,6 +172,16 @@ export function DailyScrumConfig() {
             <Users size={16} /> Roster ({includedCount} of {total} included)
           </div>
           <div className="dsconf-actions">
+            <Button
+              size="sm"
+              variant="ghost"
+              leadingIcon={<Trash2 size={14} />}
+              loading={prune.isPending}
+              onClick={handlePrune}
+              title="Delete existing scrum entries for employees not in the roster"
+            >
+              Remove excluded from boards
+            </Button>
             <Button size="sm" variant="ghost" onClick={selectAll}>Select all</Button>
             <Button size="sm" variant="ghost" onClick={selectNone}>Clear</Button>
             <Button

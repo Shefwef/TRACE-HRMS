@@ -1336,3 +1336,15 @@ export function useGenerateScrumDay() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-scrum'] }),
   });
 }
+
+export function usePruneScrumEntries() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      api<{ ok: boolean; removed: number }>(
+        '/api/daily-scrum/prune',
+        { method: 'POST' },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-scrum'] }),
+  });
+}

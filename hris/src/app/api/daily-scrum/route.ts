@@ -34,6 +34,11 @@ export async function GET(req: Request) {
     where: {
       date: dateOnly,
       ...(employeeIdFilter ? { employeeId: { in: employeeIdFilter } } : {}),
+      // Only show entries for employees currently in the scrum roster.
+      // Excluded / soft-deleted / deactivated people are hidden even if
+      // their old entries are still in the DB (a cleanup action in the
+      // Daily Tracker Config physically removes those rows).
+      employee: { dailyScrumIncluded: true, isActive: true, deletedAt: null },
     },
     include: {
       employee: {
