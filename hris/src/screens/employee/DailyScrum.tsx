@@ -322,25 +322,25 @@ function TodayItem({
       <div className="dscrum-t-content">
         <div className="dscrum-t-line">
           <span className="dscrum-t-text">{task.text}</span>
-          {task.deadline && (
-            <span className="dscrum-t-due">due {fmtDate(task.deadline, 'd MMM')}</span>
+          {canEdit && (
+            <div className="dscrum-inline-actions">
+              <button type="button" className="dscrum-icon-btn" title="Edit" onClick={onEdit}>
+                <Pencil size={12} />
+              </button>
+              <button
+                type="button"
+                className="dscrum-icon-btn dscrum-icon-btn-danger"
+                title="Delete"
+                onClick={() => remove.mutate(task.id)}
+              >
+                <Trash2 size={12} />
+              </button>
+            </div>
           )}
         </div>
       </div>
-      {canEdit && (
-        <div className="dscrum-inline-actions">
-          <button type="button" className="dscrum-icon-btn" title="Edit" onClick={onEdit}>
-            <Pencil size={12} />
-          </button>
-          <button
-            type="button"
-            className="dscrum-icon-btn dscrum-icon-btn-danger"
-            title="Delete"
-            onClick={() => remove.mutate(task.id)}
-          >
-            <Trash2 size={12} />
-          </button>
-        </div>
+      {task.deadline && (
+        <span className="dscrum-t-due">due {fmtDate(task.deadline, 'd MMM')}</span>
       )}
     </div>
   );

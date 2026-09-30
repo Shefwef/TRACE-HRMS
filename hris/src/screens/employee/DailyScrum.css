@@ -417,6 +417,10 @@
   color: var(--color-text-muted);
   white-space: nowrap;
   flex-shrink: 0;
+  /* Persistent right-side badge; sits after edit/delete actions column. */
+  align-self: center;
+  margin-left: auto;
+  padding-left: 8px;
 }
 .dscrum-t-carryover {
   font-size: 12px;
