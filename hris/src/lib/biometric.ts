@@ -18,7 +18,7 @@ import { localDateOnly, localDayBounds, localDayKey, localDayOfWeek } from './wo
  * A 08:30 → 17:30 window yields 540 minutes (9 h) - the value used to
  * split worked time into overtime vs deficit.
  */
-function standardMinutesFromWindow(workStartTime: string, workEndTime: string): number {
+export function standardMinutesFromWindow(workStartTime: string, workEndTime: string): number {
   const [sh, sm] = workStartTime.split(':').map(Number);
   const [eh, em] = workEndTime.split(':').map(Number);
   const startMin = sh * 60 + sm;

@@ -4,13 +4,7 @@ import { prisma } from '@/lib/db';
 import { requireAuth, err, parseBody } from '@/lib/api';
 import { checkPermission } from '@/lib/permissions';
 import { dayKeyToDateOnly, localTimeOnDayToUtc } from '@/lib/workday';
-
-function standardMinutesFromWindow(workStartTime: string, workEndTime: string): number {
-  const [sh, sm] = workStartTime.split(':').map(Number);
-  const [eh, em] = workEndTime.split(':').map(Number);
-  const diff = (eh * 60 + em) - (sh * 60 + sm);
-  return diff > 0 ? diff : 0;
-}
+import { standardMinutesFromWindow } from '@/lib/biometric';
 
 /**
  * HR/Admin override for a missed biometric punch. Writes an AttendanceRecord

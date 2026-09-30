@@ -18,6 +18,7 @@
 import type { AttendanceStatus, LeaveStatus, Role, WorkLocationType } from '@prisma/client';
 import { prisma } from '../db';
 import { dayLocationFacts, type DayLocationFacts as DayFacts } from '../workLocation';
+import { workWindowSlots } from '../leave';
 import { APP_TZ, monthRange, tzOffsetMinutes } from '../workday';
 
 const MONTH_NAMES = [
@@ -359,7 +360,7 @@ export async function getLeaveReportData(
   employee: Identity,
   year: number,
 ): Promise<LeaveReportData> {
-  const [balance, requests] = await Promise.all([
+  const [balance, requests, office] = await Promise.all([
     ensureBalance(employee.id, year),
     prisma.leaveRequest.findMany({
       where: {
@@ -369,7 +370,9 @@ export async function getLeaveReportData(
       include: { reviewer: { select: { fullName: true } } },
       orderBy: { startDate: 'asc' },
     }),
+    officeWindow(),
   ]);
+  const half = halfDayHelpers(office.workStartTime, office.workEndTime);
 
   const rows: LeaveRequestRow[] = requests.map((r) => ({
     employeeIdCode: employee.employeeIdCode ?? '-',
@@ -379,8 +382,8 @@ export async function getLeaveReportData(
     endDate: excelDateOnly(r.endDate),
     durationDays: Number(r.durationDays),
     halfDay: r.isHalfDay ? titleCase(r.halfDaySlot ?? 'Half day') : 'No',
-    timeFrom: r.timeFrom ?? (r.isHalfDay ? halfDayTimeFrom(r.halfDaySlot) : ''),
-    timeTo: r.timeTo ?? (r.isHalfDay ? halfDayTimeTo(r.halfDaySlot) : ''),
+    timeFrom: r.timeFrom ?? (r.isHalfDay ? half.from(r.halfDaySlot) : ''),
+    timeTo: r.timeTo ?? (r.isHalfDay ? half.to(r.halfDaySlot) : ''),
     reason: r.reason,
     status: titleCase(r.status),
     reviewer: r.reviewer?.fullName ?? '',
@@ -457,10 +460,12 @@ export async function getCompanyReportData(
   });
 
   const ids = employees.map((e) => e.id);
-  const [facts, offsite] = await Promise.all([
+  const [facts, offsite, office] = await Promise.all([
     dayLocationFacts({ employeeIds: ids, from: period.from, to: period.to }),
     getOffsiteRows(ids, period),
+    officeWindow(),
   ]);
+  const half = halfDayHelpers(office.workStartTime, office.workEndTime);
 
   const daily: DailyAttendanceRow[] = [];
   const leaves: LeaveRequestRow[] = [];
@@ -485,8 +490,8 @@ export async function getCompanyReportData(
         endDate: excelDateOnly(r.endDate),
         durationDays: Number(r.durationDays),
         halfDay: r.isHalfDay ? titleCase(r.halfDaySlot ?? 'Half day') : 'No',
-        timeFrom: r.timeFrom ?? (r.isHalfDay ? halfDayTimeFrom(r.halfDaySlot) : ''),
-        timeTo: r.timeTo ?? (r.isHalfDay ? halfDayTimeTo(r.halfDaySlot) : ''),
+        timeFrom: r.timeFrom ?? (r.isHalfDay ? half.from(r.halfDaySlot) : ''),
+        timeTo: r.timeTo ?? (r.isHalfDay ? half.to(r.halfDaySlot) : ''),
         reason: r.reason,
         status: titleCase(r.status),
         reviewer: r.reviewer?.fullName ?? '',
@@ -782,7 +787,7 @@ export async function getPerformanceLeaveSummaryData(
   const cycleFrom = new Date(Date.UTC(cycleYear, 0, 1));
   const cycleTo = new Date(Date.UTC(cycleYear + 1, 0, 1));
 
-  const [attendanceRows, balance, leaveRequestsRaw, managerInfo] = await Promise.all([
+  const [attendanceRows, balance, leaveRequestsRaw, managerInfo, office] = await Promise.all([
     getAttendanceSummaryRows([employee.id], period),
     ensureBalance(employee.id, cycleYear),
     prisma.leaveRequest.findMany({
@@ -798,7 +803,9 @@ export async function getPerformanceLeaveSummaryData(
       : prisma.user
           .findUnique({ where: { id: employee.id }, select: { lineManager: { select: { fullName: true } } } })
           .then((u) => u?.lineManager?.fullName ?? ''),
+    officeWindow(),
   ]);
+  const half = halfDayHelpers(office.workStartTime, office.workEndTime);
 
   // Performance stats from the period's attendance rows
   const workingDays = attendanceRows.filter(
@@ -831,8 +838,8 @@ export async function getPerformanceLeaveSummaryData(
     endDate: excelDateOnly(r.endDate),
     durationDays: Number(r.durationDays),
     halfDay: r.isHalfDay ? titleCase(r.halfDaySlot ?? 'Half day') : 'No',
-    timeFrom: r.timeFrom ?? (r.isHalfDay ? halfDayTimeFrom(r.halfDaySlot) : ''),
-    timeTo: r.timeTo ?? (r.isHalfDay ? halfDayTimeTo(r.halfDaySlot) : ''),
+    timeFrom: r.timeFrom ?? (r.isHalfDay ? half.from(r.halfDaySlot) : ''),
+    timeTo: r.timeTo ?? (r.isHalfDay ? half.to(r.halfDaySlot) : ''),
     reason: r.reason,
     status: titleCase(r.status),
     reviewer: r.reviewer?.fullName ?? '',
@@ -983,16 +990,47 @@ function titleCase(v: string): string {
     .join(' ');
 }
 
-function halfDayTimeFrom(slot: string | null | undefined): string {
-  if (slot === 'MORNING') return '08:30';
-  if (slot === 'AFTERNOON') return '14:00';
-  return '';
+/**
+ * Half-day boundaries derived from configured office hours.
+ * MORNING   = workStart → midpoint
+ * AFTERNOON = midpoint  → workEnd
+ * (Not hardcoded — reads SystemSettings via workWindowSlots so an office-
+ * hours change in Settings is reflected in every exported leave row.)
+ */
+interface HalfDayHelpers {
+  from: (slot: string | null | undefined) => string;
+  to:   (slot: string | null | undefined) => string;
+}
+function halfDayHelpers(workStartTime: string, workEndTime: string): HalfDayHelpers {
+  const w = workWindowSlots(workStartTime, workEndTime);
+  return {
+    from: (slot) => {
+      if (slot === 'MORNING') return workStartTime;
+      if (slot === 'AFTERNOON') return w.midpoint;
+      return '';
+    },
+    to: (slot) => {
+      if (slot === 'MORNING') return w.midpoint;
+      if (slot === 'AFTERNOON') return workEndTime;
+      return '';
+    },
+  };
 }
 
-function halfDayTimeTo(slot: string | null | undefined): string {
-  if (slot === 'MORNING') return '13:00';
-  if (slot === 'AFTERNOON') return '17:30';
-  return '';
+/**
+ * Reads office hours from SystemSettings, falling back to sensible defaults
+ * if the singleton row is missing (never happens in prod but keeps the
+ * builders robust in tests).
+ */
+async function officeWindow(): Promise<{ workStartTime: string; workEndTime: string }> {
+  const s = await prisma.systemSettings.findUnique({
+    where: { id: 'singleton' },
+    select: { workStartTime: true, workEndTime: true },
+  });
+  return {
+    workStartTime: s?.workStartTime ?? '09:00',
+    workEndTime:   s?.workEndTime   ?? '17:00',
+  };
 }
 
 function round2(n: number): number {
