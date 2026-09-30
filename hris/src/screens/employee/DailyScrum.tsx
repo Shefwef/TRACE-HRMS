@@ -71,9 +71,11 @@ type TaskModalIntent =
 interface TaskModalProps {
   intent: TaskModalIntent | null;
   onClose: () => void;
+  /** Stack depth when opened on top of another modal (dims parent). */
+  stackLevel?: number;
 }
 
-function TaskModal({ intent, onClose }: TaskModalProps) {
+function TaskModal({ intent, onClose, stackLevel = 0 }: TaskModalProps) {
   const addTask = useAddScrumTask();
   const updateTask = useUpdateScrumTask();
   const [v, setV] = useState<TaskFormValue>(emptyFormValue);
@@ -151,6 +153,7 @@ function TaskModal({ intent, onClose }: TaskModalProps) {
       onClose={onClose}
       title={title}
       size="lg"
+      stackLevel={stackLevel}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -468,6 +471,8 @@ interface EmployeeTasksPopupProps {
   date: string;
   canEdit: boolean;
   onClose: () => void;
+  /** Stack depth when opened on top of another modal (dims parent). */
+  stackLevel?: number;
 }
 
 interface QuickTaskFormValue {
@@ -483,7 +488,7 @@ const emptyQuickForm: QuickTaskFormValue = {
   text: '', priority: 'MEDIUM', deadline: '', isDecision: false, decisionNote: '', carryOver: false,
 };
 
-function EmployeeTasksPopup({ entry, date, canEdit, onClose }: EmployeeTasksPopupProps) {
+function EmployeeTasksPopup({ entry, date, canEdit, onClose, stackLevel = 0 }: EmployeeTasksPopupProps) {
   const [tab, setTab] = useState<'IN_PROGRESS' | 'DONE'>('IN_PROGRESS');
   const [v, setV] = useState<QuickTaskFormValue>(emptyQuickForm);
   const addTask = useAddScrumTask();
@@ -531,6 +536,7 @@ function EmployeeTasksPopup({ entry, date, canEdit, onClose }: EmployeeTasksPopu
       size="lg"
       widthOverride="min(720px, calc(100vw - 48px))"
       hideHeader
+      stackLevel={stackLevel}
       footer={
         <div className="dscrum-etp-footer">
           <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
@@ -957,7 +963,11 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
         )}
       </Modal>
 
-      <TaskModal intent={taskIntent} onClose={() => setTaskIntent(null)} />
+      <TaskModal
+        intent={taskIntent}
+        onClose={() => setTaskIntent(null)}
+        stackLevel={1}
+      />
 
       {openedEntryId && (() => {
         const opened = entries.find((e) => e.id === openedEntryId);
@@ -968,6 +978,7 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
             date={date}
             canEdit={canEditEntry(opened)}
             onClose={() => setOpenedEntryId(null)}
+            stackLevel={1}
           />
         );
       })()}
