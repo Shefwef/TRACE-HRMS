@@ -1156,18 +1156,11 @@ function MyTasksTab() {
       )}
 
       {!isLoading && visibleDates.length > 0 && (
-        <div className="dscrum-list-table">
-          <div className="dscrum-list-head">
-            <div>SL#</div>
-            <div>Date</div>
-            <div>Day</div>
-            <div />
-          </div>
-          {visibleDates.map((d, i) => (
-            <MyTasksRow
+        <div className="dscrum-mytasks-grid">
+          {visibleDates.map((d) => (
+            <MyTaskCard
               key={d}
               date={d}
-              serial={i + 1}
               userId={currentUser?.id ?? ''}
               searchQ={searchQ}
               onDetails={() => setActiveDate(d)}
@@ -1187,15 +1180,19 @@ function MyTasksTab() {
   );
 }
 
-interface MyTasksRowProps {
+interface MyTaskCardProps {
   date: string;
-  serial: number;
   userId: string;
   searchQ: string;
   onDetails: () => void;
 }
 
-function MyTasksRow({ date, serial, userId, searchQ, onDetails }: MyTasksRowProps) {
+/**
+ * Calendar-square card row for the My Tasks list. The date on the left reads
+ * like a wall-calendar tile (weekday · big day · month), the middle summarises
+ * the day's work, and Details opens the same filtered team modal as before.
+ */
+function MyTaskCard({ date, userId, searchQ, onDetails }: MyTaskCardProps) {
   const { data } = useDailyScrumDay(date);
   const myEntry = data?.entries.find((e) => e.employeeId === userId);
 
@@ -1207,15 +1204,55 @@ function MyTasksRow({ date, serial, userId, searchQ, onDetails }: MyTasksRowProp
     if (!matches) return null;
   }
 
+  const todayTasks = myEntry?.tasks.filter((t) => t.type === 'TODAY') ?? [];
+  const doneCount = todayTasks.filter((t) => t.status === 'DONE').length;
+  const inProgressCount = todayTasks.length - doneCount;
+  const blockerCount = todayTasks.filter((t) => t.isDecision).length;
+
+  const isToday = date === todayISO();
+
   return (
-    <div className="dscrum-list-row">
-      <div>{serial}</div>
-      <div>{fmtDate(date, 'd MMM yyyy')}</div>
-      <div>{fmtDate(date, 'EEEE')}</div>
-      <div className="dscrum-list-action">
-        <Button size="sm" variant="secondary" onClick={onDetails}>Details</Button>
+    <button
+      type="button"
+      className={cx('dscrum-mytasks-card', isToday && 'dscrum-mytasks-card--today')}
+      onClick={onDetails}
+    >
+      <div className="dscrum-mytasks-date" aria-hidden="true">
+        <span className="dscrum-mytasks-date-dow">{fmtDate(date, 'EEE').toUpperCase()}</span>
+        <span className="dscrum-mytasks-date-day">{fmtDate(date, 'd')}</span>
+        <span className="dscrum-mytasks-date-mon">{fmtDate(date, 'MMM').toUpperCase()}</span>
       </div>
-    </div>
+
+      <div className="dscrum-mytasks-info">
+        <div className="dscrum-mytasks-info-top">
+          <span className="dscrum-mytasks-weekday">{fmtDate(date, 'EEEE')}</span>
+          {isToday && <span className="dscrum-mytasks-today-tag">Today</span>}
+        </div>
+        <div className="dscrum-mytasks-full">{fmtDate(date, 'd MMMM yyyy')}</div>
+        {myEntry ? (
+          <div className="dscrum-mytasks-summary">
+            {todayTasks.length === 0 ? (
+              <span className="dscrum-mytasks-muted">No tasks logged</span>
+            ) : (
+              <>
+                <span>{todayTasks.length} {todayTasks.length === 1 ? 'task' : 'tasks'}</span>
+                {doneCount > 0 && <span className="dscrum-mytasks-done-count">· {doneCount} done</span>}
+                {inProgressCount > 0 && <span className="dscrum-mytasks-progress-count">· {inProgressCount} in progress</span>}
+                {blockerCount > 0 && <span className="dscrum-mytasks-blocker-count">· {blockerCount} waiting on decision</span>}
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="dscrum-mytasks-summary dscrum-mytasks-muted">
+            No entry for this day
+          </div>
+        )}
+      </div>
+
+      <div className="dscrum-mytasks-action">
+        <span className="dscrum-mytasks-details-btn">Details →</span>
+      </div>
+    </button>
   );
 }
 
