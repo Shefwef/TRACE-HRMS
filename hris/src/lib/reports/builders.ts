@@ -10,7 +10,7 @@
  */
 import type { Workbook } from 'exceljs';
 import {
-  addRows, addSheet, addSummarySheet, addTotalsRow, createWorkbook,
+  addRows, addSheet, addSummarySheet, addTotalsRow, createWorkbook, formatHoursMinutes,
   type CellValue, type Col,
 } from './workbook';
 import {
@@ -32,14 +32,14 @@ const DAILY_COLS: Col[] = [
   { header: 'Day', key: 'weekday', width: 8 },
   { header: 'Clock In', key: 'clockIn', format: 'time' },
   { header: 'Clock Out', key: 'clockOut', format: 'time' },
-  { header: 'Total Hours', key: 'workedHours', format: 'decimal', total: true },
-  { header: 'Break Hours', key: 'breakHours', format: 'decimal', total: true },
-  { header: 'Overtime Hours', key: 'overtimeHours', format: 'decimal', total: true },
+  { header: 'Total Hours', key: 'workedHours', format: 'duration', width: 13 },
+  { header: 'Break Hours', key: 'breakHours', format: 'duration', width: 13 },
+  { header: 'Overtime Hours', key: 'overtimeHours', format: 'duration', width: 13 },
   { header: 'Attendance Status', key: 'status', width: 18 },
   { header: 'Initial Location', key: 'initialLocation', width: 16 },
   { header: 'Final Location', key: 'finalLocation', width: 16 },
   { header: 'Off-site Work', key: 'offsiteWork', width: 13 },
-  { header: 'Off-site Hours', key: 'offsiteHours', format: 'decimal', total: true },
+  { header: 'Off-site Hours', key: 'offsiteHours', format: 'duration', width: 13 },
 ];
 
 /** §26. */
@@ -55,7 +55,7 @@ const OFFSITE_COLS: Col[] = [
   { header: 'Purpose', key: 'purpose', width: 34 },
   { header: 'Started At', key: 'startedAt', format: 'time' },
   { header: 'Ended At', key: 'endedAt', format: 'time' },
-  { header: 'Duration (hours)', key: 'durationHours', format: 'decimal', total: true },
+  { header: 'Duration', key: 'durationHours', format: 'duration', width: 13 },
   { header: 'Recorded By', key: 'changedBy', width: 24 },
   { header: 'Auto-closed', key: 'autoClosed', width: 12 },
 ];
@@ -89,10 +89,10 @@ const EMPLOYEE_COLS: Col[] = [
   { header: 'Present Days', key: 'presentDays', format: 'int', total: true },
   { header: 'Work Days', key: 'workDays', format: 'int', total: true },
   { header: 'Attendance Rate', key: 'attendanceRate', format: 'percent', width: 15 },
-  { header: 'Worked Hours', key: 'workedHours', format: 'decimal', total: true },
-  { header: 'Overtime Hours', key: 'overtimeHours', format: 'decimal', total: true },
+  { header: 'Worked Hours', key: 'workedHours', format: 'duration', width: 13 },
+  { header: 'Overtime Hours', key: 'overtimeHours', format: 'duration', width: 13 },
   { header: 'Off-site Days', key: 'offsiteDays', format: 'int', total: true },
-  { header: 'Off-site Hours', key: 'offsiteHours', format: 'decimal', total: true },
+  { header: 'Off-site Hours', key: 'offsiteHours', format: 'duration', width: 13 },
   { header: 'Casual Used', key: 'casualUsed', format: 'decimal' },
   { header: 'Casual Total', key: 'casualTotal', format: 'decimal' },
   { header: 'Sick Used', key: 'sickUsed', format: 'decimal' },
@@ -119,7 +119,7 @@ export function buildAttendanceWorkbook(
   ]);
 
   const daily = addSheet(wb, 'Daily Attendance', DAILY_COLS);
-  addRows(daily, data.daily);
+  addRows(daily, data.daily, DAILY_COLS);
   addTotalsRow(daily, DAILY_COLS);
 
   // Only when there is something to show - an empty tab reads as a bug.
@@ -167,7 +167,7 @@ export function buildLeavesWorkbook(
   ]);
 
   const sheet = addSheet(wb, 'Leave Requests', LEAVE_COLS);
-  addRows(sheet, data.requests);
+  addRows(sheet, data.requests, LEAVE_COLS);
   addTotalsRow(sheet, LEAVE_COLS);
 
   return wb;
@@ -225,8 +225,8 @@ export function buildCompanyWorkbook(
         ['Present days (all employees)', data.totals.presentDays],
         ['Expected work days (all employees)', data.totals.workDays],
         ['Attendance rate %', data.totals.attendanceRate],
-        ['Overtime hours', data.totals.overtimeHours],
-        ['Off-site hours', data.totals.offsiteHours],
+        ['Overtime hours', formatHoursMinutes(data.totals.overtimeHours)],
+        ['Off-site hours', formatHoursMinutes(data.totals.offsiteHours)],
         ['Leave requests approved', data.totals.approvedLeaves],
         ['Leave requests pending', data.totals.pendingLeaves],
       ],
@@ -234,17 +234,17 @@ export function buildCompanyWorkbook(
   ]);
 
   const emp = addSheet(wb, 'Employee Summary', EMPLOYEE_COLS);
-  addRows(emp, data.employees);
+  addRows(emp, data.employees, EMPLOYEE_COLS);
   addTotalsRow(emp, EMPLOYEE_COLS);
 
   const daily = addSheet(wb, 'Daily Attendance', DAILY_COLS);
-  addRows(daily, data.daily);
+  addRows(daily, data.daily, DAILY_COLS);
   addTotalsRow(daily, DAILY_COLS);
 
   if (data.offsite.length > 0) addOffsiteSheet(wb, data.offsite);
 
   const leaves = addSheet(wb, 'Leave Requests', LEAVE_COLS);
-  addRows(leaves, data.leaves);
+  addRows(leaves, data.leaves, LEAVE_COLS);
   addTotalsRow(leaves, LEAVE_COLS);
 
   return wb;
@@ -269,7 +269,7 @@ export function buildOffsiteWorkbook(
       rows: [
         ['Employees with off-site activity', employees],
         ['Location periods recorded', offsiteRows.length],
-        ['Total off-site hours', round2(offsiteRows.reduce((s, r) => s + (r.durationHours ?? 0), 0))],
+        ['Total off-site hours', formatHoursMinutes(offsiteRows.reduce((s, r) => s + (r.durationHours ?? 0), 0))],
         ['Periods auto-closed at clock-out', rows.filter((r) => r.autoClosed === 'Yes').length],
         ['Corrections by HR', rows.filter((r) => r.event === 'Correction by HR').length],
       ],
@@ -284,7 +284,7 @@ export function buildOffsiteWorkbook(
 
 function addOffsiteSheet(wb: Workbook, rows: OffsiteEventRow[]): void {
   const sheet = addSheet(wb, 'Off-site Work', OFFSITE_COLS);
-  addRows(sheet, rows);
+  addRows(sheet, rows, OFFSITE_COLS);
   addTotalsRow(sheet, OFFSITE_COLS);
 }
 
@@ -315,11 +315,11 @@ function attendanceMeta(t: AttendanceTotals): [string, CellValue][] {
     ['Absent days', t.absentDays],
     ['Expected work days', t.workDays],
     ['Attendance rate %', t.attendanceRate],
-    ['Hours worked', t.workedHours],
-    ['Break hours', t.breakHours],
-    ['Overtime hours', t.overtimeHours],
+    ['Hours worked', formatHoursMinutes(t.workedHours)],
+    ['Break hours', formatHoursMinutes(t.breakHours)],
+    ['Overtime hours', formatHoursMinutes(t.overtimeHours)],
     ['Days with off-site work', t.offsiteDays],
-    ['Off-site hours', t.offsiteHours],
+    ['Off-site hours', formatHoursMinutes(t.offsiteHours)],
   ];
 }
 
@@ -337,9 +337,9 @@ const ATTENDANCE_SUMMARY_COLS: Col[] = [
   { header: 'Day', key: 'weekday', width: 8 },
   { header: 'Clock In', key: 'clockIn', format: 'time' },
   { header: 'Clock Out', key: 'clockOut', format: 'time' },
-  { header: 'Total Hours', key: 'totalHours', format: 'decimal', total: true },
-  { header: 'Overtime Hours', key: 'overtimeHours', format: 'decimal', total: true },
-  { header: 'Deficit Hours', key: 'deficitHours', format: 'decimal', total: true },
+  { header: 'Total Hours', key: 'totalHours', format: 'duration', width: 13 },
+  { header: 'Overtime Hours', key: 'overtimeHours', format: 'duration', width: 13 },
+  { header: 'Deficit Hours', key: 'deficitHours', format: 'duration', width: 13 },
   { header: 'Attendance Status', key: 'status', width: 18 },
   { header: 'Initial Location', key: 'initialLocation', width: 16 },
   { header: 'Final Location', key: 'finalLocation', width: 22 },
@@ -387,7 +387,7 @@ export function buildAttendanceSummaryWorkbook(
   wb.title = `Attendance Summary - ${period.label}`;
 
   const sheet = addSheet(wb, 'Daily Attendance', ATTENDANCE_SUMMARY_COLS);
-  addRows(sheet, rows);
+  addRows(sheet, rows, ATTENDANCE_SUMMARY_COLS);
   addTotalsRow(sheet, ATTENDANCE_SUMMARY_COLS);
 
   return wb;
@@ -398,7 +398,7 @@ export function buildEmployeeSummaryWorkbook(rows: EmployeeDirectoryRow[]): Work
   wb.title = 'Employee Summary - Company Directory';
 
   const sheet = addSheet(wb, 'Employee Summary', EMPLOYEE_DIRECTORY_COLS);
-  addRows(sheet, rows);
+  addRows(sheet, rows, EMPLOYEE_DIRECTORY_COLS);
   addTotalsRow(sheet, EMPLOYEE_DIRECTORY_COLS);
 
   return wb;
@@ -444,8 +444,8 @@ export function buildPerformanceLeaveSummaryWorkbook(
         ['Working Days', p.workingDays],
         ['Half Days', p.halfDays],
         ['Leave Days', p.leaveDays],
-        ['Hours worked', p.hoursWorked],
-        ['Overtime Hours', p.overtimeHours],
+        ['Hours worked', formatHoursMinutes(p.hoursWorked)],
+        ['Overtime Hours', formatHoursMinutes(p.overtimeHours)],
         ['Days with off-site work', p.offsiteDays],
       ],
     },
@@ -498,7 +498,7 @@ export function buildPerformanceLeaveSummaryWorkbook(
 
   // Sheet 3: Leave Request table
   const leaveSheet = addSheet(wb, 'Leave Request', PERF_LEAVE_REQUEST_COLS);
-  addRows(leaveSheet, data.leaveRequests);
+  addRows(leaveSheet, data.leaveRequests, PERF_LEAVE_REQUEST_COLS);
   addTotalsRow(leaveSheet, PERF_LEAVE_REQUEST_COLS);
 
   return wb;

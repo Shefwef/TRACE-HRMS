@@ -49,6 +49,15 @@ function fmtDate(d: Date | null): string {
 
 function round2(n: number): number { return Math.round(n * 100) / 100; }
 
+function fmtHours(n: number): string {
+  if (n == null || n === 0) return '-';
+  const totalMinutes = Math.round(n * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0) return `${m}m`;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+}
+
 // ─── local styles ──────────────────────────────────────────
 
 const s = StyleSheet.create({
@@ -123,8 +132,8 @@ export function PerformanceLeaveSummaryReport({
               <Kv label="Working Days"    value={String(p.workingDays)} />
               <Kv label="Half Days"       value={String(p.halfDays)} />
               <Kv label="Leave Days"      value={String(p.leaveDays)} />
-              <Kv label="Hours Worked"    value={String(p.hoursWorked)} />
-              <Kv label="Overtime Hours"  value={String(p.overtimeHours)} />
+              <Kv label="Hours Worked"    value={fmtHours(p.hoursWorked)} />
+              <Kv label="Overtime Hours"  value={fmtHours(p.overtimeHours)} />
               <Kv label="Off-site Days"   value={String(p.offsiteDays)} />
             </View>
             <View style={s.kvCard}>

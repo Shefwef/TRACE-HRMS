@@ -26,7 +26,7 @@ const TOTAL_FILL_ARGB = 'FFEDF2F7';
  * `decimal` covers hours, leave days and balances alike - all half-step values
  * that read best to two places.
  */
-export type ColFormat = 'text' | 'date' | 'time' | 'decimal' | 'int' | 'percent';
+export type ColFormat = 'text' | 'date' | 'time' | 'decimal' | 'int' | 'percent' | 'duration';
 
 const NUM_FMT: Record<ColFormat, string | undefined> = {
   text: undefined,
@@ -35,7 +35,22 @@ const NUM_FMT: Record<ColFormat, string | undefined> = {
   decimal: '0.00',
   int: '0',
   percent: '0%',
+  // Cells are pre-rendered as text ("Xh Ym") so no numeric format applies.
+  duration: undefined,
 };
+
+/**
+ * Formats a decimal hour count as `Xh Ym` (e.g. 1.5 → "1h 30m", 2 → "2h").
+ * Zero renders as `-` so blank rows stay visually quiet.
+ */
+export function formatHoursMinutes(n: number): string {
+  if (n == null || n === 0) return '-';
+  const totalMinutes = Math.round(n * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0) return `${m}m`;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+}
 
 export interface Col {
   header: string;
@@ -95,9 +110,27 @@ export function addSheet(wb: Workbook, name: string, columns: Col[]): Worksheet 
   return sheet;
 }
 
-/** Appends data rows. Column formats come from `addSheet`, so rows stay plain. */
-export function addRows(sheet: Worksheet, rows: Row[]): void {
-  for (const r of rows) sheet.addRow(r);
+/**
+ * Appends data rows. Column formats come from `addSheet`, so rows stay plain
+ * with one exception: `duration` cells are pre-rendered to `Xh Ym` strings
+ * because Excel time formats can't express that layout unambiguously.
+ */
+export function addRows(sheet: Worksheet, rows: Row[], columns?: Col[]): void {
+  const durationKeys = new Set(
+    (columns ?? []).filter((c) => c.format === 'duration').map((c) => c.key),
+  );
+  for (const r of rows) {
+    if (durationKeys.size === 0) {
+      sheet.addRow(r);
+      continue;
+    }
+    const shaped: Row = { ...r };
+    for (const key of durationKeys) {
+      const v = shaped[key];
+      shaped[key] = typeof v === 'number' ? formatHoursMinutes(v) : (v ?? '-');
+    }
+    sheet.addRow(shaped);
+  }
 }
 
 /**
@@ -124,7 +157,7 @@ export function addTotalsRow(sheet: Worksheet, columns: Col[], label = 'Total'):
 
   columns.forEach((c, i) => {
     const cell = row.getCell(i + 1);
-    if (c.total) {
+    if (c.total && c.format !== 'duration') {
       const letter = colLetter(i + 1);
       cell.value = { formula: `SUM(${letter}${firstDataRow}:${letter}${lastDataRow})` };
     } else if (i === 0) {
