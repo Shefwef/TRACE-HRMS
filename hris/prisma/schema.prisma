@@ -50,6 +50,22 @@ enum DailyTaskType {
   COMPLETED
 }
 
+/// Runtime state of a task on its scrum entry. IN_PROGRESS is the default;
+/// DONE means the owner ticked it off; blocked tasks stay IN_PROGRESS with
+/// `isDecision` = true (they surface as "Waiting on decision" separately).
+enum DailyTaskStatus {
+  IN_PROGRESS
+  DONE
+}
+
+/// Author-set urgency. Drives the coloured chip on the scrum board and lets
+/// managers scan a day's work at a glance without opening every task.
+enum DailyTaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 enum NotificationChannel {
   EMAIL
   IN_APP
@@ -591,18 +607,23 @@ model DailyScrumEntry {
 }
 
 model DailyTask {
-  id           String          @id @default(cuid())
+  id           String            @id @default(cuid())
   entryId      String
-  entry        DailyScrumEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  entry        DailyScrumEntry   @relation(fields: [entryId], references: [id], onDelete: Cascade)
   type         DailyTaskType
   text         String
-  deadline     DateTime?       @db.Date
-  isDecision   Boolean         @default(false)
+  deadline     DateTime?         @db.Date
+  isDecision   Boolean           @default(false)
   decisionNote String?
-  carryOver    Boolean         @default(false)
-  order        Int             @default(0)
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  carryOver    Boolean           @default(false)
+  order        Int               @default(0)
+  /// Priority chip on the scrum board (light green / yellow / red).
+  priority     DailyTaskPriority @default(MEDIUM)
+  /// Current state of the task. Only DONE tasks propagate to the next day's
+  /// Yesterday/Completed column when HR generates a new board.
+  status       DailyTaskStatus   @default(IN_PROGRESS)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
   @@index([entryId])
   @@map("daily_tasks")

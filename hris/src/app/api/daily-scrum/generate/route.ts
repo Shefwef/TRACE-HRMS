@@ -67,18 +67,26 @@ export async function POST(req: Request) {
   const toCreate = roster.filter((r) => !existingIds.has(r.id));
 
   // Sequential creates so we can compute per-entry task copies in one shot.
+  //
+  // Carryover rule: only DONE tasks from the prior day's TODAY column propagate
+  // — they land in the new day's Yesterday/Completed column as a record of
+  // what was accomplished. IN_PROGRESS work is dropped; if it's still relevant
+  // the owner can pull it forward manually. This is per product decision so
+  // stale tasks don't linger and clog every board.
   let createdEntries = 0;
   let copiedTasks = 0;
   for (const u of toCreate) {
-    const priorTasks = (priorByEmp.get(u.id) ?? []).filter((t) => t.type === 'TODAY');
+    const priorTasks = (priorByEmp.get(u.id) ?? [])
+      .filter((t) => t.type === 'TODAY' && t.status === 'DONE');
     const seed = priorTasks.map((t, i) => ({
-      type: t.carryOver ? ('TODAY' as const) : ('COMPLETED' as const),
+      type: 'COMPLETED' as const,
       text: t.text,
       deadline: t.deadline,
-      isDecision: t.isDecision,
-      decisionNote: t.decisionNote,
-      // The new copy shouldn't auto-cascade a second time; HR can re-enable it.
+      isDecision: false,
+      decisionNote: null,
       carryOver: false,
+      priority: t.priority,
+      status: 'DONE' as const,
       order: i,
     }));
 

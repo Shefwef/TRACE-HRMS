@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth, err } from '@/lib/api';
 import { dayKeyToDateOnly } from '@/lib/workday';
-import type { DailyTaskType } from '@prisma/client';
+import type { DailyTaskType, DailyTaskPriority, DailyTaskStatus } from '@prisma/client';
+
+const PRIORITIES: readonly DailyTaskPriority[] = ['LOW', 'MEDIUM', 'HIGH'];
+const STATUSES: readonly DailyTaskStatus[] = ['IN_PROGRESS', 'DONE'];
 
 export async function POST(req: Request) {
   const [user, error] = await requireAuth(req);
@@ -11,14 +14,19 @@ export async function POST(req: Request) {
   let body: unknown;
   try { body = await req.json(); } catch { return err(400, 'BAD_JSON', 'Invalid JSON body.'); }
 
-  const { entryId, type, text, deadline, order, isDecision, decisionNote, carryOver } = body as {
+  const { entryId, type, text, deadline, order, isDecision, decisionNote, carryOver, priority, status } = body as {
     entryId?: unknown; type?: unknown; text?: unknown; deadline?: unknown; order?: unknown;
     isDecision?: unknown; decisionNote?: unknown; carryOver?: unknown;
+    priority?: unknown; status?: unknown;
   };
 
   if (typeof entryId !== 'string') return err(400, 'BAD_REQUEST', 'entryId is required.');
   if (type !== 'TODAY' && type !== 'COMPLETED') return err(400, 'BAD_TYPE', 'type must be TODAY or COMPLETED.');
   if (typeof text !== 'string' || !text.trim()) return err(400, 'BAD_TEXT', 'text is required.');
+  if (priority !== undefined && !PRIORITIES.includes(priority as DailyTaskPriority))
+    return err(400, 'BAD_PRIORITY', 'priority must be LOW | MEDIUM | HIGH.');
+  if (status !== undefined && !STATUSES.includes(status as DailyTaskStatus))
+    return err(400, 'BAD_STATUS', 'status must be IN_PROGRESS | DONE.');
 
   const entry = await prisma.dailyScrumEntry.findUnique({ where: { id: entryId } });
   if (!entry) return err(404, 'NOT_FOUND', 'Entry not found.');
@@ -41,6 +49,10 @@ export async function POST(req: Request) {
       isDecision: typeof isDecision === 'boolean' ? isDecision : false,
       decisionNote: typeof decisionNote === 'string' ? decisionNote : null,
       carryOver: typeof carryOver === 'boolean' ? carryOver : false,
+      priority: (priority as DailyTaskPriority | undefined) ?? 'MEDIUM',
+      // COMPLETED-type rows represent already-finished work; default them to DONE
+      // so the per-employee popup's Done tab shows them where users expect.
+      status: (status as DailyTaskStatus | undefined) ?? (type === 'COMPLETED' ? 'DONE' : 'IN_PROGRESS'),
     },
   });
 
@@ -49,6 +61,7 @@ export async function POST(req: Request) {
     deadline: task.deadline ? task.deadline.toISOString().slice(0, 10) : null,
     isDecision: task.isDecision, decisionNote: task.decisionNote,
     carryOver: task.carryOver, order: task.order,
+    priority: task.priority, status: task.status,
     createdAt: task.createdAt.toISOString(), updatedAt: task.updatedAt.toISOString(),
   }, { status: 201 });
 }

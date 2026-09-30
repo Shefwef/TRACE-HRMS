@@ -59,7 +59,7 @@ function serializeEntry(e: {
   id: string; date: Date; status: string; employeeId: string;
   createdAt: Date; updatedAt: Date;
   employee: { id: string; fullName: string; department: string | null; designation: string | null; avatarUrl: string | null; employeeIdCode: string | null };
-  tasks: { id: string; entryId: string; type: string; text: string; deadline: Date | null; isDecision: boolean; decisionNote: string | null; carryOver: boolean; order: number; createdAt: Date; updatedAt: Date }[];
+  tasks: { id: string; entryId: string; type: string; text: string; deadline: Date | null; isDecision: boolean; decisionNote: string | null; carryOver: boolean; order: number; priority: string; status: string; createdAt: Date; updatedAt: Date }[];
 }) {
   return {
     id: e.id,
@@ -77,6 +77,8 @@ function serializeEntry(e: {
       decisionNote: t.decisionNote,
       carryOver: t.carryOver,
       order: t.order,
+      priority: t.priority,
+      status: t.status,
       createdAt: t.createdAt.toISOString(),
       updatedAt: t.updatedAt.toISOString(),
     })),

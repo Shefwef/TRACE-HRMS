@@ -1162,6 +1162,9 @@ export function useSendHolidayNotice() {
 
 // ─── Daily Scrum ─────────────────────────────────────────
 
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
+export type TaskStatus = 'IN_PROGRESS' | 'DONE';
+
 export interface DailyTaskShape {
   id: string;
   entryId: string;
@@ -1172,6 +1175,8 @@ export interface DailyTaskShape {
   decisionNote: string | null;
   carryOver: boolean;
   order: number;
+  priority: TaskPriority;
+  status: TaskStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -1247,6 +1252,7 @@ export function useAddScrumTask() {
       entryId: string; type: 'TODAY' | 'COMPLETED'; text: string;
       deadline?: string; order?: number;
       isDecision?: boolean; decisionNote?: string | null; carryOver?: boolean;
+      priority?: TaskPriority; status?: TaskStatus;
     }) =>
       api<DailyTaskShape>('/api/daily-scrum/tasks', {
         method: 'POST',
@@ -1270,6 +1276,8 @@ export function useUpdateScrumTask() {
       decisionNote?: string | null;
       carryOver?: boolean;
       order?: number;
+      priority?: TaskPriority;
+      status?: TaskStatus;
     }) =>
       api<DailyTaskShape>(`/api/daily-scrum/tasks/${id}`, {
         method: 'PATCH',

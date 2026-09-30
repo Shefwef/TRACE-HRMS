@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth, err } from '@/lib/api';
 import { dayKeyToDateOnly } from '@/lib/workday';
+import type { DailyTaskPriority, DailyTaskStatus } from '@prisma/client';
+
+const PRIORITIES: readonly DailyTaskPriority[] = ['LOW', 'MEDIUM', 'HIGH'];
+const STATUSES: readonly DailyTaskStatus[] = ['IN_PROGRESS', 'DONE'];
 
 async function canEditEmployee(
   user: { id: string; role: string; roles: string[] },
@@ -44,7 +48,12 @@ export async function PATCH(
   const patch = body as {
     text?: unknown; deadline?: unknown; isDecision?: unknown;
     decisionNote?: unknown; order?: unknown; carryOver?: unknown;
+    priority?: unknown; status?: unknown;
   };
+  if (patch.priority !== undefined && !PRIORITIES.includes(patch.priority as DailyTaskPriority))
+    return err(400, 'BAD_PRIORITY', 'priority must be LOW | MEDIUM | HIGH.');
+  if (patch.status !== undefined && !STATUSES.includes(patch.status as DailyTaskStatus))
+    return err(400, 'BAD_STATUS', 'status must be IN_PROGRESS | DONE.');
 
   const updated = await prisma.dailyTask.update({
     where: { id },
@@ -63,6 +72,8 @@ export async function PATCH(
           : {}),
       ...(typeof patch.carryOver === 'boolean' ? { carryOver: patch.carryOver } : {}),
       ...(typeof patch.order === 'number' ? { order: patch.order } : {}),
+      ...(patch.priority !== undefined ? { priority: patch.priority as DailyTaskPriority } : {}),
+      ...(patch.status !== undefined ? { status: patch.status as DailyTaskStatus } : {}),
     },
   });
 
@@ -71,6 +82,7 @@ export async function PATCH(
     deadline: updated.deadline ? updated.deadline.toISOString().slice(0, 10) : null,
     isDecision: updated.isDecision, decisionNote: updated.decisionNote,
     carryOver: updated.carryOver, order: updated.order,
+    priority: updated.priority, status: updated.status,
     createdAt: updated.createdAt.toISOString(), updatedAt: updated.updatedAt.toISOString(),
   });
 }
