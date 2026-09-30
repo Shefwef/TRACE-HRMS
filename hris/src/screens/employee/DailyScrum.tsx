@@ -1135,7 +1135,7 @@ function MyTaskCard({ date, userId, onDetails }: MyTaskCardProps) {
                 <span>{todayTasks.length} {todayTasks.length === 1 ? 'task' : 'tasks'}</span>
                 {doneCount > 0 && <span className="dscrum-mytasks-done-count">· {doneCount} done</span>}
                 {inProgressCount > 0 && <span className="dscrum-mytasks-progress-count">· {inProgressCount} in progress</span>}
-                {blockerCount > 0 && <span className="dscrum-mytasks-blocker-count">· {blockerCount} ecision</span>}
+                {blockerCount > 0 && <span className="dscrum-mytasks-blocker-count">· {blockerCount} waiting on decision</span>}
               </>
             )}
           </div>
