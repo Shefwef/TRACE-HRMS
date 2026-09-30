@@ -104,6 +104,7 @@ export function InviteEmployeeModal({ open, onClose }: Props) {
       onClose={handleClose}
       title={result ? 'Employee invited' : 'Invite a new employee'}
       size="lg"
+      widthOverride="min(860px, calc(100vw - 48px))"
       footer={
         result ? (
           <Button variant="primary" onClick={handleClose}>Done</Button>

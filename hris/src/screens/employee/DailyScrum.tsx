@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Calendar, Search, Plus, Pencil, Trash2, ClipboardList,
-  Download, Check, AlertTriangle, X,
+  Download, Check, AlertTriangle, X, CheckCircle2,
 } from 'lucide-react';
 import { 
   useDailyScrumDay, useDailyScrumDates,
@@ -334,6 +334,17 @@ function EmployeeTasksPopup({
     });
   }
 
+  /** Clears the "waiting on decision" state on a task once the decision
+   *  has been resolved. Doesn't touch status — the owner still ticks the
+   *  checkbox separately when the underlying work is finished. */
+  function resolveDecision(task: DailyTaskShape) {
+    updateTask.mutate({
+      id: task.id,
+      isDecision: false,
+      decisionNote: null,
+    });
+  }
+
   function startEdit(task: DailyTaskShape) {
     setEditingId(task.id);
     setV(taskToForm(task));
@@ -486,6 +497,16 @@ function EmployeeTasksPopup({
               </button>
               {canEdit && (
                 <div className="dscrum-etp-row-actions">
+                  {t.isDecision && (
+                    <button
+                      type="button"
+                      className="dscrum-icon-btn dscrum-icon-btn-resolve"
+                      title="Mark decision as made — clears the waiting-on-decision flag"
+                      onClick={() => resolveDecision(t)}
+                    >
+                      <CheckCircle2 size={12} />
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="dscrum-icon-btn"

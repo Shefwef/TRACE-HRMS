@@ -274,10 +274,7 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  padding: 6px 12px;
-  background: var(--color-bg-subtle);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-md);
+  padding: 4px 0;
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   white-space: nowrap;
@@ -523,6 +520,13 @@
 .dscrum-icon-btn-danger:hover {
   color: var(--color-danger);
   border-color: var(--color-danger);
+}
+/* Green tint on hover for the "Mark decision made" affordance. */
+.dscrum-icon-btn-resolve { color: #38a169; }
+.dscrum-icon-btn-resolve:hover {
+  color: #276749;
+  border-color: #38a169;
+  background: rgba(56, 161, 105, 0.08);
 }
 
 /* ─── Add-item button (dashed inside cell) ─── */
