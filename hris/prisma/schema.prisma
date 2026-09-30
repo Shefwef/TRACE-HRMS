@@ -185,6 +185,10 @@ model User {
   /// The numeric ID enrolled on the biometric device (emp_code from ZKBioTime).
   /// Null until mapped by HR. Unique so two people can't share a fingerprint ID.
   biometricUserId String?   @unique
+  /// Whether this employee is included when HR generates a daily scrum board
+  /// for a date. Defaults to true; HR toggles it off from the Daily Tracker
+  /// Config screen to exclude people from future generations.
+  dailyScrumIncluded Boolean @default(true)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

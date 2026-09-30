@@ -1,13 +1,13 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Calendar, Search, Plus, Pencil, Trash2, ArrowRight, ClipboardList,
+  Calendar, Search, Plus, Pencil, Trash2, ClipboardList,
   Download, Sparkles, Check, AlertTriangle, Save, X,
 } from 'lucide-react';
 import {
   useDailyScrumDay, useDailyScrumDates, useUpsertScrumEntry,
-  useAddScrumTask, useUpdateScrumTask, useDeleteScrumTask, useMoveTaskNextDay,
-  useEnsureScrumWeek, useUsers,
+  useAddScrumTask, useUpdateScrumTask, useDeleteScrumTask,
+  useGenerateScrumDay, useUsers,
   type DailyScrumEntryShape, type DailyTaskShape, type UserSummary,
 } from '@/lib/hooks';
 import { useCurrentUser, initials, avatarColorFor } from '@/lib/session';
@@ -20,23 +20,21 @@ import { TextInput, TextArea } from '../../components/ui/Field';
 import { cx, fmtDate, todayISO } from '../../lib/utils';
 import './DailyScrum.css';
 
-function sundayOf(dayKey: string): string {
-  const [y, m, d] = dayKey.split('-').map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  dt.setUTCDate(dt.getUTCDate() - dt.getUTCDay());
-  return dt.toISOString().slice(0, 10);
-}
-
-function addDaysISO(dayKey: string, days: number): string {
-  const [y, m, d] = dayKey.split('-').map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  dt.setUTCDate(dt.getUTCDate() + days);
-  return dt.toISOString().slice(0, 10);
-}
-
-function dowOf(dayKey: string): number {
-  const [y, m, d] = dayKey.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+/**
+ * Sort comparator that orders items by their employee's `employeeIdCode`
+ * (nulls last), falling back to `fullName`.
+ */
+function byEmployeeId<T>(pick: (t: T) => { employeeIdCode?: string | null; fullName: string }) {
+  return (a: T, b: T) => {
+    const ea = pick(a);
+    const eb = pick(b);
+    const ida = ea.employeeIdCode ?? '';
+    const idb = eb.employeeIdCode ?? '';
+    if (ida && idb) return ida.localeCompare(idb);
+    if (ida) return -1;
+    if (idb) return 1;
+    return ea.fullName.localeCompare(eb.fullName);
+  };
 }
 
 // ─── Task modal (add / edit) ─────────────────────────────
@@ -220,63 +218,11 @@ function TaskModal({ intent, onClose }: TaskModalProps) {
                   />
                   <span>If not completed, move to next day</span>
                 </label>
-                <p className="dscrum-form-hint">Will appear in tomorrow&apos;s Yesterday list.</p>
+                <p className="dscrum-form-hint">If checked, this task appears in tomorrow&apos;s Today list; otherwise it moves to tomorrow&apos;s Yesterday/Completed list when the next day is generated.</p>
               </div>
             </div>
           </>
         )}
-      </div>
-    </Modal>
-  );
-}
-
-// ─── Move-to-next-day modal ──────────────────────────────
-
-interface MoveModalProps {
-  taskId: string | null;
-  onClose: () => void;
-}
-
-function MoveModal({ taskId, onClose }: MoveModalProps) {
-  const [deadline, setDeadline] = useState('');
-  const move = useMoveTaskNextDay();
-  useEffect(() => { if (!taskId) setDeadline(''); }, [taskId]);
-
-  return (
-    <Modal
-      open={!!taskId}
-      onClose={onClose}
-      title="Move task to next day"
-      size="sm"
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button
-            leadingIcon={<ArrowRight size={14} />}
-            loading={move.isPending}
-            onClick={() => {
-              if (!taskId) return;
-              move.mutate(
-                { id: taskId, deadline: deadline || undefined },
-                { onSuccess: onClose },
-              );
-            }}
-          >
-            Move
-          </Button>
-        </>
-      }
-    >
-      <div className="dscrum-form">
-        <div className="dscrum-form-group">
-          <label className="dscrum-form-label">NEW DEADLINE</label>
-          <TextInput
-            type="date"
-            value={deadline}
-            onChange={(e) => setDeadline(e.target.value)}
-          />
-          <p className="dscrum-form-hint">Optional — leave blank to clear the deadline for the next day.</p>
-        </div>
       </div>
     </Modal>
   );
@@ -318,12 +264,11 @@ function YesterdayItem({
 // ─── Today item ──────────────────────────────────────────
 
 function TodayItem({
-  task, canEdit, onEdit, onMove,
+  task, canEdit, onEdit,
 }: {
   task: DailyTaskShape;
   canEdit: boolean;
   onEdit: () => void;
-  onMove: () => void;
 }) {
   const remove = useDeleteScrumTask();
 
@@ -360,9 +305,6 @@ function TodayItem({
           >
             <Trash2 size={12} />
           </button>
-          <button type="button" className="dscrum-icon-btn" title="Move to next day" onClick={onMove}>
-            <ArrowRight size={12} />
-          </button>
         </div>
       )}
     </div>
@@ -375,10 +317,9 @@ interface BoardRowProps {
   entry: DailyScrumEntryShape;
   canEdit: boolean;
   onOpenTask: (intent: TaskModalIntent) => void;
-  onMoveTask: (taskId: string) => void;
 }
 
-function BoardRow({ entry, canEdit, onOpenTask, onMoveTask }: BoardRowProps) {
+function BoardRow({ entry, canEdit, onOpenTask }: BoardRowProps) {
   const yesterdayTasks = entry.tasks.filter((t) => t.type === 'COMPLETED');
   const todayTasks = entry.tasks.filter((t) => t.type === 'TODAY');
   const decisions = todayTasks.filter((t) => t.isDecision);
@@ -435,7 +376,6 @@ function BoardRow({ entry, canEdit, onOpenTask, onMoveTask }: BoardRowProps) {
             task={t}
             canEdit={canEdit}
             onEdit={() => onOpenTask({ mode: 'edit', task: t })}
-            onMove={() => onMoveTask(t.id)}
           />
         ))}
         {canEdit && (
@@ -523,7 +463,6 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
   const currentUser = useCurrentUser();
   const [searchQ, setSearchQ] = useState('');
   const [taskIntent, setTaskIntent] = useState<TaskModalIntent | null>(null);
-  const [moveTaskId, setMoveTaskId] = useState<string | null>(null);
 
   const canEditAll = data?.canEditAll ?? false;
   const canEditTeam = data?.canEditTeam ?? false;
@@ -533,9 +472,7 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
     const filtered = filterToUserId
       ? src.filter((e) => e.employeeId === filterToUserId)
       : src;
-    return [...filtered].sort((a, b) =>
-      a.employee.fullName.localeCompare(b.employee.fullName),
-    );
+    return [...filtered].sort(byEmployeeId((e) => e.employee));
   }, [data, filterToUserId]);
 
   const activeUsers = useMemo(() => {
@@ -543,7 +480,7 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
     return users
       .filter((u) => u.isActive && !u.deletedAt)
       .filter((u) => (filterToUserId ? u.id === filterToUserId : true))
-      .sort((a, b) => a.fullName.localeCompare(b.fullName));
+      .sort(byEmployeeId((u) => u));
   }, [users, filterToUserId]);
 
   const entryUserIds = new Set(entries.map((e) => e.employeeId));
@@ -582,7 +519,7 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
         { header: 'Employee', key: 'name', width: 26 },
         { header: 'Department', key: 'dept', width: 20 },
         { header: 'Designation', key: 'desig', width: 22 },
-        { header: 'Yesterday (Completed)', key: 'yesterday', width: 60 },
+        { header: 'Yesterday/Completed', key: 'yesterday', width: 60 },
         { header: "Today's Tasks", key: 'today', width: 60 },
         { header: 'Decisions Needed', key: 'decisions', width: 40 },
       ];
@@ -674,7 +611,7 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
           <div className="dscrum-board">
             <div className="dscrum-board-head">
               <div>Member</div>
-              <div>Yesterday</div>
+              <div>Yesterday/Completed</div>
               <div>Today</div>
               <div>Decisions needed</div>
             </div>
@@ -685,7 +622,6 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
                 entry={entry}
                 canEdit={canEditEntry(entry)}
                 onOpenTask={setTaskIntent}
-                onMoveTask={setMoveTaskId}
               />
             ))}
 
@@ -697,7 +633,6 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
       </Modal>
 
       <TaskModal intent={taskIntent} onClose={() => setTaskIntent(null)} />
-      <MoveModal taskId={moveTaskId} onClose={() => setMoveTaskId(null)} />
     </>
   );
 }
@@ -708,11 +643,10 @@ function DailyScrumTab() {
   const currentUser = useCurrentUser();
   const addToast = useStore((s) => s.addToast);
   const { data: datesData, isLoading } = useDailyScrumDates();
-  const ensureWeek = useEnsureScrumWeek();
+  const generateDay = useGenerateScrumDay();
   const [dateFilter, setDateFilter] = useState('');
   const [activeDate, setActiveDate] = useState<string | null>(null);
-  const [manualEnsuring, setManualEnsuring] = useState(false);
-  const autoRunRef = useRef(false);
+  const [generateDate, setGenerateDate] = useState(todayISO());
 
   const roles = currentUser?.roles ?? [];
   const isHr = roles.includes('HR') || roles.includes('SUPER_ADMIN');
@@ -722,36 +656,25 @@ function DailyScrumTab() {
     ? allDates.filter((d) => d === dateFilter)
     : allDates;
 
-  const ensureWeekRef = useRef(ensureWeek);
-  ensureWeekRef.current = ensureWeek;
-
-  // Auto-run silently on mount — does not affect the button's loading state.
-  useEffect(() => {
-    if (!isHr) return;
-    if (autoRunRef.current) return;
-    autoRunRef.current = true;
-    const today = todayISO();
-    const thisSun = sundayOf(today);
-    ensureWeekRef.current.mutate(thisSun);
-    const dow = dowOf(today);
-    if (dow === 5 || dow === 6) {
-      const nextSun = addDaysISO(thisSun, 7);
-      ensureWeekRef.current.mutate(nextSun);
-    }
-  }, [isHr]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function handleEnsureWeek() {
-    const sun = sundayOf(todayISO());
-    setManualEnsuring(true);
-    ensureWeek.mutate(sun, {
+  function handleGenerate() {
+    if (!generateDate) return;
+    generateDay.mutate(generateDate, {
       onSuccess: (r) => {
         addToast({
           kind: 'success',
-          title: 'Scrum week generated',
-          body: `${r.created} new ${r.created === 1 ? 'entry' : 'entries'} created for the week of ${fmtDate(sun, 'd MMM yyyy')}.`,
+          title: 'Scrum board generated',
+          body: r.createdEntries === 0
+            ? `All rostered employees already have an entry for ${fmtDate(generateDate, 'd MMM yyyy')}.`
+            : `${r.createdEntries} new ${r.createdEntries === 1 ? 'entry' : 'entries'} created for ${fmtDate(generateDate, 'd MMM yyyy')}${r.copiedTasks > 0 ? ` (${r.copiedTasks} tasks carried from prior day)` : ''}.`,
         });
       },
-      onSettled: () => setManualEnsuring(false),
+      onError: (e: Error) => {
+        addToast({
+          kind: 'error',
+          title: 'Generation failed',
+          body: e.message || 'Something went wrong.',
+        });
+      },
     });
   }
 
@@ -777,15 +700,24 @@ function DailyScrumTab() {
           )}
         </div>
         {isHr && (
-          <Button
-            size="sm"
-            variant="secondary"
-            // leadingIcon={<Sparkles size={14} />}
-            loading={manualEnsuring}
-            onClick={handleEnsureWeek}
-          >
-            Sync Team Members
-          </Button>
+          <div className="dscrum-generate-wrap">
+            <input
+              type="date"
+              className="dscrum-date-input"
+              value={generateDate}
+              onChange={(e) => setGenerateDate(e.target.value)}
+              aria-label="Date to generate"
+            />
+            <Button
+              size="sm"
+              variant="primary"
+              leadingIcon={<Sparkles size={14} />}
+              loading={generateDay.isPending}
+              onClick={handleGenerate}
+            >
+              Generate
+            </Button>
+          </div>
         )}
       </div>
 

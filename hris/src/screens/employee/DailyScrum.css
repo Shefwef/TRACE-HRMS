@@ -133,6 +133,12 @@
   gap: 8px;
   color: var(--color-text-muted);
 }
+.dscrum-generate-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
 .dscrum-date-input {
   padding: 8px 12px;
   border-radius: var(--radius-md);

@@ -41,6 +41,7 @@ const adminNav = [
   { to: '/admin/locations', label: 'Work Locations', icon: <MapPin size={18} /> },
   { to: '/admin/holidays', label: 'Holiday Manager', icon: <CalendarDays size={18} /> },
   { to: '/admin/biometric', label: 'Biometric', icon: <Fingerprint size={18} /> },
+  { to: '/admin/daily-scrum-config', label: 'Daily Tracker Config', icon: <ClipboardCheck size={18} /> },
   { to: '/admin/permissions', label: 'Permissions', icon: <Shield size={18} /> },
   { to: '/admin/settings', label: 'Settings', icon: <Settings size={18} /> },
 ];

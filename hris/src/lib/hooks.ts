@@ -1288,26 +1288,43 @@ export function useDeleteScrumTask() {
   });
 }
 
-export function useMoveTaskNextDay() {
+export interface DailyScrumConfigEmployee {
+  id: string;
+  fullName: string;
+  employeeIdCode: string | null;
+  department: string | null;
+  designation: string | null;
+  avatarUrl: string | null;
+  dailyScrumIncluded: boolean;
+}
+
+export function useDailyScrumConfig() {
+  return useQuery({
+    queryKey: ['daily-scrum', 'config'],
+    queryFn: () => api<{ employees: DailyScrumConfigEmployee[] }>('/api/daily-scrum/config'),
+  });
+}
+
+export function useSaveDailyScrumConfig() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, deadline }: { id: string; deadline?: string }) =>
-      api<{ newEntryId: string; newTaskId: string }>(
-        `/api/daily-scrum/tasks/${id}/move`,
-        { method: 'POST', body: JSON.stringify({ deadline }) },
+    mutationFn: (includedIds: string[]) =>
+      api<{ ok: boolean; included: number; excluded: number }>(
+        '/api/daily-scrum/config',
+        { method: 'PUT', body: JSON.stringify({ includedIds }) },
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-scrum'] }),
   });
 }
 
-export function useEnsureScrumWeek() {
+export function useGenerateScrumDay() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (weekStart: string) =>
-      api<{ ok: boolean; created: number }>('/api/daily-scrum/ensure-week', {
-        method: 'POST',
-        body: JSON.stringify({ weekStart }),
-      }),
+    mutationFn: (date: string) =>
+      api<{ ok: boolean; createdEntries: number; skippedEntries: number; copiedTasks: number }>(
+        '/api/daily-scrum/generate',
+        { method: 'POST', body: JSON.stringify({ date }) },
+      ),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-scrum'] }),
   });
 }
