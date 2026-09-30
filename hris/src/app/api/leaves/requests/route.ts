@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { prisma } from '@/lib/db';
 import { requireAuth, err } from '@/lib/api';
 import { CreateLeaveSchema, CreateLeaveBundleSchema, type AllocationEntryInput } from '@/lib/validation';
-import { computeDurationDays, leaveTypeLabel, formatLeavePeriod } from '@/lib/leave';
+import { computeDurationDays, leaveTypeLabel, formatLeavePeriod, standardMinutesFromWindow } from '@/lib/leave';
 import { approvalRecipients } from '@/lib/routing';
 import { notifyMany } from '@/lib/notifications';
 import { sendEmail } from '@/lib/email';
@@ -95,7 +95,17 @@ export async function POST(req: Request) {
   }
   const input = parsed.data;
 
-  const duration = computeDurationDays(input);
+  // Time-range leaves divide by the configured office-hours length so a
+  // 9-hour office (8:30-5:30) counts a 4h30m leave as 0.5 day.
+  const office = await prisma.systemSettings.findUnique({
+    where: { id: 'singleton' },
+    select: { workStartTime: true, workEndTime: true },
+  });
+  const standardMinutes = standardMinutesFromWindow(
+    office?.workStartTime ?? '09:00',
+    office?.workEndTime ?? '17:00',
+  );
+  const duration = computeDurationDays(input, standardMinutes);
   if (duration <= 0)
     return err(400, 'ZERO_DURATION', 'Leave duration comes out to zero days.');
 

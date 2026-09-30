@@ -10,11 +10,12 @@ import { useCurrentUser } from '@/lib/session';
 import {
   useBalance,
   useMyLeaves,
+  useSettings,
   useSubmitLeave,
   useUsers,
   type Balance,
 } from '@/lib/hooks';
-import { computeDurationDays } from '@/lib/leave';
+import { computeDurationDays, standardMinutesFromWindow } from '@/lib/leave';
 import { Button } from '../ui/Button';
 import { Field, TextArea, TextInput } from '../ui/Field';
 import { cx, fmtDate, leaveTypeLabel } from '../../lib/utils';
@@ -34,7 +35,11 @@ export function LeaveApplicationFlow({ open, onClose }: Props) {
   const { data: balance } = useBalance();
   const { data: myLeaves = [] } = useMyLeaves();
   const { data: allUsers = [] } = useUsers();
+  const { data: settings } = useSettings();
   const submit = useSubmitLeave();
+  const standardMinutes = settings
+    ? standardMinutesFromWindow(settings.workStartTime, settings.workEndTime)
+    : 480;
 
   const admins = useMemo(
     () => allUsers.filter((u) => u.role === 'HR' || u.role === 'SUPER_ADMIN'),
@@ -79,8 +84,8 @@ export function LeaveApplicationFlow({ open, onClose }: Props) {
       timeTo: useTimeRange && singleDay && !isHalfDay ? timeTo : undefined,
       reason: reason || 'x',
       channels: channels.length ? channels : ['EMAIL'],
-    });
-  }, [startDate, endDate, isHalfDay, halfDaySlot, useTimeRange, timeFrom, timeTo, singleDay, leaveType, reason, channels]);
+    }, standardMinutes);
+  }, [startDate, endDate, isHalfDay, halfDaySlot, useTimeRange, timeFrom, timeTo, singleDay, leaveType, reason, channels, standardMinutes]);
 
   const availableBalance = useMemo(() => {
     if (!leaveType || !balance) return 0;

@@ -4,14 +4,20 @@
 import type { CreateLeaveInput } from './validation';
 
 /**
- * Compute the leave duration (in days) for a request. Weekends (Sat/Sun) are
- * excluded from multi-day ranges.
+ * Compute the leave duration (in days) for a request. Weekends (Fri/Sat)
+ * are excluded from multi-day ranges.
  *
  * - Full-day range: number of weekdays inclusive.
  * - Half-day (single day): 0.5.
- * - Time-range (single day, timeFrom-timeTo): fraction of an 8-hour day.
+ * - Time-range (single day, timeFrom-timeTo): fraction of a standard workday,
+ *   where the standard workday length is `standardMinutes` (defaults to 480 =
+ *   8h). Callers should pass the SystemSettings-derived value so a 9-hour
+ *   office (540 min) counts a 4h30m leave as 0.5 day, not 0.56.
  */
-export function computeDurationDays(input: CreateLeaveInput): number {
+export function computeDurationDays(
+  input: CreateLeaveInput,
+  standardMinutes: number = 480,
+): number {
   const start = new Date(input.startDate + 'T00:00:00Z');
   const end = new Date(input.endDate + 'T00:00:00Z');
 
@@ -22,8 +28,9 @@ export function computeDurationDays(input: CreateLeaveInput): number {
     const [th, tm] = input.timeTo.split(':').map(Number);
     const minutes = (th * 60 + tm) - (fh * 60 + fm);
     if (minutes <= 0) return 0;
-    // Standard 8-hour workday = 480 minutes. Round to 0.5 for readability.
-    const days = minutes / 480;
+    const denom = standardMinutes > 0 ? standardMinutes : 480;
+    const days = minutes / denom;
+    // Round to nearest 0.5 for readability.
     return Math.round(days * 2) / 2;
   }
 
@@ -36,6 +43,18 @@ export function computeDurationDays(input: CreateLeaveInput): number {
     cur.setUTCDate(cur.getUTCDate() + 1);
   }
   return days;
+}
+
+/**
+ * Convenience: derive the standard-workday minutes from a workStart/workEnd
+ * pair (e.g. "09:00", "17:00" → 480). Falls back to 480 when the window is
+ * malformed or non-positive.
+ */
+export function standardMinutesFromWindow(workStartTime: string, workEndTime: string): number {
+  const [sh = 9, sm = 0] = workStartTime.split(':').map(Number);
+  const [eh = 17, em = 0] = workEndTime.split(':').map(Number);
+  const diff = (eh * 60 + em) - (sh * 60 + sm);
+  return diff > 0 ? diff : 480;
 }
 
 /**

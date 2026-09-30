@@ -594,15 +594,19 @@
 
 /* ─── Priority picker (task modal) ─── */
 .dscrum-priority-picker {
-  display: inline-flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
   padding: 4px;
   background: var(--color-bg-subtle);
   border-radius: var(--radius-md);
+  /* Give the picker a stable width so buttons don't shrink to text-length. */
+  max-width: 360px;
 }
 .dscrum-priority-option {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 6px 12px;
   border: 1px solid transparent;

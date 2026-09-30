@@ -307,26 +307,26 @@ export function EmployeeProfilePage({ id }: { id: string }) {
             <h2>Roles</h2>
           {editing && canEditRoles ? (
             <div className="ep-roles-editor">
-              {/* SUPER_ADMIN is intentionally omitted from the picker - that role
-                  is provisioned through infrastructure only, never granted from
-                  the UI. */}
-              {(['HR', 'LINE_MANAGER', 'EMPLOYEE'] as AppRole[]).map((r) => {
-                const allowed = assignableRoles(currentUser ?? { role: 'EMPLOYEE' }).includes(r);
+              {/* The picker offers every role the current caller is allowed
+                  to grant per assignableRoles(). A SUPER_ADMIN can therefore
+                  promote another user to SUPER_ADMIN; anyone else sees only
+                  HR / LINE_MANAGER / EMPLOYEE. Backend validateRoleAssignment
+                  double-checks. */}
+              {assignableRoles(currentUser ?? { role: 'EMPLOYEE' }).map((r) => {
                 const on = draft.roles.includes(r);
                 return (
-                  <label key={r} className={cx('ep-role-chip', on && 'ep-role-chip-on', !allowed && 'ep-role-chip-disabled')}>
+                  <label key={r} className={cx('ep-role-chip', on && 'ep-role-chip-on')}>
                     <input
                       type="checkbox"
                       checked={on}
-                      disabled={!allowed}
-                      onChange={() => allowed && toggleRole(r)}
+                      onChange={() => toggleRole(r)}
                     />
                     <span>{ROLE_LABEL[r]}</span>
                   </label>
                 );
               })}
               <p className="muted ep-hint">
-                You can grant: {assignableRoles(currentUser ?? { role: 'EMPLOYEE' }).filter((r) => r !== 'SUPER_ADMIN').map((r) => ROLE_LABEL[r]).join(', ') || '-'}.
+                You can grant: {assignableRoles(currentUser ?? { role: 'EMPLOYEE' }).map((r) => ROLE_LABEL[r]).join(', ') || '-'}.
               </p>
             </div>
           ) : (
