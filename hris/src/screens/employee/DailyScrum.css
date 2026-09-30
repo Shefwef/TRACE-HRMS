@@ -620,9 +620,9 @@
   height: 8px;
   border-radius: 50%;
 }
-.dscrum-priority-option.dscrum-p-low    .dscrum-priority-dot { background: #3182ce; }
-.dscrum-priority-option.dscrum-p-medium .dscrum-priority-dot { background: #d69e2e; }
-.dscrum-priority-option.dscrum-p-high   .dscrum-priority-dot { background: #c53030; }
+.dscrum-priority-option.dscrum-p-low    .dscrum-priority-dot { background: #63b3ed; }
+.dscrum-priority-option.dscrum-p-medium .dscrum-priority-dot { background: #ecc94b; }
+.dscrum-priority-option.dscrum-p-high   .dscrum-priority-dot { background: #fc8181; }
 
 /* ─── Priority accent on task cards (left border only, no fill) ─── */
 .dscrum-t-item--tinted {
@@ -630,9 +630,9 @@
   border-radius: var(--radius-sm);
   padding-left: 10px;
 }
-.dscrum-t-item--tinted.dscrum-p-low    { border-left-color: #3182ce; } /* saturated blue  */
-.dscrum-t-item--tinted.dscrum-p-medium { border-left-color: #d69e2e; } /* saturated amber */
-.dscrum-t-item--tinted.dscrum-p-high   { border-left-color: #c53030; } /* saturated red   */
+.dscrum-t-item--tinted.dscrum-p-low    { border-left-color: #63b3ed; } /* soft blue  */
+.dscrum-t-item--tinted.dscrum-p-medium { border-left-color: #ecc94b; } /* soft amber */
+.dscrum-t-item--tinted.dscrum-p-high   { border-left-color: #fc8181; } /* soft red   */
 
 /* Waiting-on-decision tasks get a subtle red wash so they stand out
    from the plain priority-only cards without shouting. */
@@ -835,9 +835,9 @@
   border-radius: var(--radius-sm);
   background: var(--color-bg-surface);
 }
-.dscrum-etp-row.dscrum-p-low    { border-left-color: #3182ce; }
-.dscrum-etp-row.dscrum-p-medium { border-left-color: #d69e2e; }
-.dscrum-etp-row.dscrum-p-high   { border-left-color: #c53030; }
+.dscrum-etp-row.dscrum-p-low    { border-left-color: #63b3ed; }
+.dscrum-etp-row.dscrum-p-medium { border-left-color: #ecc94b; }
+.dscrum-etp-row.dscrum-p-high   { border-left-color: #fc8181; }
 .dscrum-etp-check {
   width: 16px;
   height: 16px;

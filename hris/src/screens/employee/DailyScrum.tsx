@@ -1170,13 +1170,58 @@ function MyTasksTab() {
       )}
 
       {activeDate && currentUser && (
-        <DetailModal
+        <MyTasksDetailPopup
           date={activeDate}
-          filterToUserId={currentUser.id}
+          userId={currentUser.id}
           onClose={() => setActiveDate(null)}
         />
       )}
     </div>
+  );
+}
+
+// ─── My Tasks details popup (single-person focused) ─────
+/**
+ * When someone clicks Details on a My Tasks card, they get the same
+ * focused per-employee popup that HR sees on the scrum board — never
+ * the full team-board layout. Keeps the surface consistent and keeps
+ * the person centred on their own In Progress / Done split.
+ */
+function MyTasksDetailPopup({
+  date, userId, onClose,
+}: {
+  date: string;
+  userId: string;
+  onClose: () => void;
+}) {
+  const { data, isLoading } = useDailyScrumDay(date);
+  const myEntry = data?.entries.find((e) => e.employeeId === userId);
+
+  if (isLoading) {
+    return (
+      <Modal open onClose={onClose} title="Loading…" size="sm">
+        <div className="dscrum-loading">Loading your tasks…</div>
+      </Modal>
+    );
+  }
+
+  if (!myEntry) {
+    return (
+      <Modal open onClose={onClose} title="No entry" size="sm">
+        <div className="dscrum-etp-empty">
+          You don&apos;t have a scrum entry for {fmtDate(date, 'd MMM yyyy')} yet.
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <EmployeeTasksPopup
+      entry={myEntry}
+      date={date}
+      canEdit
+      onClose={onClose}
+    />
   );
 }
 
@@ -1269,17 +1314,17 @@ export function DailyScrumPage() {
       </div>
 
       <div className="dscrum-tabs">
+                <button
+          className={cx('dscrum-tab', tab === 'MY_TASKS' && 'dscrum-tab-active')}
+          onClick={() => setTab('MY_TASKS')}
+        >
+          My Tasks
+        </button>
         <button
           className={cx('dscrum-tab', tab === 'SCRUM' && 'dscrum-tab-active')}
           onClick={() => setTab('SCRUM')}
         >
           Daily Scrum
-        </button>
-        <button
-          className={cx('dscrum-tab', tab === 'MY_TASKS' && 'dscrum-tab-active')}
-          onClick={() => setTab('MY_TASKS')}
-        >
-          My Tasks
         </button>
       </div>
 
