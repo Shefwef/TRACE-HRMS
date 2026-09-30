@@ -20,9 +20,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  position: relative;
   overflow: hidden;
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  /* Pinned so the branded header stays put while the team board scrolls. */
+  position: sticky;
+  top: calc(-1 * var(--space-6));
+  z-index: 20;
 }
 .dscrum-modal-hero::before {
   content: '';
@@ -334,6 +337,30 @@
 .dscrum-member-role {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
+}
+/* CTA hint under the name — always visible so new users know the row is
+   clickable, brightens on hover of its parent cell. */
+.dscrum-member-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 2px 8px;
+  align-self: flex-start;
+  border: 1px solid var(--color-border-default);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  background: var(--color-bg-surface);
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+.dscrum-member-cell--clickable:hover .dscrum-member-cta {
+  color: #2E86C1;
+  border-color: #2E86C1;
+  background: rgba(46, 134, 193, 0.08);
 }
 
 /* ─── Yesterday task item (green checkmark + text) ─── */
@@ -755,7 +782,11 @@
   background: linear-gradient(120deg, #2E86C1 0%, #1B5E86 100%);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   color: #fff;
-  position: relative;
+  /* Pinned to the top of the modal-body scroll container so the popup
+     header stays visible while the task list scrolls beneath it. */
+  position: sticky;
+  top: calc(-1 * var(--space-6));
+  z-index: 20;
 }
 .dscrum-etp-head-left { display: flex; align-items: center; gap: 14px; }
 .dscrum-etp-head-text { display: flex; flex-direction: column; gap: 2px; }

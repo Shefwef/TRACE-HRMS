@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Calendar, Search, Plus, Pencil, Trash2, ClipboardList,
-  Download, Check, AlertTriangle, Save, X,
+  Download, Check, AlertTriangle, Save, X, ListChecks,
 } from 'lucide-react';
 import { 
   useDailyScrumDay, useDailyScrumDates, useUpsertScrumEntry,
@@ -368,7 +368,7 @@ function BoardRow({ entry, canEdit, onOpenTask, onOpenEmployee }: BoardRowProps)
         type="button"
         className="dscrum-board-cell dscrum-member-cell dscrum-member-cell--clickable"
         onClick={() => onOpenEmployee(entry.id)}
-        title="View all tasks for this person"
+        title="Open task checkboxes for this person"
       >
         <Avatar
           initials={initials(emp.fullName)}
@@ -381,6 +381,9 @@ function BoardRow({ entry, canEdit, onOpenTask, onOpenEmployee }: BoardRowProps)
           {emp.designation && (
             <span className="dscrum-member-role">{emp.designation}</span>
           )}
+          <span className="dscrum-member-cta">
+            <ListChecks size={11} /> Open tasks
+          </span>
         </div>
       </button>
 
@@ -1304,7 +1307,7 @@ function MyTaskCard({ date, userId, searchQ, onDetails }: MyTaskCardProps) {
 // ─── Page root ───────────────────────────────────────────
 
 export function DailyScrumPage() {
-  const [tab, setTab] = useState<'SCRUM' | 'MY_TASKS'>('SCRUM');
+  const [tab, setTab] = useState<'SCRUM' | 'MY_TASKS'>('MY_TASKS');
 
   return (
     <div className="dscrum">

@@ -52,7 +52,7 @@
 .btn-primary:hover:not(:disabled) {
   background: var(--color-brand-secondary);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(44, 82, 130, 0.28);
+  box-shadow: 0 6px 16px rgba(46, 134, 193, 0.28);
 }
 .btn-primary:active:not(:disabled) {
   transform: translateY(0);

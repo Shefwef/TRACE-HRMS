@@ -1,8 +1,8 @@
 :root {
   /* ── Primary Brand ── */
-  --color-brand-primary: #2c5282;
-  --color-brand-secondary: #3182ce;
-  --color-brand-accent: #63b3ed;
+  --color-brand-primary: #2e86c1;
+  --color-brand-secondary: #1b5e86;
+  --color-brand-accent: #7bb8de;
 
   /* ── Surface & Background ── */
   --color-bg-canvas: #f7f9fc;
