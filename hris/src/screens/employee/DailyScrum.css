@@ -187,9 +187,18 @@
   grid-template-columns: 60px 1fr 1fr 120px;
   align-items: center;
   padding: 0 20px;
-  gap: 16px;
+  gap: 0;
   font-size: var(--text-sm);
 }
+.dscrum-list-head > div,
+.dscrum-list-row > div {
+  padding: 0 16px;
+  /* Thin vertical column separator. */
+  border-right: 1px solid #eef1f5;
+}
+.dscrum-list-head > div:last-child,
+.dscrum-list-row > div:last-child { border-right: none; }
+.dscrum-list-head > div { border-right-color: rgba(255, 255, 255, 0.18); }
 .dscrum-list-head {
   background: #305496;
   border-bottom: 1px solid var(--color-border-default);
@@ -276,7 +285,13 @@
   font-weight: var(--weight-semibold);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
-.dscrum-board-head > div { padding: 12px 16px; white-space: nowrap; }
+.dscrum-board-head > div {
+  padding: 12px 16px;
+  white-space: nowrap;
+  /* Thin vertical column separator; last column skips it below. */
+  border-right: 1px solid #eef1f5;
+}
+.dscrum-board-head > div:last-child { border-right: none; }
 
 .dscrum-board-row {
   border-bottom: 1px solid var(--color-border-default);
@@ -291,7 +306,10 @@
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+  /* Match the head so columns line up visually. */
+  border-right: 1px solid #eef1f5;
 }
+.dscrum-board-row > .dscrum-board-cell:last-child { border-right: none; }
 
 .dscrum-status-cell { align-items: flex-start; }
 

@@ -110,10 +110,21 @@
   display: grid;
   grid-template-columns: 40px 120px 2fr 1.4fr 1.4fr;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: 0;
+  padding: 10px 0;
   font-size: var(--text-sm);
 }
+.dsconf-thead > div,
+.dsconf-row > div {
+  padding: 0 14px;
+  /* Thin vertical column separator (checkbox column has no separator). */
+  border-right: 1px solid #eef1f5;
+}
+.dsconf-thead > div:first-child,
+.dsconf-row > div:first-child { border-right: none; padding-left: 14px; }
+.dsconf-thead > div:last-child,
+.dsconf-row > div:last-child { border-right: none; }
+.dsconf-row > .dsconf-check { border-right: none; }
 .dsconf-thead {
   background: var(--color-bg-subtle);
   color: var(--color-text-muted);

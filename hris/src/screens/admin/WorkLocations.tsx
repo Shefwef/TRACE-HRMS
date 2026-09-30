@@ -220,7 +220,7 @@ export function WorkLocations() {
                   </>
                 ) : (
                   <span className="muted">
-                    {r.clockInTime ? 'Trace office, Dhaka' : '-'}
+                    {r.clockInTime ? 'TRACE office, Dhaka' : '-'}
                   </span>
                 )}
               </span>

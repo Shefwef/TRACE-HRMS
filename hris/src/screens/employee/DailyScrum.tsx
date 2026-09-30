@@ -4,7 +4,7 @@ import {
   Calendar, Search, Plus, Pencil, Trash2, ClipboardList,
   Download, Check, AlertTriangle, Save, X,
 } from 'lucide-react';
-import {
+import { 
   useDailyScrumDay, useDailyScrumDates, useUpsertScrumEntry,
   useAddScrumTask, useUpdateScrumTask, useDeleteScrumTask,
   useGenerateScrumDay, useUsers,
@@ -164,7 +164,7 @@ function TaskModal({ intent, onClose }: TaskModalProps) {
         {showDetails && (
           <>
             <div className="dscrum-form-group">
-              <label className="dscrum-form-label">BLOCKER</label>
+              <label className="dscrum-form-label">WAITING ON DECISION</label>
               <div className="dscrum-toggle-row">
                 <button
                   type="button"
@@ -176,7 +176,7 @@ function TaskModal({ intent, onClose }: TaskModalProps) {
                     <span className="dscrum-toggle-knob" />
                   </span>
                   <span className="dscrum-toggle-text">
-                    {v.isDecision ? 'This task is blocked' : 'Not blocked'}
+                    {v.isDecision ? 'Waiting on a decision' : 'Ready to proceed'}
                   </span>
                 </button>
               </div>
@@ -187,12 +187,12 @@ function TaskModal({ intent, onClose }: TaskModalProps) {
                     <TextArea
                       value={v.decisionNote}
                       onChange={(e) => setV((p) => ({ ...p, decisionNote: e.target.value }))}
-                      placeholder="What decision is needed to unblock this?"
+                      placeholder="Whose decision is holding this back? (e.g. Waiting on budget approval from CFO)"
                       rows={2}
                       className="dscrum-blocker-input"
                     />
                   </div>
-                  <p className="dscrum-form-hint">Shown highlighted in the scrum board.</p>
+                  <p className="dscrum-form-hint">Highlighted in the scrum board so managers can spot what needs attention.</p>
                 </>
               )}
             </div>
@@ -521,7 +521,7 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
         { header: 'Designation', key: 'desig', width: 22 },
         { header: 'Yesterday/Completed', key: 'yesterday', width: 60 },
         { header: "Today's Tasks", key: 'today', width: 60 },
-        { header: 'Decisions Needed', key: 'decisions', width: 40 },
+        { header: 'Decisions/Blockers', key: 'decisions', width: 40 },
       ];
       const sheet = addSheet(wb, `Scrum ${date}`, cols);
       addRows(sheet, entries.map((e, i) => ({
@@ -613,7 +613,7 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
               <div>Member</div>
               <div>Yesterday/Completed</div>
               <div>Today</div>
-              <div>Decisions needed</div>
+              <div>Decisions/Blockers</div>
             </div>
 
             {visibleEntries.map((entry) => (
