@@ -436,7 +436,7 @@ export async function getCompanyReportData(
       isActive: true,
       ...(employeeIds === 'ALL' ? {} : { id: { in: employeeIds } }),
     },
-    orderBy: [{ department: 'asc' }, { fullName: 'asc' }],
+    orderBy: [{ department: 'asc' }, { employeeIdCode: { sort: 'asc', nulls: 'last' } }, { fullName: 'asc' }],
     include: {
       lineManager: { select: { fullName: true } },
       leaveBalances: { where: { cycleYear: period.year } },
@@ -602,7 +602,7 @@ export async function getAttendanceSummaryRows(
     prisma.user.findMany({
       where: { id: { in: employeeIds } },
       select: { id: true, fullName: true, employeeIdCode: true, designation: true },
-      orderBy: { fullName: 'asc' },
+      orderBy: [{ employeeIdCode: { sort: 'asc', nulls: 'last' } }, { fullName: 'asc' }],
     }),
     prisma.attendanceRecord.findMany({
       where: {
@@ -751,6 +751,7 @@ export async function getEmployeeDirectoryRows(): Promise<EmployeeDirectoryRow[]
     orderBy: [
       { isActive: 'desc' },
       { department: 'asc' },
+      { employeeIdCode: { sort: 'asc', nulls: 'last' } },
       { fullName: 'asc' },
     ],
   });

@@ -20,7 +20,7 @@ export async function GET(req: Request) {
       employeeIdCode: true,
       biometricUserId: true,
     },
-    orderBy: { fullName: 'asc' },
+    orderBy: [{ employeeIdCode: { sort: 'asc', nulls: 'last' } }, { fullName: 'asc' }],
   });
 
   return NextResponse.json(employees);

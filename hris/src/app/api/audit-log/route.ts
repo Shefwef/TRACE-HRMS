@@ -71,7 +71,7 @@ export async function GET(req: Request) {
     prisma.user.findMany({
       where: { isActive: true },
       select: { id: true, fullName: true, role: true },
-      orderBy: { fullName: 'asc' },
+      orderBy: [{ employeeIdCode: { sort: 'asc', nulls: 'last' } }, { fullName: 'asc' }],
     }),
   ]);
 

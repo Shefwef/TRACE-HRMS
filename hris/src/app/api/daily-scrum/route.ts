@@ -44,7 +44,7 @@ export async function GET(req: Request) {
       },
       tasks: { orderBy: { order: 'asc' } },
     },
-    orderBy: { employee: { fullName: 'asc' } },
+    orderBy: { employee: { employeeIdCode: { sort: 'asc', nulls: 'last' } } },
   });
 
   return NextResponse.json({

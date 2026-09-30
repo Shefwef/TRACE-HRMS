@@ -514,7 +514,7 @@ export async function getLocationBoard(args: {
       id: true, fullName: true, employeeIdCode: true,
       department: true, designation: true,
     },
-    orderBy: { fullName: 'asc' },
+    orderBy: [{ employeeIdCode: { sort: 'asc', nulls: 'last' } }, { fullName: 'asc' }],
   });
   if (employees.length === 0) return [];
 

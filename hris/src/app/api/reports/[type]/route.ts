@@ -856,7 +856,7 @@ async function renderAllEmployees(
 
   const employees = await prisma.user.findMany({
     where: { isActive: true },
-    orderBy: [{ role: 'asc' }, { fullName: 'asc' }],
+    orderBy: [{ role: 'asc' }, { employeeIdCode: { sort: 'asc', nulls: 'last' } }, { fullName: 'asc' }],
     include: {
       leaveBalances: { where: { cycleYear: year } },
       leaveRequests: {

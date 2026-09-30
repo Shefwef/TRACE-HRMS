@@ -50,7 +50,7 @@ export async function GET(req: Request) {
         },
       },
     },
-    orderBy: [{ date: 'desc' }, { employee: { fullName: 'asc' } }],
+    orderBy: [{ date: 'desc' }, { employee: { employeeIdCode: { sort: 'asc', nulls: 'last' } } }],
   });
 
   return NextResponse.json(
