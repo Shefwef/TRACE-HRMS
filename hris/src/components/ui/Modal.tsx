@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+'use client';
+import { useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import './Modal.css';
@@ -29,11 +31,22 @@ export function Modal({
     full: 'min(1200px, calc(100vw - 48px))',
   };
   const finalWidth = widthOverride ?? widths[size];
-  // Nested modals bump their overlay + dialog above the parent's dialog
-  // (base overlay 70 / dialog 71) so the parent gets covered and blurred.
-  const overlayZ = 70 + stackLevel * 10;
-  const wrapZ    = 71 + stackLevel * 10;
-  return (
+  // Nested modals bump their overlay + dialog above the parent's dialog.
+  // Base overlay 200 / dialog 201 sits above the sidebar drawer (z-91) and
+  // topbar dropdowns (z-40) with plenty of headroom for nested modals.
+  const overlayZ = 200 + stackLevel * 10;
+  const wrapZ    = 201 + stackLevel * 10;
+
+  // Portal to <body> so the modal escapes any ancestor stacking context.
+  // Any parent with a `transform`, `filter`, `backdrop-filter`, `perspective`,
+  // `contain` or `will-change` becomes the containing block for position:fixed
+  // descendants — which was trapping the overlay inside <.dscrum-tab-content>
+  // (its animation retains a translateY(0) transform). Portaling sidesteps
+  // that entire class of bug regardless of what future CSS ships.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  const tree = (
     <AnimatePresence>
       {open && (
         <>
@@ -74,4 +87,7 @@ export function Modal({
       )}
     </AnimatePresence>
   );
+
+  if (!mounted) return null;
+  return createPortal(tree, document.body);
 }
