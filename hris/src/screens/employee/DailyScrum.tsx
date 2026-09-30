@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Calendar, Search, Plus, Pencil, Trash2, ClipboardList,
-  Download, Sparkles, Check, AlertTriangle, Save, X,
+  Download, Check, AlertTriangle, Save, X,
 } from 'lucide-react';
 import {
   useDailyScrumDay, useDailyScrumDates, useUpsertScrumEntry,
@@ -681,8 +681,9 @@ function DailyScrumTab() {
   return (
     <div className="dscrum-tab-content">
       <div className="dscrum-controls">
-        <div className="dscrum-date-wrap">
+        <label className="dscrum-date-wrap">
           <Calendar size={16} className="dscrum-date-icon" />
+          <span className="dscrum-date-label">Filter</span>
           <input
             type="date"
             className="dscrum-date-input"
@@ -698,20 +699,22 @@ function DailyScrumTab() {
               Clear
             </button>
           )}
-        </div>
+        </label>
         {isHr && (
           <div className="dscrum-generate-wrap">
-            <input
-              type="date"
-              className="dscrum-date-input"
-              value={generateDate}
-              onChange={(e) => setGenerateDate(e.target.value)}
-              aria-label="Date to generate"
-            />
+            <label className="dscrum-date-wrap">
+              <span className="dscrum-date-label">Generate for</span>
+              <input
+                type="date"
+                className="dscrum-date-input"
+                value={generateDate}
+                onChange={(e) => setGenerateDate(e.target.value)}
+                aria-label="Date to generate"
+              />
+            </label>
             <Button
               size="sm"
               variant="primary"
-              leadingIcon={<Sparkles size={14} />}
               loading={generateDay.isPending}
               onClick={handleGenerate}
             >
