@@ -40,7 +40,7 @@ const SUGGESTED_PROMPTS = [
 const GREETING: ChatMsg = {
   role: 'assistant',
   content:
-    "Hi! I'm the TRACE HRMS assistant. Ask me anything about this app - how to apply for a leave, approve one, log extra work, invite employees, or general HR-information-system concepts.",
+    "Hi! I'm TRACY, the TRACE HRMS AI Assistant. Ask me anything about the app - how to apply for a leave, approve one, log extra work, invite employees, or general HR-information-system concepts.",
 };
 
 export function HelpPanel() {
@@ -119,10 +119,10 @@ export function HelpPanel() {
         <button
           className="help-fab"
           onClick={() => setOpen(true)}
-          aria-label="Open assistant"
+          aria-label="Open TRACY, the TRACE HRMS AI Assistant"
         >
           <MessageCircle size={18} />
-          <span>Ask HRMS</span>
+          <span>Ask TRACY</span>
         </button>
       )}
 
@@ -135,14 +135,14 @@ export function HelpPanel() {
               exit={{ opacity: 0, y: 20, scale: 0.96 }}
               transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
               role="dialog"
-              aria-label="HRMS assistant"
+              aria-label="TRACY, the TRACE HRMS AI Assistant"
             >
               <header className="help-header">
                 <div className="help-title">
                   <div className="help-title-icon"><Bot size={18} /></div>
                   <div>
-                    <div className="help-eyebrow">ASSISTANT</div>
-                    <h2>Ask HRMS</h2>
+                    <div className="help-eyebrow">TRACE HRMS AI ASSISTANT</div>
+                    <h2>TRACY</h2>
                   </div>
                 </div>
                 <div className="help-header-actions">
@@ -214,7 +214,7 @@ export function HelpPanel() {
                 <textarea
                   ref={inputRef}
                   className="help-input"
-                  placeholder="Ask about TRACE HRMS…"
+                  placeholder="Ask TRACY about TRACE HRMS…"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -231,7 +231,7 @@ export function HelpPanel() {
               </form>
 
               <footer className="help-footer">
-                Only answers about TRACE HRMS or HR-information-system concepts.
+                TRACY only answers about TRACE HRMS or HR-information-system concepts.
               </footer>
             </motion.aside>
         )}

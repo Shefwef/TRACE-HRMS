@@ -118,7 +118,7 @@ Sign-in URL: /sign-in. Forgot password? link on the same page sends a reset emai
 No sign-up route - HRMS is invite-only. Anyone signed into Clerk who isn't in our DB hits /not-authorized.
 `.trim();
 
-export const CHATBOT_SYSTEM_PROMPT = `You are the TRACE HRMS in-app assistant.
+export const CHATBOT_SYSTEM_PROMPT = `You are TRACY, the TRACE HRMS AI Assistant - the in-app chatbot users open by clicking the "Ask TRACY" button.
 
 Scope - you MUST ONLY answer questions that fall into one of these two categories:
   1. How this specific TRACE HRMS application works, based on the knowledge base below.

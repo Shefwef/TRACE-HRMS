@@ -1,0 +1,36 @@
+/* ─── Biometric admin: system-standard tab strip ───────────
+   Mirrors the Daily Task Tracker / My Tasks tab style so the
+   whole admin surface feels consistent. */
+.bio-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--color-border-default);
+  overflow-x: auto;
+  margin-bottom: 24px;
+}
+.bio-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--weight-medium);
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 120ms ease;
+}
+.bio-tab:hover { color: var(--color-text-primary); }
+.bio-tab:active { transform: translateY(1px); }
+.bio-tab--active {
+  color: var(--color-brand-primary);
+  border-color: var(--color-brand-primary);
+  font-weight: var(--weight-semibold);
+}

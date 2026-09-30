@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { useCurrentUser } from '@/lib/session';
 import { checkPermissionSync } from '@/lib/permissionsMeta';
+import './BiometricAdmin.css';
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -72,7 +73,7 @@ export function BiometricAdmin() {
       <div className="pg-head">
         <div>
           <h1><Fingerprint size={24} style={{ verticalAlign: 'middle', marginRight: 8 }} />Biometric</h1>
-          <p className="muted">ZKTeco M2-LR integration - punch ingest, device management, and employee mapping.</p>
+          <p className="muted">Manage the biometric connection from the admin side — devices, employee mapping, and punch history.</p>
         </div>
       </div>
 
@@ -97,7 +98,8 @@ export function BiometricAdmin() {
         </div>
       )}
 
-      <div className="tab-bar" style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--color-border-default)', marginBottom: 24 }}>
+      {/* System-standard tab strip (mirrors the Daily Task Tracker / My Tasks tabs). */}
+      <div className="bio-tabs">
         {([
           { key: 'punches',  label: 'Punches',   icon: <Activity size={14} /> },
           { key: 'devices',  label: 'Devices',   icon: <Server size={14} /> },
@@ -107,14 +109,9 @@ export function BiometricAdmin() {
         ] as { key: string; label: string; icon: React.ReactNode }[]).map((t) => (
           <button
             key={t.key}
+            type="button"
             onClick={() => setTab(t.key as typeof tab)}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '8px 14px', border: 'none', background: 'transparent', cursor: 'pointer',
-              fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)',
-              borderBottom: tab === t.key ? '2px solid var(--color-accent)' : '2px solid transparent',
-              color: tab === t.key ? 'var(--color-accent)' : 'var(--color-text-secondary)',
-            }}
+            className={`bio-tab${tab === t.key ? ' bio-tab--active' : ''}`}
           >
             {t.icon} {t.label}
           </button>
@@ -176,9 +173,9 @@ function DevicesTab({ canManage }: { canManage: boolean }) {
       <div className="card" style={{ overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
           <thead>
-            <tr style={{ background: 'var(--color-bg-subtle)', textAlign: 'left' }}>
+            <tr style={{ background: '#2E86C1', textAlign: 'left' }}>
               {['Status', 'Serial', 'Alias', 'Last seen', 'Punches', ...(canManage ? [''] : [])].map((h) => (
-                <th key={h} style={{ padding: '10px 16px', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--color-text-muted)', fontWeight: 600 }}>{h}</th>
+                <th key={h} style={{ padding: '10px 16px', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: '#fff', fontWeight: 600 }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -243,9 +240,9 @@ function MappingTab({ canManage }: { canManage: boolean }) {
       </div>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
         <thead>
-          <tr style={{ background: 'var(--color-bg-subtle)', textAlign: 'left' }}>
+          <tr style={{ background: '#2E86C1', textAlign: 'left' }}>
             {['Employee', 'Designation', 'Device ID (emp_code)', ...(canManage ? [''] : [])].map((h) => (
-              <th key={h} style={{ padding: '10px 16px', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--color-text-muted)', fontWeight: 600 }}>{h}</th>
+              <th key={h} style={{ padding: '10px 16px', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: '#fff', fontWeight: 600 }}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -551,9 +548,9 @@ function PunchesTab() {
 
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
         <thead>
-          <tr style={{ background: 'var(--color-bg-subtle)', textAlign: 'left' }}>
+          <tr style={{ background: '#2E86C1', textAlign: 'left' }}>
             {cols.map((h) => (
-              <th key={h} style={{ padding: '10px 16px', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--color-text-muted)', fontWeight: 600 }}>
+              <th key={h} style={{ padding: '10px 16px', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: '#fff', fontWeight: 600 }}>
                 {h}
               </th>
             ))}
@@ -695,9 +692,9 @@ function SyncLogTab() {
       </div>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
         <thead>
-          <tr style={{ background: 'var(--color-bg-subtle)', textAlign: 'left' }}>
+          <tr style={{ background: '#2E86C1', textAlign: 'left' }}>
             {['Time', 'Received', 'Applied', 'Duplicates', 'Unmapped', 'Status'].map((h) => (
-              <th key={h} style={{ padding: '10px 16px', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--color-text-muted)', fontWeight: 600 }}>{h}</th>
+              <th key={h} style={{ padding: '10px 16px', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: '#fff', fontWeight: 600 }}>{h}</th>
             ))}
           </tr>
         </thead>
