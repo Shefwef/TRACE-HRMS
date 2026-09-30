@@ -2,14 +2,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Calendar, Search, Plus, Pencil, Trash2, ClipboardList,
-  Download, Check, AlertTriangle, Save, X, Loader2,
+  Download, Check, AlertTriangle, Save, X,
 } from 'lucide-react';
 import { 
   useDailyScrumDay, useDailyScrumDates, useUpsertScrumEntry,
   useAddScrumTask, useUpdateScrumTask, useDeleteScrumTask,
   useGenerateScrumDay, useUsers,
   type DailyScrumEntryShape, type DailyTaskShape, type UserSummary,
-  type TaskPriority, type TaskStatus,
+  type TaskPriority,
 } from '@/lib/hooks';
 import { useCurrentUser, initials, avatarColorFor } from '@/lib/session';
 import { useStore } from '@/lib/store';
@@ -266,85 +266,6 @@ function TaskModal({ intent, onClose }: TaskModalProps) {
   );
 }
 
-// ─── Status icon (per-task pill on the scrum board) ─────
-/**
- * Compact status pill:
- *   • DONE          → green check
- *   • Waiting on    → amber alert (isDecision overrides IN_PROGRESS)
- *   • IN_PROGRESS   → yellow spinner
- * Kept small enough to sit inline with the task text.
- */
-function StatusIcon({ task }: { task: DailyTaskShape }) {
-  if (task.status === 'DONE') {
-    return (
-      <span className="dscrum-status dscrum-status--done" title="Done">
-        <Check size={12} strokeWidth={3} />
-      </span>
-    );
-  }
-  if (task.isDecision) {
-    return (
-      <span className="dscrum-status dscrum-status--blocked" title="Waiting on decision">
-        <AlertTriangle size={12} />
-      </span>
-    );
-  }
-  return (
-    <span className="dscrum-status dscrum-status--inprogress" title="In progress">
-      <Loader2 size={12} className="dscrum-status-spin" />
-    </span>
-  );
-}
-
-// ─── Priority chip ───────────────────────────────────────
-
-function PriorityChip({ priority }: { priority: TaskPriority }) {
-  return (
-    <span className={cx('dscrum-priority-chip', priorityClass(priority))}>
-      {priority === 'LOW' ? 'Low' : priority === 'MEDIUM' ? 'Medium' : 'High'}
-    </span>
-  );
-}
-
-// ─── Board legend ────────────────────────────────────────
-/**
- * Tiny top-right key that explains what each status icon and priority
- * colour mean on the scrum board. Kept as a single row so it doesn't
- * take vertical space away from the tasks themselves.
- */
-function BoardLegend() {
-  return (
-    <div className="dscrum-legend" aria-label="Legend">
-      <span className="dscrum-legend-group">
-        <span className="dscrum-legend-item">
-          <span className="dscrum-status dscrum-status--done"><Check size={10} strokeWidth={3} /></span>
-          Done
-        </span>
-        <span className="dscrum-legend-item">
-          <span className="dscrum-status dscrum-status--inprogress"><Loader2 size={10} className="dscrum-status-spin" /></span>
-          In progress
-        </span>
-        <span className="dscrum-legend-item">
-          <span className="dscrum-status dscrum-status--blocked"><AlertTriangle size={10} /></span>
-          Waiting on decision
-        </span>
-      </span>
-      <span className="dscrum-legend-sep" aria-hidden="true" />
-      <span className="dscrum-legend-group">
-        <span className="dscrum-legend-item">
-          <span className="dscrum-legend-swatch dscrum-p-low" /> Low
-        </span>
-        <span className="dscrum-legend-item">
-          <span className="dscrum-legend-swatch dscrum-p-medium" /> Medium
-        </span>
-        <span className="dscrum-legend-item">
-          <span className="dscrum-legend-swatch dscrum-p-high" /> High
-        </span>
-      </span>
-    </div>
-  );
-}
-
 // ─── Yesterday item ──────────────────────────────────────
 
 function YesterdayItem({
@@ -391,7 +312,6 @@ function TodayItem({
 
   return (
     <div className={cx('dscrum-t-item', 'dscrum-t-item--tinted', priorityClass(task.priority))}>
-      <StatusIcon task={task} />
       <div className="dscrum-t-content">
         <div className="dscrum-t-line">
           <span className="dscrum-t-text">{task.text}</span>
@@ -400,7 +320,6 @@ function TodayItem({
           )}
         </div>
       </div>
-      <PriorityChip priority={task.priority} />
       {canEdit && (
         <div className="dscrum-inline-actions">
           <button type="button" className="dscrum-icon-btn" title="Edit" onClick={onEdit}>
@@ -696,17 +615,14 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
           </button>
         </div>
 
-        <div className="dscrum-modal-toolbar">
-          <div className="dscrum-modal-search">
-            <Search size={14} className="dscrum-search-icon" />
-            <input
-              className="dscrum-search-input"
-              placeholder="Search tasks or people"
-              value={searchQ}
-              onChange={(e) => setSearchQ(e.target.value)}
-            />
-          </div>
-          <BoardLegend />
+        <div className="dscrum-modal-search">
+          <Search size={14} className="dscrum-search-icon" />
+          <input
+            className="dscrum-search-input"
+            placeholder="Search tasks or people"
+            value={searchQ}
+            onChange={(e) => setSearchQ(e.target.value)}
+          />
         </div>
 
         {isLoading && <div className="dscrum-loading">Loading…</div>}
