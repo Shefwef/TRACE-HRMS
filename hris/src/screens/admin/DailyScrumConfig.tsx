@@ -114,7 +114,7 @@ export function DailyScrumConfig() {
       <div className="dsconf-panel">
         <div className="dsconf-panel-head">
           <div className="dsconf-panel-title">
-            <Sparkles size={16} /> Generate a scrum board
+             Generate a scrum board
           </div>
           <p className="muted">
             Creates an entry for every currently-included employee on the chosen date.
@@ -134,7 +134,7 @@ export function DailyScrumConfig() {
           </div>
           <Button
             variant="primary"
-            leadingIcon={<Sparkles size={14} />}
+            // leadingIcon={<Sparkles size={14} />}
             loading={generate.isPending}
             disabled={includedCount === 0}
             onClick={handleGenerate}
