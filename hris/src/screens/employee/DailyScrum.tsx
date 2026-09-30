@@ -186,7 +186,7 @@ function BoardRow({ entry, canEdit, onOpenEmployee }: BoardRowProps) {
             className="dscrum-add-btn"
             onClick={() => onOpenEmployee(entry.id)}
           >
-            <Plus size={11} /> Add task
+            <Plus size={11} /> Add / manage tasks
           </button>
         )}
       </div>
@@ -209,7 +209,7 @@ function BoardRow({ entry, canEdit, onOpenEmployee }: BoardRowProps) {
             className="dscrum-add-btn"
             onClick={() => onOpenEmployee(entry.id)}
           >
-            <Plus size={11} /> Add task
+            <Plus size={11} /> Add / manage tasks
           </button>
         )}
       </div>
