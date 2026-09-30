@@ -113,6 +113,7 @@
   font-weight: var(--weight-semibold);
   color: var(--color-text-muted);
 }
+.ep-field-required { color: var(--color-danger); margin-left: 2px; }
 .ep-field-value {
   font-size: var(--text-sm);
   color: var(--color-text-primary);

@@ -41,7 +41,8 @@ function assignableRoles(actor: { role: string; roles?: string[] | null }): AppR
 }
 
 interface DraftProfile {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   designation: string;
   department: string;
   employeeIdCode: string;
@@ -51,6 +52,23 @@ interface DraftProfile {
   avatarUrl: string;
   lineManagerId: string | null;
   roles: AppRole[];
+}
+
+/**
+ * Splits a fullName into first + last. First word is the first name; the
+ * rest joins into the last name so a middle-name-heavy person still edits
+ * cleanly (e.g. "Md. Muftehedul Islam Mithul" -> first="Md.", last=rest).
+ */
+function splitName(fullName: string): { firstName: string; lastName: string } {
+  const parts = fullName.trim().split(/\s+/);
+  return {
+    firstName: parts[0] ?? '',
+    lastName: parts.slice(1).join(' '),
+  };
+}
+
+function joinName(firstName: string, lastName: string): string {
+  return `${firstName.trim()} ${lastName.trim()}`.trim();
 }
 
 export function EmployeeProfilePage({ id }: { id: string }) {
@@ -75,8 +93,10 @@ export function EmployeeProfilePage({ id }: { id: string }) {
   // Seed the draft when profile loads or we exit edit mode.
   useEffect(() => {
     if (!profile) return;
+    const { firstName, lastName } = splitName(profile.fullName);
     setDraft({
-      fullName: profile.fullName,
+      firstName,
+      lastName,
       designation: profile.designation ?? '',
       department: profile.department ?? '',
       employeeIdCode: profile.employeeIdCode ?? '',
@@ -138,8 +158,13 @@ export function EmployeeProfilePage({ id }: { id: string }) {
 
   function saveChanges() {
     if (!draft) return;
+    const fullName = joinName(draft.firstName, draft.lastName);
+    if (!fullName) {
+      addToast({ kind: 'error', title: 'First name is required', body: 'Please enter a first name before saving.' });
+      return;
+    }
     const patch: Record<string, unknown> = {
-      fullName: draft.fullName,
+      fullName,
       designation: draft.designation || undefined,
       department: draft.department || undefined,
       employeeIdCode: draft.employeeIdCode || undefined,
@@ -197,7 +222,7 @@ export function EmployeeProfilePage({ id }: { id: string }) {
           <div className="ep-header-avatar-edit">
             <AvatarUpload
               value={draft.avatarUrl}
-              name={draft.fullName || profile.fullName}
+              name={joinName(draft.firstName, draft.lastName) || profile.fullName}
               onChange={(url) => setDraft({ ...draft, avatarUrl: url })}
             />
           </div>
@@ -211,15 +236,12 @@ export function EmployeeProfilePage({ id }: { id: string }) {
           />
         )}
         <div className="ep-header-body">
-          {editing ? (
-            <TextInput
-              className="ep-header-name-input"
-              value={draft.fullName}
-              onChange={(e) => setDraft({ ...draft, fullName: e.target.value })}
-            />
-          ) : (
-            <h1 className="ep-header-name">{profile.fullName}</h1>
-          )}
+          {/* Name at the header is always read-only, even in edit mode.
+              The editable First / Last name fields live inside the
+              Profile details grid below (mirrors the invite modal). */}
+          <h1 className="ep-header-name">
+            {editing ? (joinName(draft.firstName, draft.lastName) || profile.fullName) : profile.fullName}
+          </h1>
           <div className="ep-header-meta">
             <span>{profile.designation ?? <em className="muted">No designation</em>}</span>
             {profile.employeeIdCode && (
@@ -257,6 +279,19 @@ export function EmployeeProfilePage({ id }: { id: string }) {
         <section className="card ep-section ep-section-primary">
           <h2>Profile details</h2>
           <div className="ep-fields">
+            <ProfileField
+              label="First name"
+              editing={editing}
+              value={editing ? draft.firstName : (splitName(profile.fullName).firstName || '-')}
+              onChange={(v) => setDraft({ ...draft, firstName: v })}
+              required
+            />
+            <ProfileField
+              label="Last name"
+              editing={editing}
+              value={editing ? draft.lastName : (splitName(profile.fullName).lastName || '-')}
+              onChange={(v) => setDraft({ ...draft, lastName: v })}
+            />
             <ProfileField label="Email" value={profile.email} readOnly />
             <ProfileField
               label="Employee ID"
@@ -587,7 +622,7 @@ export function EmployeeProfilePage({ id }: { id: string }) {
 }
 
 function ProfileField({
-  label, value, onChange, editing = false, type = 'text', readOnly = false,
+  label, value, onChange, editing = false, type = 'text', readOnly = false, required = false,
 }: {
   label: string;
   value: string;
@@ -595,12 +630,16 @@ function ProfileField({
   editing?: boolean;
   type?: 'text' | 'date';
   readOnly?: boolean;
+  required?: boolean;
 }) {
   return (
     <div className="ep-field">
-      <span className="ep-field-label">{label}</span>
+      <span className="ep-field-label">
+        {label}
+        {required && editing && <span className="ep-field-required" aria-hidden="true"> *</span>}
+      </span>
       {editing && !readOnly ? (
-        <TextInput type={type} value={value} onChange={(e) => onChange?.(e.target.value)} />
+        <TextInput type={type} value={value} onChange={(e) => onChange?.(e.target.value)} required={required} />
       ) : (
         <span className="ep-field-value">{value || <em className="muted">-</em>}</span>
       )}
