@@ -86,12 +86,17 @@ export function DailyScrumConfig() {
     if (!genDate) return;
     generate.mutate(genDate, {
       onSuccess: (r) => {
+        const parts: string[] = [];
+        if (r.createdEntries > 0) parts.push(`${r.createdEntries} added`);
+        if (r.skippedEntries > 0) parts.push(`${r.skippedEntries} kept`);
+        if (r.prunedEntries > 0)  parts.push(`${r.prunedEntries} removed`);
+        if (r.copiedTasks > 0)    parts.push(`${r.copiedTasks} tasks carried forward`);
         addToast({
           kind: 'success',
-          title: 'Scrum board generated',
-          body: r.createdEntries === 0
-            ? `All rostered employees already have an entry for ${fmtDate(genDate, 'd MMM yyyy')}.`
-            : `${r.createdEntries} new ${r.createdEntries === 1 ? 'entry' : 'entries'} created for ${fmtDate(genDate, 'd MMM yyyy')}${r.copiedTasks > 0 ? ` (${r.copiedTasks} tasks carried from prior day)` : ''}.`,
+          title: 'Scrum board reconciled',
+          body: parts.length === 0
+            ? `Nothing to change for ${fmtDate(genDate, 'd MMM yyyy')}.`
+            : `${parts.join(' · ')} for ${fmtDate(genDate, 'd MMM yyyy')}.`,
         });
       },
       onError: (e: Error) => {

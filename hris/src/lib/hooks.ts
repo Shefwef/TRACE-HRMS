@@ -1329,7 +1329,7 @@ export function useGenerateScrumDay() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (date: string) =>
-      api<{ ok: boolean; createdEntries: number; skippedEntries: number; copiedTasks: number }>(
+      api<{ ok: boolean; createdEntries: number; skippedEntries: number; prunedEntries: number; copiedTasks: number }>(
         '/api/daily-scrum/generate',
         { method: 'POST', body: JSON.stringify({ date }) },
       ),

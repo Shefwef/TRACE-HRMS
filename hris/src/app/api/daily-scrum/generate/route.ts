@@ -7,18 +7,24 @@ import { dayKeyToDateOnly } from '@/lib/workday';
 /**
  * POST /api/daily-scrum/generate  { date: 'YYYY-MM-DD' }
  *
- * Creates a scrum entry for the given date for every currently-selected
- * employee (User.dailyScrumIncluded = true). Idempotent — employees who
- * already have an entry for that date are left untouched, so HR can safely
- * run this again after adding a mid-week joiner to the roster.
+ * Reconciles the target day's scrum entries against the current roster
+ * (User.dailyScrumIncluded = true). Regeneration semantics — a re-run
+ * on the same date is the way HR pushes the latest roster to that day:
  *
- * Task carryover from the prior day's entry:
- *   • Only source tasks with type='TODAY' are considered (source COMPLETED
- *     tasks stayed on that older day).
- *   • If carryOver=true on the source, the copy lands as type='TODAY' on
- *     the new day (appears in tomorrow's Today column).
- *   • Otherwise it lands as type='COMPLETED' (appears in tomorrow's
- *     Yesterday/Completed column).
+ *   * ADD    — creates an empty scrum entry for every rostered employee
+ *              who doesn't yet have one, seeded with the prior day's
+ *              DONE-tasks as COMPLETED items (see carryover rule below).
+ *   * KEEP   — employees already on the board with an entry are left
+ *              untouched, so tasks they've written are never lost.
+ *   * PRUNE  — employees whose entries exist for the target date but
+ *              are NOT in the current roster get their entry (and
+ *              cascade its tasks) deleted. This lets a fresh generation
+ *              replace old rows for people HR unchecked in Config.
+ *
+ * Task carryover on new entries: only prior-day TODAY tasks with
+ * status = DONE propagate, and they land as type = COMPLETED so they
+ * live in tomorrow's Yesterday/Completed column. In-progress work is
+ * dropped; the owner can pull anything relevant forward by hand.
  *
  * Only HR / SUPER_ADMIN.
  */
@@ -58,13 +64,26 @@ export async function POST(req: Request) {
 
   const priorByEmp = new Map(priorEntries.map((e) => [e.employeeId, e.tasks]));
 
-  // Which employees already have an entry for the target date? Those we skip.
-  const existing = await prisma.dailyScrumEntry.findMany({
-    where: { date: target, employeeId: { in: roster.map((r) => r.id) } },
-    select: { employeeId: true },
+  // Everything currently on the board for the target date, regardless of
+  // whether the employee is still rostered. `keptIds` = intersection with
+  // roster (we don't touch these); `pruneIds` = the difference (deleted
+  // below, cascade removes their tasks).
+  const allExisting = await prisma.dailyScrumEntry.findMany({
+    where: { date: target },
+    select: { id: true, employeeId: true },
   });
-  const existingIds = new Set(existing.map((e) => e.employeeId));
-  const toCreate = roster.filter((r) => !existingIds.has(r.id));
+  const rosterIdSet = new Set(roster.map((r) => r.id));
+  const keptIds  = new Set(allExisting.filter((e) => rosterIdSet.has(e.employeeId)).map((e) => e.employeeId));
+  const pruneRows = allExisting.filter((e) => !rosterIdSet.has(e.employeeId));
+  const toCreate = roster.filter((r) => !keptIds.has(r.id));
+
+  let prunedEntries = 0;
+  if (pruneRows.length > 0) {
+    const res = await prisma.dailyScrumEntry.deleteMany({
+      where: { id: { in: pruneRows.map((r) => r.id) } },
+    });
+    prunedEntries = res.count;
+  }
 
   // Sequential creates so we can compute per-entry task copies in one shot.
   //
@@ -104,7 +123,8 @@ export async function POST(req: Request) {
   return NextResponse.json({
     ok: true,
     createdEntries,
-    skippedEntries: existingIds.size,
+    skippedEntries: keptIds.size,
+    prunedEntries,
     copiedTasks,
   });
 }

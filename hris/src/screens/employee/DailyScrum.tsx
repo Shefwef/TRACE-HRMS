@@ -5,10 +5,10 @@ import {
   Download, Check, AlertTriangle, X,
 } from 'lucide-react';
 import { 
-  useDailyScrumDay, useDailyScrumDates, useUpsertScrumEntry,
+  useDailyScrumDay, useDailyScrumDates,
   useAddScrumTask, useUpdateScrumTask, useDeleteScrumTask,
-  useGenerateScrumDay, useUsers,
-  type DailyScrumEntryShape, type DailyTaskShape, type UserSummary,
+  useGenerateScrumDay,
+  type DailyScrumEntryShape, type DailyTaskShape,
   type TaskPriority,
 } from '@/lib/hooks';
 import { useCurrentUser, initials, avatarColorFor } from '@/lib/session';
@@ -631,47 +631,6 @@ function EmployeeTasksPopup({
   );
 }
 
-// ─── Placeholder row (user without an entry) ─────────────
-
-interface PlaceholderRowProps {
-  user: UserSummary;
-  date: string;
-}
-
-function PlaceholderRow({ user, date }: PlaceholderRowProps) {
-  const upsert = useUpsertScrumEntry();
-  return (
-    <div className="dscrum-board-row dscrum-board-row-empty">
-      <div className="dscrum-board-cell dscrum-member-cell">
-        <Avatar
-          initials={initials(user.fullName)}
-          color={avatarColorFor(user.id)}
-          imageUrl={user.avatarUrl}
-          size="md"
-        />
-        <div className="dscrum-member-info">
-          <span className="dscrum-member-name">{user.fullName}</span>
-          {user.designation && (
-            <span className="dscrum-member-role">{user.designation}</span>
-          )}
-        </div>
-      </div>
-      <div className="dscrum-board-cell dscrum-placeholder-cell" style={{ gridColumn: 'span 3' }}>
-        <span className="dscrum-none">No entry yet</span>
-        <Button
-          size="sm"
-          variant="secondary"
-          leadingIcon={<Plus size={12} />}
-          loading={upsert.isPending}
-          onClick={() => upsert.mutate({ date, employeeId: user.id })}
-        >
-          Create entry
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 // ─── Detail modal (the team board) ───────────────────────
 
 interface DetailModalProps {
@@ -682,7 +641,6 @@ interface DetailModalProps {
 
 function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
   const { data, isLoading } = useDailyScrumDay(date);
-  const { data: users } = useUsers();
   const currentUser = useCurrentUser();
   const [searchQ, setSearchQ] = useState('');
   const [opened, setOpened] = useState<{ entryId: string; editTaskId?: string } | null>(null);
@@ -698,17 +656,6 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
     return [...filtered].sort(byEmployeeId((e) => e.employee));
   }, [data, filterToUserId]);
 
-  const activeUsers = useMemo(() => {
-    if (!users) return [] as UserSummary[];
-    return users
-      .filter((u) => u.isActive && !u.deletedAt)
-      .filter((u) => (filterToUserId ? u.id === filterToUserId : true))
-      .sort(byEmployeeId((u) => u));
-  }, [users, filterToUserId]);
-
-  const entryUserIds = new Set(entries.map((e) => e.employeeId));
-  const missing = activeUsers.filter((u) => !entryUserIds.has(u.id));
-
   const q = searchQ.trim().toLowerCase();
   const visibleEntries = q
     ? entries.filter(
@@ -717,9 +664,6 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
           e.tasks.some((t) => t.text.toLowerCase().includes(q)),
       )
     : entries;
-  const visibleMissing = q
-    ? missing.filter((u) => u.fullName.toLowerCase().includes(q))
-    : missing;
 
   function canEditEntry(e: DailyScrumEntryShape): boolean {
     if (canEditAll) return true;
@@ -728,7 +672,7 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
     return false;
   }
 
-  const memberCount = entries.length + missing.length;
+  const memberCount = entries.length;
   const taskCount = entries.reduce((sum, e) => sum + e.tasks.length, 0);
   const [exporting, setExporting] = useState(false);
 
@@ -825,15 +769,17 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
 
         {isLoading && <div className="dscrum-loading">Loading…</div>}
 
-        {!isLoading && visibleEntries.length === 0 && visibleMissing.length === 0 && (
+        {!isLoading && visibleEntries.length === 0 && (
           <EmptyState
             icon={<ClipboardList size={32} />}
             title="Nothing to show"
-            body={searchQ ? 'Try a different search term.' : 'No scrum entries for this date.'}
+            body={searchQ
+              ? 'Try a different search term.'
+              : 'No scrum entries for this date. Ask HR to generate the board from Daily Tracker Config.'}
           />
         )}
 
-        {!isLoading && (visibleEntries.length > 0 || visibleMissing.length > 0) && (
+        {!isLoading && visibleEntries.length > 0 && (
           <div className="dscrum-board">
             <div className="dscrum-board-head">
               <div>Member</div>
@@ -849,10 +795,6 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
                 canEdit={canEditEntry(entry)}
                 onOpenEmployee={(entryId, editTaskId) => setOpened({ entryId, editTaskId })}
               />
-            ))}
-
-            {visibleMissing.map((u) => (
-              <PlaceholderRow key={u.id} user={u} date={date} />
             ))}
           </div>
         )}
@@ -899,12 +841,17 @@ function DailyScrumTab() {
     if (!generateDate) return;
     generateDay.mutate(generateDate, {
       onSuccess: (r) => {
+        const parts: string[] = [];
+        if (r.createdEntries > 0) parts.push(`${r.createdEntries} added`);
+        if (r.skippedEntries > 0) parts.push(`${r.skippedEntries} kept`);
+        if (r.prunedEntries > 0)  parts.push(`${r.prunedEntries} removed`);
+        if (r.copiedTasks > 0)    parts.push(`${r.copiedTasks} tasks carried forward`);
         addToast({
           kind: 'success',
-          title: 'Scrum board generated',
-          body: r.createdEntries === 0
-            ? `All rostered employees already have an entry for ${fmtDate(generateDate, 'd MMM yyyy')}.`
-            : `${r.createdEntries} new ${r.createdEntries === 1 ? 'entry' : 'entries'} created for ${fmtDate(generateDate, 'd MMM yyyy')}${r.copiedTasks > 0 ? ` (${r.copiedTasks} tasks carried from prior day)` : ''}.`,
+          title: 'Scrum board reconciled',
+          body: parts.length === 0
+            ? `Nothing to change for ${fmtDate(generateDate, 'd MMM yyyy')}.`
+            : `${parts.join(' · ')} for ${fmtDate(generateDate, 'd MMM yyyy')}.`,
         });
       },
       onError: (e: Error) => {

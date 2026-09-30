@@ -76,12 +76,25 @@ export async function GET(req: Request) {
 
   const priorByEmp = new Map(priorEntries.map((e) => [e.employeeId, e.tasks]));
 
-  const existing = await prisma.dailyScrumEntry.findMany({
-    where: { date: targetDate, employeeId: { in: roster.map((r) => r.id) } },
-    select: { employeeId: true },
+  // Reconcile the target day against the current roster (same rule the
+  // manual Generate endpoint uses): keep entries for employees still in
+  // the roster, drop entries for anyone unchecked, and add missing ones.
+  const allExisting = await prisma.dailyScrumEntry.findMany({
+    where: { date: targetDate },
+    select: { id: true, employeeId: true },
   });
-  const existingIds = new Set(existing.map((e) => e.employeeId));
-  const toCreate = roster.filter((r) => !existingIds.has(r.id));
+  const rosterIdSet = new Set(roster.map((r) => r.id));
+  const keptIds  = new Set(allExisting.filter((e) => rosterIdSet.has(e.employeeId)).map((e) => e.employeeId));
+  const pruneRows = allExisting.filter((e) => !rosterIdSet.has(e.employeeId));
+  const toCreate = roster.filter((r) => !keptIds.has(r.id));
+
+  let prunedEntries = 0;
+  if (pruneRows.length > 0) {
+    const res = await prisma.dailyScrumEntry.deleteMany({
+      where: { id: { in: pruneRows.map((r) => r.id) } },
+    });
+    prunedEntries = res.count;
+  }
 
   let createdEntries = 0;
   let copiedTasks = 0;
@@ -117,7 +130,8 @@ export async function GET(req: Request) {
     dow,
     rosterSize: roster.length,
     createdEntries,
-    skippedExisting: existingIds.size,
+    skippedExisting: keptIds.size,
+    prunedEntries,
     copiedTasks,
   });
 }
