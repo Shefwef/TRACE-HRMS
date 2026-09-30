@@ -158,7 +158,7 @@ function TodayItem({
 interface BoardRowProps {
   entry: DailyScrumEntryShape;
   canEdit: boolean;
-  onOpenEmployee: (entryId: string, editTaskId?: string) => void;
+  onOpenEmployee: (entryId: string, editTaskId?: string, targetType?: 'TODAY' | 'COMPLETED') => void;
 }
 
 function BoardRow({ entry, canEdit, onOpenEmployee }: BoardRowProps) {
@@ -199,14 +199,14 @@ function BoardRow({ entry, canEdit, onOpenEmployee }: BoardRowProps) {
             key={t.id}
             task={t}
             canEdit={canEdit}
-            onEdit={() => onOpenEmployee(entry.id, t.id)}
+            onEdit={() => onOpenEmployee(entry.id, t.id, 'COMPLETED')}
           />
         ))}
         {canEdit && (
           <button
             type="button"
             className="dscrum-add-btn"
-            onClick={() => onOpenEmployee(entry.id)}
+            onClick={() => onOpenEmployee(entry.id, undefined, 'COMPLETED')}
           >
             <Plus size={11} /> Add / manage tasks
           </button>
@@ -222,14 +222,14 @@ function BoardRow({ entry, canEdit, onOpenEmployee }: BoardRowProps) {
             key={t.id}
             task={t}
             canEdit={canEdit}
-            onEdit={() => onOpenEmployee(entry.id, t.id)}
+            onEdit={() => onOpenEmployee(entry.id, t.id, 'TODAY')}
           />
         ))}
         {canEdit && (
           <button
             type="button"
             className="dscrum-add-btn"
-            onClick={() => onOpenEmployee(entry.id)}
+            onClick={() => onOpenEmployee(entry.id, undefined, 'TODAY')}
           >
             <Plus size={11} /> Add / manage tasks
           </button>
@@ -275,6 +275,12 @@ interface EmployeeTasksPopupProps {
    *  form so the viewer lands directly in edit mode (used when clicking a
    *  task on the scrum board). */
   initialEditTaskId?: string;
+  /** Which column the popup is scoped to.
+   *  - 'TODAY' (default): In Progress / Done tabs; form adds today items.
+   *  - 'COMPLETED': flat list of yesterday/completed items; form adds
+   *    already-done historical items (no status toggle, no carry-over,
+   *    no waiting-on-decision — those don't apply to finished work). */
+  targetType?: 'TODAY' | 'COMPLETED';
   /** Stack depth when opened on top of another modal (dims parent). */
   stackLevel?: number;
 }
@@ -304,8 +310,9 @@ function taskToForm(task: DailyTaskShape): QuickTaskFormValue {
 }
 
 function EmployeeTasksPopup({
-  entry, date, canEdit, onClose, initialEditTaskId, stackLevel = 0,
+  entry, date, canEdit, onClose, initialEditTaskId, targetType = 'TODAY', stackLevel = 0,
 }: EmployeeTasksPopupProps) {
+  const isCompletedMode = targetType === 'COMPLETED';
   const [tab, setTab] = useState<'IN_PROGRESS' | 'DONE'>('IN_PROGRESS');
   const [editingId, setEditingId] = useState<string | null>(initialEditTaskId ?? null);
   const [v, setV] = useState<QuickTaskFormValue>(() => {
@@ -319,12 +326,17 @@ function EmployeeTasksPopup({
   const updateTask = useUpdateScrumTask();
   const removeTask = useDeleteScrumTask();
 
-  // Only TODAY-type tasks live in the tabs — COMPLETED-type rows represent
-  // rolled-forward yesterday items and don't need a status flip UI.
+  // Split the visible list based on which column the popup was scoped to.
+  // COMPLETED-mode = yesterday/completed column: flat list of type=COMPLETED
+  // rows (all effectively DONE by definition). TODAY-mode: the classic
+  // In Progress / Done sub-tab split over type=TODAY rows.
   const todayTasks = entry.tasks.filter((t) => t.type === 'TODAY');
+  const completedTasks = entry.tasks.filter((t) => t.type === 'COMPLETED');
   const inProgress = todayTasks.filter((t) => t.status !== 'DONE');
   const done       = todayTasks.filter((t) => t.status === 'DONE');
-  const visible    = tab === 'IN_PROGRESS' ? inProgress : done;
+  const visible    = isCompletedMode
+    ? completedTasks
+    : (tab === 'IN_PROGRESS' ? inProgress : done);
   const isEditing  = editingId !== null;
 
   function toggleStatus(task: DailyTaskShape) {
@@ -371,16 +383,22 @@ function EmployeeTasksPopup({
         { onSuccess: cancelEdit },
       );
     } else {
+      // New task target depends on which column button opened the popup.
+      // COMPLETED-mode inserts historical items (already-done work) — the
+      // Waiting-on-decision / Carry-over flags are hidden in that mode, so
+      // we hard-set them off regardless of the form's current state.
       addTask.mutate(
         {
           entryId: entry.id,
-          type: 'TODAY',
+          type: isCompletedMode ? 'COMPLETED' : 'TODAY',
           text: v.text.trim(),
           priority: v.priority,
-          status: 'IN_PROGRESS',
-          isDecision: v.isDecision,
-          decisionNote: v.isDecision ? (v.decisionNote.trim() || null) : null,
-          carryOver: v.carryOver,
+          status: isCompletedMode ? 'DONE' : 'IN_PROGRESS',
+          isDecision: isCompletedMode ? false : v.isDecision,
+          decisionNote: isCompletedMode
+            ? null
+            : (v.isDecision ? (v.decisionNote.trim() || null) : null),
+          carryOver: isCompletedMode ? false : v.carryOver,
           ...(v.deadline ? { deadline: v.deadline } : {}),
         },
         { onSuccess: () => setV(emptyQuickForm) },
@@ -414,7 +432,9 @@ function EmployeeTasksPopup({
             size="lg"
           />
           <div className="dscrum-etp-head-text">
-            <p className="dscrum-etp-title">Daily Tasks</p>
+            <p className="dscrum-etp-title">
+              {isCompletedMode ? 'Yesterday / Completed' : 'Daily Tasks'}
+            </p>
             <p className="dscrum-etp-name">{emp.fullName}</p>
             <p className="dscrum-etp-meta">
               {emp.designation ? `${emp.designation} · ` : ''}{fmtDate(date, 'EEEE, d MMM yyyy')}
@@ -427,30 +447,34 @@ function EmployeeTasksPopup({
       </div>
 
       {/* System-standard tabs (matches Daily Scrum / My Tasks page tabs).
-          Switching tabs cancels any in-flight edit so the form isn't stuck
-          on a task the viewer can no longer see. */}
-      <div className="dscrum-tabs dscrum-etp-tabs">
-        <button
-          type="button"
-          className={cx('dscrum-tab', tab === 'IN_PROGRESS' && 'dscrum-tab-active')}
-          onClick={() => { cancelEdit(); setTab('IN_PROGRESS'); }}
-        >
-          In Progress <span className="dscrum-etp-count">{inProgress.length}</span>
-        </button>
-        <button
-          type="button"
-          className={cx('dscrum-tab', tab === 'DONE' && 'dscrum-tab-active')}
-          onClick={() => { cancelEdit(); setTab('DONE'); }}
-        >
-          Done <span className="dscrum-etp-count">{done.length}</span>
-        </button>
-      </div>
+          Only shown when the popup is scoped to TODAY — COMPLETED mode has
+          a single flat list of yesterday/completed items instead. */}
+      {!isCompletedMode && (
+        <div className="dscrum-tabs dscrum-etp-tabs">
+          <button
+            type="button"
+            className={cx('dscrum-tab', tab === 'IN_PROGRESS' && 'dscrum-tab-active')}
+            onClick={() => { cancelEdit(); setTab('IN_PROGRESS'); }}
+          >
+            In Progress <span className="dscrum-etp-count">{inProgress.length}</span>
+          </button>
+          <button
+            type="button"
+            className={cx('dscrum-tab', tab === 'DONE' && 'dscrum-tab-active')}
+            onClick={() => { cancelEdit(); setTab('DONE'); }}
+          >
+            Done <span className="dscrum-etp-count">{done.length}</span>
+          </button>
+        </div>
+      )}
 
       {/* Task list */}
-      <div className="dscrum-etp-list" key={tab}>
+      <div className="dscrum-etp-list" key={isCompletedMode ? 'completed' : tab}>
         {visible.length === 0 && (
           <div className="dscrum-etp-empty">
-            {tab === 'IN_PROGRESS' ? 'No tasks in progress.' : 'Nothing marked done yet.'}
+            {isCompletedMode
+              ? 'No yesterday / completed items logged.'
+              : (tab === 'IN_PROGRESS' ? 'No tasks in progress.' : 'Nothing marked done yet.')}
           </div>
         )}
         {visible.map((t) => {
@@ -469,7 +493,9 @@ function EmployeeTasksPopup({
                 type="checkbox"
                 className="dscrum-etp-check"
                 checked={t.status === 'DONE'}
-                disabled={!canEdit || updateTask.isPending}
+                // COMPLETED-mode items are always DONE by definition —
+                // no in-progress toggle makes sense.
+                disabled={isCompletedMode || !canEdit || updateTask.isPending}
                 onChange={() => toggleStatus(t)}
                 aria-label={t.status === 'DONE' ? 'Mark as in progress' : 'Mark as done'}
               />
@@ -536,7 +562,11 @@ function EmployeeTasksPopup({
         <div className="dscrum-etp-add">
           <div className="dscrum-etp-add-head">
             {isEditing ? <Pencil size={14} /> : <Plus size={14} />}
-            <span>{isEditing ? 'Edit task' : 'New task'}</span>
+            <span>
+              {isEditing
+                ? 'Edit task'
+                : isCompletedMode ? 'New yesterday / completed item' : 'New task'}
+            </span>
             {isEditing && (
               <button type="button" className="dscrum-etp-cancel-edit" onClick={cancelEdit}>
                 Cancel edit
@@ -587,49 +617,55 @@ function EmployeeTasksPopup({
               </div>
             </div>
 
-            <div className="dscrum-form-group">
-              <label className="dscrum-form-label">DECISION</label>
-              <div className="dscrum-toggle-row">
-                <button
-                  type="button"
-                  className={cx('dscrum-toggle', v.isDecision && 'dscrum-toggle--on')}
-                  onClick={() => setV((p) => ({ ...p, isDecision: !p.isDecision }))}
-                  aria-pressed={v.isDecision}
-                >
-                  <span className="dscrum-toggle-track">
-                    <span className="dscrum-toggle-knob" />
-                  </span>
-                </button>
+            {/* Waiting-on-decision + carry-over don't apply to already-
+                finished historical items, so hidden in COMPLETED mode. */}
+            {!isCompletedMode && (
+              <div className="dscrum-form-group">
+                <label className="dscrum-form-label">DECISION</label>
+                <div className="dscrum-toggle-row">
+                  <button
+                    type="button"
+                    className={cx('dscrum-toggle', v.isDecision && 'dscrum-toggle--on')}
+                    onClick={() => setV((p) => ({ ...p, isDecision: !p.isDecision }))}
+                    aria-pressed={v.isDecision}
+                  >
+                    <span className="dscrum-toggle-track">
+                      <span className="dscrum-toggle-knob" />
+                    </span>
+                  </button>
+                  {v.isDecision && (
+                    <span className="dscrum-toggle-text">Waiting on decision</span>
+                  )}
+                </div>
                 {v.isDecision && (
-                  <span className="dscrum-toggle-text">Waiting on decision</span>
+                  <div className="dscrum-blocker-wrap">
+                    <AlertTriangle size={14} className="dscrum-blocker-icon" />
+                    <TextArea
+                      value={v.decisionNote}
+                      onChange={(e) => setV((p) => ({ ...p, decisionNote: e.target.value }))}
+                      placeholder="Whose decision is holding this back?"
+                      rows={2}
+                      className="dscrum-blocker-input"
+                    />
+                  </div>
                 )}
               </div>
-              {v.isDecision && (
-                <div className="dscrum-blocker-wrap">
-                  <AlertTriangle size={14} className="dscrum-blocker-icon" />
-                  <TextArea
-                    value={v.decisionNote}
-                    onChange={(e) => setV((p) => ({ ...p, decisionNote: e.target.value }))}
-                    placeholder="Whose decision is holding this back?"
-                    rows={2}
-                    className="dscrum-blocker-input"
-                  />
-                </div>
-              )}
-            </div>
+            )}
 
-            <div className="dscrum-form-group">
-              <label className="dscrum-form-label">CARRY OVER</label>
-              <label className="dscrum-check-row">
-                <input
-                  type="checkbox"
-                  checked={v.carryOver}
-                  onChange={(e) => setV((p) => ({ ...p, carryOver: e.target.checked }))}
-                />
-                <span>If not completed, move to next day</span>
-              </label>
-              <p className="dscrum-form-hint">Doing this moves the task to the next day&apos;s Today list.</p>
-            </div>
+            {!isCompletedMode && (
+              <div className="dscrum-form-group">
+                <label className="dscrum-form-label">CARRY OVER</label>
+                <label className="dscrum-check-row">
+                  <input
+                    type="checkbox"
+                    checked={v.carryOver}
+                    onChange={(e) => setV((p) => ({ ...p, carryOver: e.target.checked }))}
+                  />
+                  <span>If not completed, move to next day</span>
+                </label>
+                <p className="dscrum-form-hint">Doing this moves the task to the next day&apos;s Today list.</p>
+              </div>
+            )}
 
             <div className="dscrum-form-group dscrum-etp-add-actions">
               {isEditing && (
@@ -642,7 +678,9 @@ function EmployeeTasksPopup({
                 disabled={!v.text.trim()}
                 onClick={submit}
               >
-                {isEditing ? 'Save changes' : 'Add task'}
+                {isEditing
+                  ? 'Save changes'
+                  : isCompletedMode ? 'Add item' : 'Add task'}
               </Button>
             </div>
           </div>
@@ -664,7 +702,11 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
   const { data, isLoading } = useDailyScrumDay(date);
   const currentUser = useCurrentUser();
   const [searchQ, setSearchQ] = useState('');
-  const [opened, setOpened] = useState<{ entryId: string; editTaskId?: string } | null>(null);
+  const [opened, setOpened] = useState<{
+    entryId: string;
+    editTaskId?: string;
+    targetType?: 'TODAY' | 'COMPLETED';
+  } | null>(null);
 
   const canEditAll = data?.canEditAll ?? false;
   const canEditTeam = data?.canEditTeam ?? false;
@@ -814,7 +856,7 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
                 key={entry.id}
                 entry={entry}
                 canEdit={canEditEntry(entry)}
-                onOpenEmployee={(entryId, editTaskId) => setOpened({ entryId, editTaskId })}
+                onOpenEmployee={(entryId, editTaskId, targetType) => setOpened({ entryId, editTaskId, targetType })}
               />
             ))}
           </div>
@@ -830,6 +872,7 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
             date={date}
             canEdit={canEditEntry(openedEntry)}
             initialEditTaskId={opened.editTaskId}
+            targetType={opened.targetType}
             onClose={() => setOpened(null)}
             stackLevel={1}
           />
