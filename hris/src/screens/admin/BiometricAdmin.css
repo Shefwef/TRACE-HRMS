@@ -1,3 +1,20 @@
+/* ─── Biometric admin: page header spacing ────────────────
+   `.pg-head` has no base style in the app; add breathing room
+   here so the h1/subtitle don't kiss the tab strip below. */
+.pg .pg-head {
+  margin-bottom: 20px;
+}
+.pg .pg-head h1 {
+  margin: 0 0 6px;
+  font-size: var(--text-3xl);
+  letter-spacing: -0.02em;
+}
+.pg .pg-head p.muted {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
 /* ─── Biometric admin: system-standard tab strip ───────────
    Mirrors the Daily Task Tracker / My Tasks tab style so the
    whole admin surface feels consistent. */
@@ -6,6 +23,7 @@
   gap: 4px;
   border-bottom: 1px solid var(--color-border-default);
   overflow-x: auto;
+  margin-top: 8px;
   margin-bottom: 24px;
 }
 .bio-tab {

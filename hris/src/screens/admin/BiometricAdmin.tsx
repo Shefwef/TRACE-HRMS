@@ -423,6 +423,12 @@ function PunchesTab() {
   const cols = showDateCol
     ? ['Date', 'Name', 'Employee ID', 'Designation', 'Clock In', 'Clock Out', 'Total Work', 'Overtime', 'Deficit']
     : ['Name', 'Employee ID', 'Designation', 'Clock In', 'Clock Out', 'Total Work', 'Overtime', 'Deficit'];
+  // Explicit min-widths so time / total / ID cells don't get squeezed to
+  // the point their header labels wrap. Name is flexible; everything else
+  // gets a fixed floor.
+  const colWidths = showDateCol
+    ? ['130px', 'auto',  '130px', '150px', '110px', '110px', '120px', '100px', '100px']
+    : ['auto',  '130px', '150px', '110px', '110px', '120px', '100px', '100px'];
 
   const headerLabel = from === to
     ? fmtDate(`${from}T12:00:00`, 'EEEE · d MMM yyyy')
@@ -549,8 +555,20 @@ function PunchesTab() {
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
         <thead>
           <tr style={{ background: '#2E86C1', textAlign: 'left' }}>
-            {cols.map((h) => (
-              <th key={h} style={{ padding: '10px 16px', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: '#fff', fontWeight: 600 }}>
+            {cols.map((h, i) => (
+              <th
+                key={h}
+                style={{
+                  padding: '10px 16px',
+                  fontSize: 10,
+                  textTransform: 'uppercase',
+                  letterSpacing: '.06em',
+                  color: '#fff',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  minWidth: colWidths[i] === 'auto' ? undefined : colWidths[i],
+                }}
+              >
                 {h}
               </th>
             ))}
