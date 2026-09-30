@@ -231,6 +231,14 @@
 
 
 /* ─── Search bar (inside modal) ─── */
+.dscrum-modal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
 .dscrum-modal-search {
   display: flex;
   align-items: center;
@@ -241,7 +249,8 @@
   border-radius: var(--radius-md);
   color: var(--color-text-muted);
   max-width: 420px;
-  margin-bottom: var(--space-4);
+  flex: 1;
+  min-width: 240px;
   transition: border var(--transition-fast), box-shadow var(--transition-fast);
 }
 .dscrum-modal-search-inline {
@@ -582,6 +591,112 @@
   font-size: var(--text-xs);
   color: var(--color-text-muted);
 }
+
+/* ─── Priority picker (task modal) ─── */
+.dscrum-priority-picker {
+  display: inline-flex;
+  gap: 8px;
+  padding: 4px;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-md);
+}
+.dscrum-priority-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+.dscrum-priority-option:hover { color: var(--color-text-primary); }
+.dscrum-priority-option--on {
+  background: #fff;
+  border-color: var(--color-border-default);
+  color: var(--color-text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.dscrum-priority-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.dscrum-priority-option.dscrum-p-low    .dscrum-priority-dot { background: #38a169; }
+.dscrum-priority-option.dscrum-p-medium .dscrum-priority-dot { background: #d69e2e; }
+.dscrum-priority-option.dscrum-p-high   .dscrum-priority-dot { background: #c53030; }
+
+/* ─── Priority chip (task item + list) ─── */
+.dscrum-priority-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.dscrum-priority-chip.dscrum-p-low    { background: #edf7ee; color: #276749; }
+.dscrum-priority-chip.dscrum-p-medium { background: #fdf6e3; color: #975a16; }
+.dscrum-priority-chip.dscrum-p-high   { background: #fdecec; color: #9b2c2c; }
+
+/* ─── Tinted task card (background by priority) ─── */
+.dscrum-t-item--tinted {
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  padding-left: 8px;
+}
+.dscrum-t-item--tinted.dscrum-p-low    { border-left-color: #9ae6b4; background: #f6fbf7; }
+.dscrum-t-item--tinted.dscrum-p-medium { border-left-color: #f6d582; background: #fefaf1; }
+.dscrum-t-item--tinted.dscrum-p-high   { border-left-color: #feb2b2; background: #fef5f5; }
+
+/* ─── Status pill (per task) ─── */
+.dscrum-status {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+.dscrum-status--done      { background: #38a169; }
+.dscrum-status--inprogress { background: #d69e2e; }
+.dscrum-status--blocked   { background: #c53030; }
+.dscrum-status-spin { animation: dscrum-spin 1.6s linear infinite; }
+@keyframes dscrum-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ─── Legend (top-right of detail modal) ─── */
+.dscrum-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.dscrum-legend-group { display: inline-flex; gap: 12px; }
+.dscrum-legend-item  { display: inline-flex; align-items: center; gap: 6px; }
+.dscrum-legend-sep   { width: 1px; height: 16px; background: var(--color-border-default); }
+.dscrum-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+}
+.dscrum-legend-swatch.dscrum-p-low    { background: #edf7ee; border-color: #9ae6b4; }
+.dscrum-legend-swatch.dscrum-p-medium { background: #fdf6e3; border-color: #f6d582; }
+.dscrum-legend-swatch.dscrum-p-high   { background: #fdecec; border-color: #feb2b2; }
 
 /* ─── Blocker toggle ─── */
 .dscrum-toggle-row {

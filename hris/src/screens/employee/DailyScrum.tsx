@@ -2,13 +2,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Calendar, Search, Plus, Pencil, Trash2, ClipboardList,
-  Download, Check, AlertTriangle, Save, X,
+  Download, Check, AlertTriangle, Save, X, Loader2,
 } from 'lucide-react';
 import { 
   useDailyScrumDay, useDailyScrumDates, useUpsertScrumEntry,
   useAddScrumTask, useUpdateScrumTask, useDeleteScrumTask,
   useGenerateScrumDay, useUsers,
   type DailyScrumEntryShape, type DailyTaskShape, type UserSummary,
+  type TaskPriority, type TaskStatus,
 } from '@/lib/hooks';
 import { useCurrentUser, initials, avatarColorFor } from '@/lib/session';
 import { useStore } from '@/lib/store';
@@ -45,11 +46,23 @@ interface TaskFormValue {
   isDecision: boolean;
   decisionNote: string;
   carryOver: boolean;
+  priority: TaskPriority;
 }
 
 const emptyFormValue: TaskFormValue = {
-  text: '', deadline: '', isDecision: false, decisionNote: '', carryOver: false,
+  text: '', deadline: '', isDecision: false, decisionNote: '', carryOver: false, priority: 'MEDIUM',
 };
+
+const PRIORITY_OPTIONS: { value: TaskPriority; label: string }[] = [
+  { value: 'LOW',    label: 'Low' },
+  { value: 'MEDIUM', label: 'Medium' },
+  { value: 'HIGH',   label: 'High' },
+];
+
+/** Small class-name helper for the coloured priority chip / border used everywhere. */
+function priorityClass(p: TaskPriority): string {
+  return `dscrum-p-${p.toLowerCase()}`;
+}
 
 type TaskModalIntent =
   | { mode: 'add'; entryId: string; taskType: 'TODAY' | 'COMPLETED' }
@@ -82,6 +95,7 @@ function TaskModal({ intent, onClose }: TaskModalProps) {
         isDecision: intent.task.isDecision,
         decisionNote: intent.task.decisionNote ?? '',
         carryOver: intent.task.carryOver,
+        priority: intent.task.priority,
       });
     } else {
       setV(emptyFormValue);
@@ -102,6 +116,7 @@ function TaskModal({ intent, onClose }: TaskModalProps) {
         {
           id: intent.task.id,
           text: v.text,
+          priority: v.priority,
           ...(showDetails ? {
             deadline: v.deadline || null,
             isDecision: v.isDecision,
@@ -117,6 +132,7 @@ function TaskModal({ intent, onClose }: TaskModalProps) {
           entryId: intent.entryId,
           type: intent.taskType,
           text: v.text,
+          priority: v.priority,
           ...(showDetails && v.deadline ? { deadline: v.deadline } : {}),
           ...(showDetails ? {
             isDecision: v.isDecision,
@@ -159,6 +175,28 @@ function TaskModal({ intent, onClose }: TaskModalProps) {
             rows={2}
             autoFocus
           />
+        </div>
+
+        <div className="dscrum-form-group">
+          <label className="dscrum-form-label">PRIORITY</label>
+          <div className="dscrum-priority-picker" role="radiogroup" aria-label="Priority">
+            {PRIORITY_OPTIONS.map((opt) => {
+              const on = v.priority === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  className={cx('dscrum-priority-option', priorityClass(opt.value), on && 'dscrum-priority-option--on')}
+                  onClick={() => setV((p) => ({ ...p, priority: opt.value }))}
+                >
+                  <span className="dscrum-priority-dot" aria-hidden="true" />
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {showDetails && (
@@ -228,6 +266,85 @@ function TaskModal({ intent, onClose }: TaskModalProps) {
   );
 }
 
+// ─── Status icon (per-task pill on the scrum board) ─────
+/**
+ * Compact status pill:
+ *   • DONE          → green check
+ *   • Waiting on    → amber alert (isDecision overrides IN_PROGRESS)
+ *   • IN_PROGRESS   → yellow spinner
+ * Kept small enough to sit inline with the task text.
+ */
+function StatusIcon({ task }: { task: DailyTaskShape }) {
+  if (task.status === 'DONE') {
+    return (
+      <span className="dscrum-status dscrum-status--done" title="Done">
+        <Check size={12} strokeWidth={3} />
+      </span>
+    );
+  }
+  if (task.isDecision) {
+    return (
+      <span className="dscrum-status dscrum-status--blocked" title="Waiting on decision">
+        <AlertTriangle size={12} />
+      </span>
+    );
+  }
+  return (
+    <span className="dscrum-status dscrum-status--inprogress" title="In progress">
+      <Loader2 size={12} className="dscrum-status-spin" />
+    </span>
+  );
+}
+
+// ─── Priority chip ───────────────────────────────────────
+
+function PriorityChip({ priority }: { priority: TaskPriority }) {
+  return (
+    <span className={cx('dscrum-priority-chip', priorityClass(priority))}>
+      {priority === 'LOW' ? 'Low' : priority === 'MEDIUM' ? 'Medium' : 'High'}
+    </span>
+  );
+}
+
+// ─── Board legend ────────────────────────────────────────
+/**
+ * Tiny top-right key that explains what each status icon and priority
+ * colour mean on the scrum board. Kept as a single row so it doesn't
+ * take vertical space away from the tasks themselves.
+ */
+function BoardLegend() {
+  return (
+    <div className="dscrum-legend" aria-label="Legend">
+      <span className="dscrum-legend-group">
+        <span className="dscrum-legend-item">
+          <span className="dscrum-status dscrum-status--done"><Check size={10} strokeWidth={3} /></span>
+          Done
+        </span>
+        <span className="dscrum-legend-item">
+          <span className="dscrum-status dscrum-status--inprogress"><Loader2 size={10} className="dscrum-status-spin" /></span>
+          In progress
+        </span>
+        <span className="dscrum-legend-item">
+          <span className="dscrum-status dscrum-status--blocked"><AlertTriangle size={10} /></span>
+          Waiting on decision
+        </span>
+      </span>
+      <span className="dscrum-legend-sep" aria-hidden="true" />
+      <span className="dscrum-legend-group">
+        <span className="dscrum-legend-item">
+          <span className="dscrum-legend-swatch dscrum-p-low" /> Low
+        </span>
+        <span className="dscrum-legend-item">
+          <span className="dscrum-legend-swatch dscrum-p-medium" /> Medium
+        </span>
+        <span className="dscrum-legend-item">
+          <span className="dscrum-legend-swatch dscrum-p-high" /> High
+        </span>
+      </span>
+    </div>
+  );
+}
+
 // ─── Yesterday item ──────────────────────────────────────
 
 function YesterdayItem({
@@ -272,26 +389,18 @@ function TodayItem({
 }) {
   const remove = useDeleteScrumTask();
 
-  const markerClass = task.isDecision
-    ? 'dscrum-t-marker--decision'
-    : task.deadline
-      ? 'dscrum-t-marker--deadline'
-      : 'dscrum-t-marker--default';
-
   return (
-    <div className="dscrum-t-item">
-      <span className={cx('dscrum-t-marker', markerClass)} aria-hidden="true" />
+    <div className={cx('dscrum-t-item', 'dscrum-t-item--tinted', priorityClass(task.priority))}>
+      <StatusIcon task={task} />
       <div className="dscrum-t-content">
         <div className="dscrum-t-line">
-          {task.carryOver && (
-            <span className="dscrum-t-carryover" title="Auto-carries to next day if unfinished">↻</span>
-          )}
           <span className="dscrum-t-text">{task.text}</span>
           {task.deadline && (
             <span className="dscrum-t-due">due {fmtDate(task.deadline, 'd MMM')}</span>
           )}
         </div>
       </div>
+      <PriorityChip priority={task.priority} />
       {canEdit && (
         <div className="dscrum-inline-actions">
           <button type="button" className="dscrum-icon-btn" title="Edit" onClick={onEdit}>
@@ -587,14 +696,17 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
           </button>
         </div>
 
-        <div className="dscrum-modal-search">
-          <Search size={14} className="dscrum-search-icon" />
-          <input
-            className="dscrum-search-input"
-            placeholder="Search tasks or people"
-            value={searchQ}
-            onChange={(e) => setSearchQ(e.target.value)}
-          />
+        <div className="dscrum-modal-toolbar">
+          <div className="dscrum-modal-search">
+            <Search size={14} className="dscrum-search-icon" />
+            <input
+              className="dscrum-search-input"
+              placeholder="Search tasks or people"
+              value={searchQ}
+              onChange={(e) => setSearchQ(e.target.value)}
+            />
+          </div>
+          <BoardLegend />
         </div>
 
         {isLoading && <div className="dscrum-loading">Loading…</div>}
