@@ -727,6 +727,176 @@
   cursor: pointer;
 }
 
+/* ─── Clickable member cell (opens per-employee popup) ─── */
+.dscrum-member-cell--clickable {
+  cursor: pointer;
+  text-align: left;
+  border: none;
+  background: transparent;
+  width: 100%;
+  transition: background var(--transition-fast);
+}
+.dscrum-member-cell--clickable:hover {
+  background: var(--color-bg-subtle);
+}
+.dscrum-member-cell--clickable:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: -2px;
+}
+
+/* ─── Per-employee Daily Tasks popup ─── */
+.dscrum-etp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px 14px;
+  margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) var(--space-4);
+  background: linear-gradient(120deg, #305496 0%, #243f7a 100%);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  color: #fff;
+  position: relative;
+}
+.dscrum-etp-head-left { display: flex; align-items: center; gap: 14px; }
+.dscrum-etp-head-text { display: flex; flex-direction: column; gap: 2px; }
+.dscrum-etp-title {
+  margin: 0;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.72);
+}
+.dscrum-etp-name {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: #fff;
+}
+.dscrum-etp-meta {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: rgba(255, 255, 255, 0.78);
+}
+.dscrum-etp-close {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.85);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.dscrum-etp-close:hover { background: rgba(255, 255, 255, 0.18); color: #fff; }
+
+.dscrum-etp-tabs { margin-bottom: var(--space-3); }
+.dscrum-etp-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  padding: 0 6px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--color-bg-subtle);
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+}
+.dscrum-tab-active .dscrum-etp-count {
+  background: rgba(48, 84, 150, 0.12);
+  color: var(--color-brand-primary);
+}
+
+.dscrum-etp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--space-4);
+}
+.dscrum-etp-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-md);
+}
+.dscrum-etp-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px 10px 8px;
+  border: 1px solid var(--color-border-default);
+  border-left: 4px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+}
+.dscrum-etp-row.dscrum-p-low    { border-left-color: #3182ce; }
+.dscrum-etp-row.dscrum-p-medium { border-left-color: #d69e2e; }
+.dscrum-etp-row.dscrum-p-high   { border-left-color: #c53030; }
+.dscrum-etp-check {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  accent-color: #38a169;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.dscrum-etp-row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dscrum-etp-row-text {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+.dscrum-etp-row-text--done {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  text-decoration-color: rgba(0, 0, 0, 0.35);
+}
+.dscrum-etp-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.dscrum-etp-blocker-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #fef2f2;
+  color: #9b2c2c;
+  border-radius: 999px;
+  font-weight: var(--weight-semibold);
+}
+
+.dscrum-etp-add {
+  padding: 14px;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border-default);
+}
+.dscrum-etp-add-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
+}
+.dscrum-etp-add-actions { flex-direction: row; justify-content: flex-end; }
+.dscrum-etp-footer { display: flex; justify-content: flex-end; width: 100%; }
+
 /* ─── Responsive ─── */
 @media (max-width: 1100px) {
   .dscrum-board-head,

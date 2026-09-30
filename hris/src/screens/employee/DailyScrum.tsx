@@ -352,9 +352,10 @@ interface BoardRowProps {
   entry: DailyScrumEntryShape;
   canEdit: boolean;
   onOpenTask: (intent: TaskModalIntent) => void;
+  onOpenEmployee: (entryId: string) => void;
 }
 
-function BoardRow({ entry, canEdit, onOpenTask }: BoardRowProps) {
+function BoardRow({ entry, canEdit, onOpenTask, onOpenEmployee }: BoardRowProps) {
   const yesterdayTasks = entry.tasks.filter((t) => t.type === 'COMPLETED');
   const todayTasks = entry.tasks.filter((t) => t.type === 'TODAY');
   const decisions = todayTasks.filter((t) => t.isDecision);
@@ -363,7 +364,12 @@ function BoardRow({ entry, canEdit, onOpenTask }: BoardRowProps) {
 
   return (
     <div className="dscrum-board-row">
-      <div className="dscrum-board-cell dscrum-member-cell">
+      <button
+        type="button"
+        className="dscrum-board-cell dscrum-member-cell dscrum-member-cell--clickable"
+        onClick={() => onOpenEmployee(entry.id)}
+        title="View all tasks for this person"
+      >
         <Avatar
           initials={initials(emp.fullName)}
           color={avatarColorFor(emp.id)}
@@ -376,7 +382,7 @@ function BoardRow({ entry, canEdit, onOpenTask }: BoardRowProps) {
             <span className="dscrum-member-role">{emp.designation}</span>
           )}
         </div>
-      </div>
+      </button>
 
       <div className="dscrum-board-cell">
         {yesterdayTasks.length === 0 && (
@@ -443,6 +449,285 @@ function BoardRow({ entry, canEdit, onOpenTask }: BoardRowProps) {
   );
 }
 
+// ─── Per-employee Daily Tasks popup ──────────────────────
+/**
+ * Nested modal that opens when someone clicks the member cell of a scrum
+ * board row. Shows all of that employee's tasks for the day split across
+ * In Progress / Done tabs, lets the viewer flip a task's status by ticking
+ * its checkbox, and offers a compact inline "New task" form at the bottom
+ * so HR / the employee can add work without leaving the popup.
+ *
+ * Deliberately narrower than the team board modal — the point here is a
+ * one-person focus view, not another wide grid.
+ */
+interface EmployeeTasksPopupProps {
+  entry: DailyScrumEntryShape;
+  date: string;
+  canEdit: boolean;
+  onClose: () => void;
+}
+
+interface QuickTaskFormValue {
+  text: string;
+  priority: TaskPriority;
+  deadline: string;
+  isDecision: boolean;
+  decisionNote: string;
+  carryOver: boolean;
+}
+
+const emptyQuickForm: QuickTaskFormValue = {
+  text: '', priority: 'MEDIUM', deadline: '', isDecision: false, decisionNote: '', carryOver: false,
+};
+
+function EmployeeTasksPopup({ entry, date, canEdit, onClose }: EmployeeTasksPopupProps) {
+  const [tab, setTab] = useState<'IN_PROGRESS' | 'DONE'>('IN_PROGRESS');
+  const [v, setV] = useState<QuickTaskFormValue>(emptyQuickForm);
+  const addTask = useAddScrumTask();
+  const updateTask = useUpdateScrumTask();
+  const removeTask = useDeleteScrumTask();
+
+  // Only TODAY-type tasks live in the tabs — COMPLETED-type rows represent
+  // rolled-forward yesterday items and don't need a status flip UI.
+  const todayTasks = entry.tasks.filter((t) => t.type === 'TODAY');
+  const inProgress = todayTasks.filter((t) => t.status !== 'DONE');
+  const done       = todayTasks.filter((t) => t.status === 'DONE');
+  const visible    = tab === 'IN_PROGRESS' ? inProgress : done;
+
+  function toggleStatus(task: DailyTaskShape) {
+    updateTask.mutate({
+      id: task.id,
+      status: task.status === 'DONE' ? 'IN_PROGRESS' : 'DONE',
+    });
+  }
+
+  function submit() {
+    if (!v.text.trim()) return;
+    addTask.mutate(
+      {
+        entryId: entry.id,
+        type: 'TODAY',
+        text: v.text.trim(),
+        priority: v.priority,
+        status: 'IN_PROGRESS',
+        isDecision: v.isDecision,
+        decisionNote: v.isDecision ? (v.decisionNote.trim() || null) : null,
+        carryOver: v.carryOver,
+        ...(v.deadline ? { deadline: v.deadline } : {}),
+      },
+      { onSuccess: () => setV(emptyQuickForm) },
+    );
+  }
+
+  const emp = entry.employee;
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      size="lg"
+      widthOverride="min(720px, calc(100vw - 48px))"
+      hideHeader
+      footer={
+        <div className="dscrum-etp-footer">
+          <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
+        </div>
+      }
+    >
+      {/* Compact header — mirrors the main modal hero but for one person */}
+      <div className="dscrum-etp-head">
+        <div className="dscrum-etp-head-left">
+          <Avatar
+            initials={initials(emp.fullName)}
+            color={avatarColorFor(emp.id)}
+            imageUrl={emp.avatarUrl}
+            size="lg"
+          />
+          <div className="dscrum-etp-head-text">
+            <p className="dscrum-etp-title">Daily Tasks</p>
+            <p className="dscrum-etp-name">{emp.fullName}</p>
+            <p className="dscrum-etp-meta">
+              {emp.designation ? `${emp.designation} · ` : ''}{fmtDate(date, 'EEEE, d MMM yyyy')}
+            </p>
+          </div>
+        </div>
+        <button type="button" className="dscrum-etp-close" onClick={onClose} aria-label="Close">
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* System-standard tabs (matches Daily Scrum / My Tasks page tabs) */}
+      <div className="dscrum-tabs dscrum-etp-tabs">
+        <button
+          type="button"
+          className={cx('dscrum-tab', tab === 'IN_PROGRESS' && 'dscrum-tab-active')}
+          onClick={() => setTab('IN_PROGRESS')}
+        >
+          In Progress <span className="dscrum-etp-count">{inProgress.length}</span>
+        </button>
+        <button
+          type="button"
+          className={cx('dscrum-tab', tab === 'DONE' && 'dscrum-tab-active')}
+          onClick={() => setTab('DONE')}
+        >
+          Done <span className="dscrum-etp-count">{done.length}</span>
+        </button>
+      </div>
+
+      {/* Task list */}
+      <div className="dscrum-etp-list">
+        {visible.length === 0 && (
+          <div className="dscrum-etp-empty">
+            {tab === 'IN_PROGRESS' ? 'No tasks in progress.' : 'Nothing marked done yet.'}
+          </div>
+        )}
+        {visible.map((t) => (
+          <div
+            key={t.id}
+            className={cx(
+              'dscrum-etp-row',
+              priorityClass(t.priority),
+              t.isDecision && 'dscrum-t-item--blocker',
+            )}
+          >
+            <input
+              type="checkbox"
+              className="dscrum-etp-check"
+              checked={t.status === 'DONE'}
+              disabled={!canEdit || updateTask.isPending}
+              onChange={() => toggleStatus(t)}
+              aria-label={t.status === 'DONE' ? 'Mark as in progress' : 'Mark as done'}
+            />
+            <div className="dscrum-etp-row-body">
+              <div className={cx('dscrum-etp-row-text', t.status === 'DONE' && 'dscrum-etp-row-text--done')}>
+                {t.text}
+              </div>
+              {(t.deadline || t.isDecision) && (
+                <div className="dscrum-etp-row-meta">
+                  {t.deadline && <span>due {fmtDate(t.deadline, 'd MMM')}</span>}
+                  {t.isDecision && (
+                    <span className="dscrum-etp-blocker-tag">
+                      <AlertTriangle size={11} />
+                      {t.decisionNote?.trim() || 'Waiting on decision'}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+            {canEdit && (
+              <button
+                type="button"
+                className="dscrum-icon-btn dscrum-icon-btn-danger"
+                title="Delete"
+                onClick={() => removeTask.mutate(t.id)}
+              >
+                <Trash2 size={12} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Inline add form (only when the viewer can edit this entry) */}
+      {canEdit && (
+        <div className="dscrum-etp-add">
+          <div className="dscrum-etp-add-head">
+            <Plus size={14} />
+            <span>New task</span>
+          </div>
+          <div className="dscrum-form">
+            <div className="dscrum-form-group">
+              <label className="dscrum-form-label">TASK TITLE</label>
+              <TextArea
+                value={v.text}
+                onChange={(e) => setV((p) => ({ ...p, text: e.target.value }))}
+                placeholder="What needs to be done?"
+                rows={2}
+              />
+            </div>
+
+            <div className="dscrum-form-row">
+              <div className="dscrum-form-group">
+                <label className="dscrum-form-label">PRIORITY</label>
+                <div className="dscrum-priority-picker" role="radiogroup" aria-label="Priority">
+                  {PRIORITY_OPTIONS.map((opt) => {
+                    const on = v.priority === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        className={cx('dscrum-priority-option', priorityClass(opt.value), on && 'dscrum-priority-option--on')}
+                        onClick={() => setV((p) => ({ ...p, priority: opt.value }))}
+                      >
+                        <span className="dscrum-priority-dot" aria-hidden="true" />
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="dscrum-form-group">
+                <label className="dscrum-form-label">DEADLINE</label>
+                <TextInput
+                  type="date"
+                  value={v.deadline}
+                  onChange={(e) => setV((p) => ({ ...p, deadline: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="dscrum-form-group">
+              <label className="dscrum-form-label">WAITING ON DECISION</label>
+              <div className="dscrum-toggle-row">
+                <button
+                  type="button"
+                  className={cx('dscrum-toggle', v.isDecision && 'dscrum-toggle--on')}
+                  onClick={() => setV((p) => ({ ...p, isDecision: !p.isDecision }))}
+                  aria-pressed={v.isDecision}
+                >
+                  <span className="dscrum-toggle-track">
+                    <span className="dscrum-toggle-knob" />
+                  </span>
+                  <span className="dscrum-toggle-text">
+                    {v.isDecision ? 'Waiting on a decision' : 'Ready to proceed'}
+                  </span>
+                </button>
+              </div>
+              {v.isDecision && (
+                <div className="dscrum-blocker-wrap">
+                  <AlertTriangle size={14} className="dscrum-blocker-icon" />
+                  <TextArea
+                    value={v.decisionNote}
+                    onChange={(e) => setV((p) => ({ ...p, decisionNote: e.target.value }))}
+                    placeholder="Whose decision is holding this back?"
+                    rows={2}
+                    className="dscrum-blocker-input"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="dscrum-form-group dscrum-etp-add-actions">
+              <Button
+                variant="primary"
+                leadingIcon={<Plus size={14} />}
+                loading={addTask.isPending}
+                disabled={!v.text.trim()}
+                onClick={submit}
+              >
+                Add task
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
 // ─── Placeholder row (user without an entry) ─────────────
 
 interface PlaceholderRowProps {
@@ -498,6 +783,7 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
   const currentUser = useCurrentUser();
   const [searchQ, setSearchQ] = useState('');
   const [taskIntent, setTaskIntent] = useState<TaskModalIntent | null>(null);
+  const [openedEntryId, setOpenedEntryId] = useState<string | null>(null);
 
   const canEditAll = data?.canEditAll ?? false;
   const canEditTeam = data?.canEditTeam ?? false;
@@ -657,6 +943,7 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
                 entry={entry}
                 canEdit={canEditEntry(entry)}
                 onOpenTask={setTaskIntent}
+                onOpenEmployee={setOpenedEntryId}
               />
             ))}
 
@@ -668,6 +955,19 @@ function DetailModal({ date, filterToUserId, onClose }: DetailModalProps) {
       </Modal>
 
       <TaskModal intent={taskIntent} onClose={() => setTaskIntent(null)} />
+
+      {openedEntryId && (() => {
+        const opened = entries.find((e) => e.id === openedEntryId);
+        if (!opened) return null;
+        return (
+          <EmployeeTasksPopup
+            entry={opened}
+            date={date}
+            canEdit={canEditEntry(opened)}
+            onClose={() => setOpenedEntryId(null)}
+          />
+        );
+      })()}
     </>
   );
 }
