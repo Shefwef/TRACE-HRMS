@@ -1073,24 +1073,13 @@ function DailyScrumTab() {
       )}
 
       {!isLoading && visibleDates.length > 0 && (
-        <div className="dscrum-list-table">
-          <div className="dscrum-list-head">
-            <div>SL#</div>
-            <div>Date</div>
-            <div>Day</div>
-            <div />
-          </div>
-          {visibleDates.map((d, i) => (
-            <div className="dscrum-list-row" key={d}>
-              <div>{i + 1}</div>
-              <div>{fmtDate(d, 'd MMM yyyy')}</div>
-              <div>{fmtDate(d, 'EEEE')}</div>
-              <div className="dscrum-list-action">
-                <Button size="sm" variant="secondary" onClick={() => setActiveDate(d)}>
-                  Details
-                </Button>
-              </div>
-            </div>
+        <div className="dscrum-mytasks-grid">
+          {visibleDates.map((d) => (
+            <ScrumDateCard
+              key={d}
+              date={d}
+              onDetails={() => setActiveDate(d)}
+            />
           ))}
         </div>
       )}
@@ -1108,7 +1097,6 @@ function MyTasksTab() {
   const currentUser = useCurrentUser();
   const { data: datesData, isLoading } = useDailyScrumDates();
   const [dateFilter, setDateFilter] = useState('');
-  const [searchQ, setSearchQ] = useState('');
   const [activeDate, setActiveDate] = useState<string | null>(null);
 
   const allDates = datesData?.dates ?? [];
@@ -1137,15 +1125,6 @@ function MyTasksTab() {
             </button>
           )}
         </div>
-        <div className="dscrum-modal-search dscrum-modal-search-inline">
-          <Search size={14} className="dscrum-search-icon" />
-          <input
-            className="dscrum-search-input"
-            placeholder="Search tasks…"
-            value={searchQ}
-            onChange={(e) => setSearchQ(e.target.value)}
-          />
-        </div>
       </div>
 
       {isLoading && <div className="dscrum-loading">Loading…</div>}
@@ -1165,7 +1144,6 @@ function MyTasksTab() {
               key={d}
               date={d}
               userId={currentUser?.id ?? ''}
-              searchQ={searchQ}
               onDetails={() => setActiveDate(d)}
             />
           ))}
@@ -1228,10 +1206,41 @@ function MyTasksDetailPopup({
   );
 }
 
+/**
+ * Slim calendar-square card for the Daily Scrum date list. Same visual shell
+ * as MyTaskCard but without any task-count summary — HR/managers just need
+ * to pick a date and jump into the team board.
+ */
+function ScrumDateCard({ date, onDetails }: { date: string; onDetails: () => void }) {
+  const isToday = date === todayISO();
+  return (
+    <button
+      type="button"
+      className={cx('dscrum-mytasks-card', isToday && 'dscrum-mytasks-card--today')}
+      onClick={onDetails}
+    >
+      <div className="dscrum-mytasks-date" aria-hidden="true">
+        <span className="dscrum-mytasks-date-dow">{fmtDate(date, 'EEE').toUpperCase()}</span>
+        <span className="dscrum-mytasks-date-day">{fmtDate(date, 'd')}</span>
+        <span className="dscrum-mytasks-date-mon">{fmtDate(date, 'MMM').toUpperCase()}</span>
+      </div>
+      <div className="dscrum-mytasks-info">
+        <div className="dscrum-mytasks-info-top">
+          <span className="dscrum-mytasks-weekday">{fmtDate(date, 'EEEE')}</span>
+          {isToday && <span className="dscrum-mytasks-today-tag">Today</span>}
+        </div>
+        <div className="dscrum-mytasks-full">{fmtDate(date, 'd MMMM yyyy')}</div>
+      </div>
+      <div className="dscrum-mytasks-action">
+        <span className="dscrum-mytasks-details-btn">Details →</span>
+      </div>
+    </button>
+  );
+}
+
 interface MyTaskCardProps {
   date: string;
   userId: string;
-  searchQ: string;
   onDetails: () => void;
 }
 
@@ -1240,17 +1249,9 @@ interface MyTaskCardProps {
  * like a wall-calendar tile (weekday · big day · month), the middle summarises
  * the day's work, and Details opens the same filtered team modal as before.
  */
-function MyTaskCard({ date, userId, searchQ, onDetails }: MyTaskCardProps) {
+function MyTaskCard({ date, userId, onDetails }: MyTaskCardProps) {
   const { data } = useDailyScrumDay(date);
   const myEntry = data?.entries.find((e) => e.employeeId === userId);
-
-  const q = searchQ.trim().toLowerCase();
-  if (myEntry && q) {
-    const matches =
-      myEntry.employee.fullName.toLowerCase().includes(q) ||
-      myEntry.tasks.some((t) => t.text.toLowerCase().includes(q));
-    if (!matches) return null;
-  }
 
   const todayTasks = myEntry?.tasks.filter((t) => t.type === 'TODAY') ?? [];
   const doneCount = todayTasks.filter((t) => t.status === 'DONE').length;
