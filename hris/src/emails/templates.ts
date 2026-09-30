@@ -9,8 +9,8 @@ interface Skin {
   appName?: string;
 }
 
-const BRAND_PRIMARY = '#2C5282';
-const BRAND_SECONDARY = '#3182CE';
+const BRAND_PRIMARY = '#2E86C1';
+const BRAND_SECONDARY = '#7BB8DE';
 
 function shell({
   title,

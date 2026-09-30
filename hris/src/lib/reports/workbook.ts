@@ -11,8 +11,8 @@ import { Workbook, type Worksheet } from 'exceljs';
 export const XLSX_MIME =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
-/** Excel header blue matched to design system brand colour #305496 */
-const BRAND_ARGB = 'FF305496';
+/** Excel header ocean-blue matched to design system brand colour #2E86C1 */
+const BRAND_ARGB = 'FF2E86C1';
 const HEADER_TEXT_ARGB = 'FFFFFFFF';
 const TOTAL_FILL_ARGB = 'FFEDF2F7';
 

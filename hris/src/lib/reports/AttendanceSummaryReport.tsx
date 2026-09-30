@@ -83,7 +83,7 @@ const s = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   brandBlock: {
-    backgroundColor: '#305496',
+    backgroundColor: '#2E86C1',
     paddingVertical: 18,
     paddingHorizontal: 32,
     flexDirection: 'row',
@@ -98,7 +98,7 @@ const s = StyleSheet.create({
   brandMetaLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 7, letterSpacing: 0.8, marginBottom: 2 },
   brandMetaValue: { color: '#fff', fontSize: 10, fontFamily: 'Helvetica-Bold' },
   brandGenerated: { color: 'rgba(255,255,255,0.55)', fontSize: 7, marginTop: 4 },
-  accentStripe: { height: 3, backgroundColor: '#7baed4' },
+  accentStripe: { height: 3, backgroundColor: '#7BB8DE' },
   body: { paddingHorizontal: 28, paddingTop: 16, paddingBottom: 20 },
   table: { borderWidth: 1, borderColor: brand.border, borderRadius: 3 },
   thead: {
@@ -128,7 +128,7 @@ const s = StyleSheet.create({
   summary: { flexDirection: 'row', gap: 12, marginBottom: 12, marginTop: 4 },
   summaryCard: { flex: 1, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 10, backgroundColor: '#fff' },
   summaryLabel: { fontSize: 7, color: brand.soft, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 },
-  summaryValue: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: '#305496' },
+  summaryValue: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: '#2E86C1' },
 });
 
 // ─── component ────────────────────────────────────────────

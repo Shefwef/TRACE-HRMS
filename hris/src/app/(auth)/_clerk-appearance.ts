@@ -3,7 +3,7 @@
  * auth pages. Keeps the two flows visually identical.
  */
 
-const brand = '#2C5282';
+const brand = '#2E86C1';
 
 export const clerkAppearance = {
   variables: {

@@ -525,7 +525,7 @@
   min-width: 600px;
 }
 .rpts-preview-table th {
-  background: #305496;
+  background: #2E86C1;
   font-weight: var(--weight-semibold);
   color: #fff;
   padding: 6px 10px;
@@ -632,7 +632,7 @@
 .rpts-preview-kv-sections { display: flex; flex-direction: column; gap: var(--space-4); }
 .rpts-preview-kv-table { width: 100%; border-collapse: collapse; border: 1px solid var(--color-border-default); border-radius: var(--radius-md); overflow: hidden; }
 .rpts-preview-kv-section {
-  background: #305496;
+  background: #2E86C1;
   color: #fff;
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);

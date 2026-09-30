@@ -65,7 +65,7 @@ const s = StyleSheet.create({
   tablePage: { paddingTop: 0, paddingBottom: 60, fontSize: 9, color: brand.text, fontFamily: 'Helvetica', backgroundColor: '#ffffff' },
   body: { paddingHorizontal: 36, paddingTop: 18, paddingBottom: 16 },
   sectionDivider: { marginTop: 18, marginBottom: 6, paddingBottom: 4, borderBottomWidth: 1, borderBottomColor: brand.border },
-  sectionTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#305496', textTransform: 'uppercase', letterSpacing: 0.8 },
+  sectionTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#2E86C1', textTransform: 'uppercase', letterSpacing: 0.8 },
   empMeta: { fontSize: 8, color: brand.soft, marginBottom: 14, flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   twoCol: { flexDirection: 'row', gap: 12, marginBottom: 10 },
   kvCard: { flex: 1, borderWidth: 1, borderColor: brand.border, borderRadius: 5, padding: 12, backgroundColor: '#fff' },

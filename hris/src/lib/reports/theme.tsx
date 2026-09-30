@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 
 // Brand palette mirrored from the app's design tokens.
 export const brand = {
-  primary: '#2C5282',
-  secondary: '#3182CE',
+  primary: '#2E86C1',
+  secondary: '#7BB8DE',
   accent: '#319795',
   text: '#1A202C',
   muted: '#4A5568',
