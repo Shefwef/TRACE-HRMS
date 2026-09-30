@@ -616,19 +616,23 @@
   height: 8px;
   border-radius: 50%;
 }
-.dscrum-priority-option.dscrum-p-low    .dscrum-priority-dot { background: #38a169; }
+.dscrum-priority-option.dscrum-p-low    .dscrum-priority-dot { background: #3182ce; }
 .dscrum-priority-option.dscrum-p-medium .dscrum-priority-dot { background: #d69e2e; }
 .dscrum-priority-option.dscrum-p-high   .dscrum-priority-dot { background: #c53030; }
 
 /* ─── Priority accent on task cards (left border only, no fill) ─── */
 .dscrum-t-item--tinted {
-  border-left: 3px solid transparent;
+  border-left: 4px solid transparent;
   border-radius: var(--radius-sm);
-  padding-left: 8px;
+  padding-left: 10px;
 }
-.dscrum-t-item--tinted.dscrum-p-low    { border-left-color: #9ae6b4; }
-.dscrum-t-item--tinted.dscrum-p-medium { border-left-color: #f6d582; }
-.dscrum-t-item--tinted.dscrum-p-high   { border-left-color: #feb2b2; }
+.dscrum-t-item--tinted.dscrum-p-low    { border-left-color: #3182ce; } /* saturated blue  */
+.dscrum-t-item--tinted.dscrum-p-medium { border-left-color: #d69e2e; } /* saturated amber */
+.dscrum-t-item--tinted.dscrum-p-high   { border-left-color: #c53030; } /* saturated red   */
+
+/* Waiting-on-decision tasks get a subtle red wash so they stand out
+   from the plain priority-only cards without shouting. */
+.dscrum-t-item--blocker { background: #fef2f2; }
 
 /* ─── Blocker toggle ─── */
 .dscrum-toggle-row {

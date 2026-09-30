@@ -311,7 +311,14 @@ function TodayItem({
   const remove = useDeleteScrumTask();
 
   return (
-    <div className={cx('dscrum-t-item', 'dscrum-t-item--tinted', priorityClass(task.priority))}>
+    <div
+      className={cx(
+        'dscrum-t-item',
+        'dscrum-t-item--tinted',
+        priorityClass(task.priority),
+        task.isDecision && 'dscrum-t-item--blocker',
+      )}
+    >
       <div className="dscrum-t-content">
         <div className="dscrum-t-line">
           <span className="dscrum-t-text">{task.text}</span>
