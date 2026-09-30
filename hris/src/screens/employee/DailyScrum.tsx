@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Calendar, Search, Plus, Pencil, Trash2, ClipboardList,
-  Download, Check, AlertTriangle, Save, X, ListChecks,
+  Download, Check, AlertTriangle, Save, X, ArrowRight,
 } from 'lucide-react';
 import { 
   useDailyScrumDay, useDailyScrumDates, useUpsertScrumEntry,
@@ -385,7 +385,7 @@ function BoardRow({ entry, canEdit, onOpenTask, onOpenEmployee }: BoardRowProps)
             <span className="dscrum-member-role">{emp.designation}</span>
           )}
           <span className="dscrum-member-cta">
-            <ListChecks size={11} /> Open tasks
+            Open tasks <ArrowRight size={12} />
           </span>
         </div>
       </button>
