@@ -2,16 +2,20 @@
  * Seeds DailyScrumEntry + DailyTask rows for Sept 27-30, 2026 (Sun-Wed)
  * from the printed Daily Check-In sheets shared by HR.
  *
- *   npx tsx --env-file=.env.local scripts/seed-daily-scrum.ts             (dry-run)
- *   npx tsx --env-file=.env.local scripts/seed-daily-scrum.ts --apply     (writes)
+ *   npx tsx --env-file=.env.local scripts/seed-daily-scrum.ts                       (dry-run)
+ *   npx tsx --env-file=.env.local scripts/seed-daily-scrum.ts --apply               (writes)
+ *   npx tsx --env-file=.env.local scripts/seed-daily-scrum.ts --reset --apply       (wipe + reseed)
  *
- * Idempotent: skips a (date, employee) that already has an entry, and
- * skips adding a task whose text is already present on that entry.
+ * Idempotent when run without --reset: skips a (date, employee) that
+ * already has an entry, and skips a task whose text is already present.
+ * With --reset every DailyScrumEntry (and its tasks) is deleted first so
+ * the board reflects only the PDF content.
  *
  * Task status is derived from the text — anything containing "(done)"
  * (case-insensitive) is DONE; everything else is IN_PROGRESS. Priority
- * defaults to MEDIUM and carryOver is false. HR can adjust either from
- * the popup after the fact.
+ * is randomized deterministically per task (30% HIGH / 40% MEDIUM /
+ * 30% LOW) and tasks within each column are ordered HIGH → LOW so the
+ * highest-priority items sit at the top.
  *
  * COMPLETED-type tasks (the "Yesterday/Completed" column) get status =
  * DONE regardless of the "(done)" marker — that column semantically
@@ -20,7 +24,7 @@
  * ticked something off during the day).
  */
 import { PrismaClient } from '@prisma/client';
-import type { DailyTaskType, DailyTaskStatus } from '@prisma/client';
+import type { DailyTaskType, DailyTaskStatus, DailyTaskPriority } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -788,6 +792,26 @@ const ALL_DAYS: DaySeed[] = [SUN_27, MON_28, TUE_29, WED_30];
 
 // ─── Runner ──────────────────────────────────────────────────────────
 
+const PRIORITY_RANK: Record<DailyTaskPriority, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+
+// Deterministic hash so re-runs pick the same "random" priority per task.
+function hashString(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+// 30% HIGH / 40% MEDIUM / 30% LOW.
+function priorityFor(seed: string): DailyTaskPriority {
+  const roll = hashString(seed) % 10;
+  if (roll < 3) return 'HIGH';
+  if (roll < 7) return 'MEDIUM';
+  return 'LOW';
+}
+
 function statusFor(text: string, type: DailyTaskType): DailyTaskStatus {
   if (type === 'COMPLETED') return 'DONE';
   // COMPLETED-column items are historically done; TODAY items default to
@@ -811,7 +835,19 @@ async function findEmployeeId(pdfName: string): Promise<string | null> {
 
 async function main() {
   const apply = process.argv.includes('--apply');
+  const reset = process.argv.includes('--reset');
   console.log(apply ? '=== APPLYING ===' : '=== DRY-RUN (add --apply to write) ===');
+  if (reset) console.log('=== --reset: existing DailyScrumEntry rows will be wiped ===');
+
+  if (reset && apply) {
+    const tasksDel = await prisma.dailyTask.deleteMany({});
+    const entriesDel = await prisma.dailyScrumEntry.deleteMany({});
+    console.log(`Deleted ${tasksDel.count} tasks and ${entriesDel.count} entries.\n`);
+  } else if (reset && !apply) {
+    const tasksCount = await prisma.dailyTask.count();
+    const entriesCount = await prisma.dailyScrumEntry.count();
+    console.log(`Would delete ${tasksCount} tasks and ${entriesCount} entries.\n`);
+  }
 
   let daysProcessed = 0;
   let entriesCreated = 0;
@@ -858,35 +894,38 @@ async function main() {
 
       const existingTexts = new Set(existing?.tasks.map((t) => t.text.toLowerCase()) ?? []);
 
-      const toInsert: Array<{
+      type Pending = {
         entryId: string;
         type: DailyTaskType;
         status: DailyTaskStatus;
         text: string;
+        priority: DailyTaskPriority;
         order: number;
-      }> = [];
+      };
 
-      entry.completed.forEach((text, i) => {
-        if (existingTexts.has(text.toLowerCase())) { tasksSkipped += 1; return; }
-        toInsert.push({
-          entryId: scrumEntryId,
-          type: 'COMPLETED',
-          status: statusFor(text, 'COMPLETED'),
-          text,
-          order: i,
-        });
-      });
+      const collect = (texts: string[], type: DailyTaskType): Pending[] => {
+        const rows: Pending[] = [];
+        for (const text of texts) {
+          if (existingTexts.has(text.toLowerCase())) { tasksSkipped += 1; continue; }
+          rows.push({
+            entryId: scrumEntryId,
+            type,
+            status: statusFor(text, type),
+            text,
+            priority: priorityFor(`${day.date}|${entry.personPdfName}|${type}|${text}`),
+            order: 0,
+          });
+        }
+        // HIGH first, then MEDIUM, then LOW. Stable within a bucket.
+        rows.sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]);
+        rows.forEach((r, i) => { r.order = i; });
+        return rows;
+      };
 
-      entry.today.forEach((text, i) => {
-        if (existingTexts.has(text.toLowerCase())) { tasksSkipped += 1; return; }
-        toInsert.push({
-          entryId: scrumEntryId,
-          type: 'TODAY',
-          status: statusFor(text, 'TODAY'),
-          text,
-          order: i,
-        });
-      });
+      const toInsert: Pending[] = [
+        ...collect(entry.completed, 'COMPLETED'),
+        ...collect(entry.today, 'TODAY'),
+      ];
 
       if (apply && toInsert.length > 0 && scrumEntryId !== '(pending)') {
         await prisma.dailyTask.createMany({
@@ -896,7 +935,7 @@ async function main() {
             status: t.status,
             text: t.text,
             order: t.order,
-            priority: 'MEDIUM',
+            priority: t.priority,
             isDecision: false,
             carryOver: false,
           })),
@@ -917,7 +956,7 @@ async function main() {
     console.log(`\nMissing users (need to be created + Trace-ID first):`);
     for (const p of missingPeople) console.log(`  - ${p}  (canonical: ${canonicalName(p)})`);
   }
-  if (!apply) console.log('\nRun again with --apply to write.');
+  if (!apply) console.log('\nRun again with --apply to write (add --reset to wipe first).');
 }
 
 main()
