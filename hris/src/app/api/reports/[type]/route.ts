@@ -24,7 +24,7 @@ import {
   buildOffsiteWorkbook, buildSummaryWorkbook,
   buildAttendanceSummaryWorkbook, buildEmployeeSummaryWorkbook, buildPerformanceLeaveSummaryWorkbook,
 } from '@/lib/reports/builders';
-import { xlsxResponse } from '@/lib/reports/workbook';
+import { xlsxResponse, formatHoursMinutes } from '@/lib/reports/workbook';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -394,7 +394,9 @@ async function renderPreview(
         fmtDate(r.date), r.weekday,
         fmtPreviewTime(r.clockIn),
         fmtPreviewTime(r.clockOut),
-        fmtNum(r.totalHours), fmtNum(r.overtimeHours), fmtNum(r.deficitHours),
+        formatHoursMinutes(r.totalHours),
+        formatHoursMinutes(r.overtimeHours),
+        formatHoursMinutes(r.deficitHours),
         r.status, r.initialLocation, r.finalLocation, r.offsiteWorkPlace,
       ]);
       return json({ columns, rows: tableRows });
@@ -439,8 +441,8 @@ async function renderPreview(
               ['Working Days', data.performance.workingDays],
               ['Half Days', data.performance.halfDays],
               ['Leave Days', data.performance.leaveDays],
-              ['Hours Worked', data.performance.hoursWorked],
-              ['Overtime Hours', data.performance.overtimeHours],
+              ['Hours Worked', formatHoursMinutes(data.performance.hoursWorked)],
+              ['Overtime Hours', formatHoursMinutes(data.performance.overtimeHours)],
               ['Off-site Days', data.performance.offsiteDays],
             ],
           },
