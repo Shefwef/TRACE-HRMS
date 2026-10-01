@@ -826,9 +826,12 @@ function canonicalName(pdfName: string): string {
 
 async function findEmployeeId(pdfName: string): Promise<string | null> {
   const canonical = canonicalName(pdfName);
+  // Prefer active, non-deleted users. If duplicates exist (e.g. a deleted
+  // old account with the same name), the active one wins.
   const user = await prisma.user.findFirst({
-    where: { fullName: { equals: canonical, mode: 'insensitive' } },
-    select: { id: true },
+    where: { fullName: { equals: canonical, mode: 'insensitive' }, deletedAt: null },
+    select: { id: true, isActive: true },
+    orderBy: [{ isActive: 'desc' }, { employeeIdCode: 'asc' }],
   });
   return user?.id ?? null;
 }
