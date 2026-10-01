@@ -121,16 +121,21 @@ export function CalendarPage() {
       </div>
 
       <div className="card calpg-upcoming">
-        <h3>Upcoming</h3>
+        <h3>Upcoming Holidays</h3>
         <ul>
           {holidays
             .filter((h) => new Date(h.date) >= new Date())
             .slice(0, 5)
             .map((h) => (
               <li key={h.id}>
-                <Badge variant="holiday">Holiday</Badge>
-                <strong>{h.name}</strong>
-                <span className="muted">{fmtDate(h.date, 'EEE, d MMM yyyy')}</span>
+                <div className="calpg-upcoming-tile">
+                  <span className="calpg-upcoming-tile-month">{fmtDate(h.date, 'MMM')}</span>
+                  <span className="calpg-upcoming-tile-day">{fmtDate(h.date, 'd')}</span>
+                </div>
+                <div className="calpg-upcoming-info">
+                  <span className="calpg-upcoming-name">{h.name}</span>
+                  <span className="calpg-upcoming-dow">{fmtDate(h.date, 'EEEE')}</span>
+                </div>
               </li>
             ))}
         </ul>

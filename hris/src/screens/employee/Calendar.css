@@ -90,22 +90,22 @@
   box-shadow: 0 0 0 1px var(--color-brand-secondary) inset;
 }
 
-/* status-tinted full backgrounds - visible but never loud */
+/* status-tinted full backgrounds */
 .calpg-cell-present {
-  background: color-mix(in srgb, var(--color-success) 12%, transparent);
-  border-color: color-mix(in srgb, var(--color-success) 30%, var(--color-border-default));
+  background: color-mix(in srgb, var(--color-success) 22%, transparent);
+  border-color: color-mix(in srgb, var(--color-success) 50%, var(--color-border-default));
 }
-.calpg-cell-present:hover { background: color-mix(in srgb, var(--color-success) 18%, transparent); }
+.calpg-cell-present:hover { background: color-mix(in srgb, var(--color-success) 30%, transparent); }
 .calpg-cell-leave {
-  background: color-mix(in srgb, var(--color-leave-casual) 14%, transparent);
-  border-color: color-mix(in srgb, var(--color-leave-casual) 32%, var(--color-border-default));
+  background: color-mix(in srgb, var(--color-leave-casual) 26%, transparent);
+  border-color: color-mix(in srgb, var(--color-leave-casual) 52%, var(--color-border-default));
 }
-.calpg-cell-leave:hover { background: color-mix(in srgb, var(--color-leave-casual) 20%, transparent); }
+.calpg-cell-leave:hover { background: color-mix(in srgb, var(--color-leave-casual) 34%, transparent); }
 .calpg-cell-holiday {
-  background: color-mix(in srgb, var(--color-brand-secondary) 14%, transparent);
-  border-color: color-mix(in srgb, var(--color-brand-secondary) 40%, var(--color-border-default));
+  background: color-mix(in srgb, var(--color-brand-secondary) 26%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand-secondary) 60%, var(--color-border-default));
 }
-.calpg-cell-holiday:hover { background: color-mix(in srgb, var(--color-brand-secondary) 22%, transparent); }
+.calpg-cell-holiday:hover { background: color-mix(in srgb, var(--color-brand-secondary) 36%, transparent); }
 .calpg-cell-holiday .calpg-cell-head { color: var(--color-brand-primary); }
 
 /* Holiday label: transparent, square (no border-radius), 3-line clamp. */
@@ -138,22 +138,22 @@
   padding: 0;
 }
 
-/* Bangladesh weekend cells (Fri + Sat) get a subtle red tint too. */
+/* Bangladesh weekend cells (Fri + Sat) */
 .calpg-cell-weekend-day {
-  background: color-mix(in srgb, var(--color-danger) 6%, transparent);
-  border-color: color-mix(in srgb, var(--color-danger) 20%, var(--color-border-default));
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-danger) 35%, var(--color-border-default));
 }
 .calpg-cell-weekend-day .calpg-cell-head { color: var(--color-danger); }
 .calpg-cell-halfday {
-  background: color-mix(in srgb, var(--color-warning) 14%, transparent);
-  border-color: color-mix(in srgb, var(--color-warning) 32%, var(--color-border-default));
+  background: color-mix(in srgb, var(--color-warning) 26%, transparent);
+  border-color: color-mix(in srgb, var(--color-warning) 52%, var(--color-border-default));
 }
-.calpg-cell-halfday:hover { background: color-mix(in srgb, var(--color-warning) 20%, transparent); }
+.calpg-cell-halfday:hover { background: color-mix(in srgb, var(--color-warning) 34%, transparent); }
 .calpg-cell-absent {
-  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
-  border-color: color-mix(in srgb, var(--color-danger) 30%, var(--color-border-default));
+  background: color-mix(in srgb, var(--color-danger) 22%, transparent);
+  border-color: color-mix(in srgb, var(--color-danger) 50%, var(--color-border-default));
 }
-.calpg-cell-absent:hover { background: color-mix(in srgb, var(--color-danger) 18%, transparent); }
+.calpg-cell-absent:hover { background: color-mix(in srgb, var(--color-danger) 30%, transparent); }
 
 .calpg-cell-head {
   display: flex;
@@ -201,28 +201,84 @@
 .calpg-legend-halfday { background: color-mix(in srgb, var(--color-warning) 22%, transparent); border: 1px solid color-mix(in srgb, var(--color-warning) 40%, transparent); }
 .calpg-legend-weekend { background: color-mix(in srgb, var(--color-danger) 12%, transparent); border: 1px solid color-mix(in srgb, var(--color-danger) 28%, transparent); }
 
-.calpg-upcoming {
-  padding: var(--space-5);
-}
-@media (max-width: 640px) {
-  .calpg-upcoming li {
-    grid-template-columns: 1fr;
-    gap: 4px;
-    text-align: left;
-  }
-}
+.calpg-upcoming { padding: var(--space-5); }
 .calpg-upcoming h3 {
+  font-family: var(--font-display);
   font-size: var(--text-base);
-  margin-bottom: 12px;
+  font-weight: var(--weight-semibold);
+  margin-bottom: 14px;
 }
 .calpg-upcoming ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .calpg-upcoming li {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 12px;
-  padding: 10px 12px;
+  display: flex;
   align-items: center;
-  border-radius: var(--radius-md);
-  background: var(--color-bg-subtle);
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-brand-secondary) 6%, var(--color-bg-subtle));
+  border: 1px solid color-mix(in srgb, var(--color-brand-secondary) 20%, var(--color-border-default));
+  transition: background var(--transition-fast);
 }
-.calpg-upcoming strong { font-size: var(--text-sm); font-weight: var(--weight-semibold); }
+.calpg-upcoming li:hover {
+  background: color-mix(in srgb, var(--color-brand-secondary) 12%, var(--color-bg-subtle));
+}
+
+/* Mini calendar date tile */
+.calpg-upcoming-tile {
+  flex-shrink: 0;
+  width: 48px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid color-mix(in srgb, var(--color-brand-secondary) 40%, transparent);
+}
+.calpg-upcoming-tile-month {
+  width: 100%;
+  text-align: center;
+  background: var(--color-brand-primary);
+  color: #fff;
+  font-size: 9px;
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 0;
+}
+.calpg-upcoming-tile-day {
+  width: 100%;
+  text-align: center;
+  background: color-mix(in srgb, var(--color-brand-secondary) 18%, var(--color-bg-surface));
+  color: var(--color-brand-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  padding: 6px 0 5px;
+}
+
+/* Holiday name + day name */
+.calpg-upcoming-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.calpg-upcoming-name {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.calpg-upcoming-dow {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 480px) {
+  .calpg-upcoming-tile { width: 42px; }
+  .calpg-upcoming-tile-day { font-size: var(--text-lg); }
+}
