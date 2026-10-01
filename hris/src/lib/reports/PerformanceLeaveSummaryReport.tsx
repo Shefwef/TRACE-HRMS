@@ -1,5 +1,5 @@
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
-import { brand, BrandHeader, BrandFooter, styles as shared, statusBadgeStyle, Kv } from './theme';
+import { brand, BrandHeader, BrandFooter, styles as shared, statusBadgeStyle, SummarySection } from './theme';
 import type { PerformanceLeaveSummaryData } from './data';
 
 // ─── input types ──────────────────────────────────────────
@@ -20,24 +20,25 @@ export interface PerformanceLeaveSummaryReportInput {
 }
 
 // ─── leave request table columns (A4 landscape) ───────────
+// Labels mirror the Excel sheet (PERF_LEAVE_REQUEST_COLS in builders.ts).
 
 const LR_COLS = [
-  { label: '#',            w: '3%'  },
-  { label: 'Emp ID',       w: '6%'  },
-  { label: 'Name',         w: '9%'  },
-  { label: 'Leave Type',   w: '7%'  },
-  { label: 'Start',        w: '6%'  },
-  { label: 'End',          w: '6%'  },
-  { label: 'Days',         w: '4%'  },
-  { label: 'Half Day',     w: '4%'  },
-  { label: 'From',         w: '5%'  },
-  { label: 'To',           w: '5%'  },
-  { label: 'Reason',       w: '10%' },
-  { label: 'Status',       w: '6%'  },
-  { label: 'Reviewer',     w: '8%'  },
-  { label: 'Reviewed At',  w: '6%'  },
-  { label: 'Applied On',   w: '6%'  },
-  { label: 'Admin Note',   w: '9%'  },
+  { label: 'Sl',               w: '3%'  },
+  { label: 'Employee ID',      w: '6%'  },
+  { label: 'Employee Name',    w: '9%'  },
+  { label: 'Leave Type',       w: '7%'  },
+  { label: 'Start Date',       w: '6%'  },
+  { label: 'End Date',         w: '6%'  },
+  { label: 'Duration (days)',  w: '5%'  },
+  { label: 'Half Day',         w: '4%'  },
+  { label: 'Time From',        w: '5%'  },
+  { label: 'Time To',          w: '5%'  },
+  { label: 'Reason',           w: '10%' },
+  { label: 'Status',           w: '6%'  },
+  { label: 'Reviewed By',      w: '8%'  },
+  { label: 'Reviewed At',      w: '6%'  },
+  { label: 'Applied On',       w: '6%'  },
+  { label: 'Admin Note',       w: '8%'  },
 ];
 
 // ─── helpers ──────────────────────────────────────────────
@@ -61,15 +62,10 @@ function fmtHours(n: number): string {
 // ─── local styles ──────────────────────────────────────────
 
 const s = StyleSheet.create({
-  kvPage: { paddingTop: 0, paddingBottom: 60, fontSize: 10, color: brand.text, fontFamily: 'Helvetica', backgroundColor: '#ffffff' },
-  tablePage: { paddingTop: 0, paddingBottom: 60, fontSize: 9, color: brand.text, fontFamily: 'Helvetica', backgroundColor: '#ffffff' },
-  body: { paddingHorizontal: 36, paddingTop: 18, paddingBottom: 16 },
-  sectionDivider: { marginTop: 18, marginBottom: 6, paddingBottom: 4, borderBottomWidth: 1, borderBottomColor: brand.border },
-  sectionTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#2E86C1', textTransform: 'uppercase', letterSpacing: 0.8 },
-  empMeta: { fontSize: 8, color: brand.soft, marginBottom: 14, flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
-  twoCol: { flexDirection: 'row', gap: 12, marginBottom: 10 },
-  kvCard: { flex: 1, borderWidth: 1, borderColor: brand.border, borderRadius: 5, padding: 12, backgroundColor: '#fff' },
-  kvCardTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: brand.muted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 },
+  summaryPage: { paddingBottom: 60, fontSize: 9, color: brand.text, fontFamily: 'Helvetica', backgroundColor: '#ffffff' },
+  tablePage: { paddingBottom: 60, fontSize: 9, color: brand.text, fontFamily: 'Helvetica', backgroundColor: '#ffffff' },
+  body: { paddingHorizontal: 36, paddingTop: 16, paddingBottom: 16 },
+  tableBody: { paddingHorizontal: 28, paddingTop: 14, paddingBottom: 70 },
   table: { borderWidth: 1, borderColor: brand.border, borderRadius: 3 },
   thead: {
     flexDirection: 'row',
@@ -83,7 +79,7 @@ const s = StyleSheet.create({
     paddingVertical: 4, paddingHorizontal: 5,
   },
   trowAlt: { backgroundColor: '#FAFBFC' },
-  th: { fontSize: 6, fontFamily: 'Helvetica-Bold', color: brand.muted, textTransform: 'uppercase', letterSpacing: 0.3 },
+  th: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: brand.muted, textTransform: 'uppercase', letterSpacing: 0.3 },
   td: { fontSize: 7, color: brand.text },
   tdMuted: { fontSize: 7, color: brand.soft },
   badge: {
@@ -101,90 +97,107 @@ export function PerformanceLeaveSummaryReport({
   const b = data.balance;
   const p = data.performance;
 
+  // Sheet 1 content (mirrors Excel's "Performance Summary" sheet)
+  const perfReport: [string, string | number][] = [
+    ['Report Type',  'Performance summary'],
+    ['Period',       period],
+    ['Generated on', generatedAt],
+    ['Source',       'TRACE HRMS'],
+  ];
+  const perfEmployee: [string, string | number][] = [
+    ['Employee ID',  employee.employeeIdCode ?? '-'],
+    ['Name',         employee.fullName],
+    ['Email',        employee.email],
+    ['Department',   employee.department ?? '-'],
+    ['Designation',  employee.designation ?? '-'],
+    ['Line Manager', lineManagerName],
+  ];
+  const perfAttendance: [string, string | number][] = [
+    ['Working Days',             p.workingDays],
+    ['Half Days',                p.halfDays],
+    ['Leave Days',               p.leaveDays],
+    ['Hours worked',             fmtHours(p.hoursWorked)],
+    ['Overtime Hours',           fmtHours(p.overtimeHours)],
+    ['Days with off-site work',  p.offsiteDays],
+  ];
+
+  // Sheet 2 content (mirrors Excel's "Leave History Summary" sheet)
+  const leaveReport: [string, string | number][] = [
+    ['Report',       'Leave history'],
+    ['Period',       period],
+    ['Generated on', generatedAt],
+    ['Source',       'TRACE HRMS'],
+  ];
+  const leaveEmployee: [string, string | number][] = perfEmployee;
+  const leaveBalance: [string, string | number][] = [
+    ['Casual - Entitled',          b.casualTotal],
+    ['Casual - Used',              b.casualUsed],
+    ['Casual - Remaining',         round2(b.casualTotal - b.casualUsed - b.casualPending)],
+    ['Sick - Entitled',            b.sickTotal],
+    ['Sick - Used',                b.sickUsed],
+    ['Sick - Remaining',           round2(b.sickTotal - b.sickUsed - b.sickPending)],
+    ['Replacement Leave Balance',  b.replacementBalance],
+    ['Replacement Leave - Used',   b.replacementUsed ?? 0],
+  ];
+  const leaveRequests: [string, string | number][] = [
+    ['Approved', data.requestCounts.approved],
+    ['Pending',  data.requestCounts.pending],
+    ['Rejected', data.requestCounts.rejected],
+  ];
+
   return (
     <Document title={`Performance & Leave Summary - ${employee.fullName}`} author="TRACE HRMS">
 
-      {/* ── Page 1: KV sections (portrait) ─────────────────── */}
-      <Page size="A4" style={s.kvPage}>
+      {/* ── Page 1: Performance Summary (mirrors Excel Sheet 1) ─ */}
+      <Page size="A4" style={s.summaryPage}>
         <BrandHeader
-          title="Performance & Leave Summary"
-          metaLabel="Employee"
+          title="Performance Summary"
+          metaLabel="EMPLOYEE"
           metaValue={employee.fullName}
+          extraMeta={`Period: ${period}`}
           logoDataUrl={logoDataUrl}
         />
 
         <View style={s.body}>
-          {/* Employee info strip */}
-          <View style={s.empMeta}>
-            {employee.employeeIdCode ? <Text>ID: {employee.employeeIdCode}</Text> : null}
-            {employee.department ? <Text>Dept: {employee.department}</Text> : null}
-            {employee.designation ? <Text>{employee.designation}</Text> : null}
-            {lineManagerName ? <Text>Manager: {lineManagerName}</Text> : null}
-            <Text>Period: {period}</Text>
-          </View>
-
-          {/* ── Tab 1: Performance Summary ── */}
-          <View style={s.sectionDivider}><Text style={s.sectionTitle}>Performance Summary</Text></View>
-
-          <View style={s.twoCol}>
-            <View style={s.kvCard}>
-              <Text style={s.kvCardTitle}>Attendance</Text>
-              <Kv label="Working Days"    value={String(p.workingDays)} />
-              <Kv label="Half Days"       value={String(p.halfDays)} />
-              <Kv label="Leave Days"      value={String(p.leaveDays)} />
-              <Kv label="Hours Worked"    value={fmtHours(p.hoursWorked)} />
-              <Kv label="Overtime Hours"  value={fmtHours(p.overtimeHours)} />
-              <Kv label="Off-site Days"   value={String(p.offsiteDays)} />
-            </View>
-            <View style={s.kvCard}>
-              <Text style={s.kvCardTitle}>Leave Requests (cycle year)</Text>
-              <Kv label="Approved"  value={String(data.requestCounts.approved)} />
-              <Kv label="Pending"   value={String(data.requestCounts.pending)} />
-              <Kv label="Rejected"  value={String(data.requestCounts.rejected)} />
-            </View>
-          </View>
-
-          {/* ── Tab 2: Leave History Summary ── */}
-          <View style={[s.sectionDivider, { marginTop: 14 }]}><Text style={s.sectionTitle}>Leave History Summary</Text></View>
-
-          <View style={s.twoCol}>
-            <View style={s.kvCard}>
-              <Text style={s.kvCardTitle}>Casual Leave</Text>
-              <Kv label="Total"     value={String(b.casualTotal)} />
-              <Kv label="Used"      value={String(b.casualUsed)} />
-              <Kv label="Pending"   value={String(b.casualPending)} />
-              <Kv label="Remaining" value={String(round2(b.casualTotal - b.casualUsed - b.casualPending))} />
-            </View>
-            <View style={s.kvCard}>
-              <Text style={s.kvCardTitle}>Sick Leave</Text>
-              <Kv label="Total"     value={String(b.sickTotal)} />
-              <Kv label="Used"      value={String(b.sickUsed)} />
-              <Kv label="Pending"   value={String(b.sickPending)} />
-              <Kv label="Remaining" value={String(round2(b.sickTotal - b.sickUsed - b.sickPending))} />
-            </View>
-            <View style={s.kvCard}>
-              <Text style={s.kvCardTitle}>Replacement Leave</Text>
-              <Kv label="Balance"   value={String(b.replacementBalance)} />
-              <Kv label="Used"      value={String(b.replacementUsed ?? 0)} />
-            </View>
-          </View>
+          <SummarySection heading="Report"               rows={perfReport} />
+          <SummarySection heading="Employee Information" rows={perfEmployee} />
+          <SummarySection heading={`Attendance - ${period}`} rows={perfAttendance} />
         </View>
 
         <BrandFooter generatedAt={generatedAt} />
       </Page>
 
-      {/* ── Page 2+: Leave Request table (landscape) ────────── */}
-      <Page size="A4" orientation="landscape" style={s.tablePage}>
+      {/* ── Page 2: Leave History Summary (mirrors Excel Sheet 2) ─ */}
+      <Page size="A4" style={s.summaryPage}>
         <BrandHeader
-          title="Leave Requests"
-          metaLabel="Employee"
+          title="Leave History Summary"
+          metaLabel="EMPLOYEE"
           metaValue={employee.fullName}
+          extraMeta={`Period: ${period}`}
           logoDataUrl={logoDataUrl}
         />
 
-        <View style={[s.body, { paddingBottom: 70 }]}>
-          <View style={[s.sectionDivider, { marginTop: 4 }]}><Text style={s.sectionTitle}>Leave Request</Text></View>
+        <View style={s.body}>
+          <SummarySection heading="Report"               rows={leaveReport} />
+          <SummarySection heading="Employee"             rows={leaveEmployee} />
+          <SummarySection heading="Leave balance"        rows={leaveBalance} />
+          <SummarySection heading="Requests this cycle"  rows={leaveRequests} />
+        </View>
 
+        <BrandFooter generatedAt={generatedAt} />
+      </Page>
+
+      {/* ── Page 3+: Leave Request table (mirrors Excel Sheet 3) ─ */}
+      <Page size="A4" orientation="landscape" style={s.tablePage}>
+        <BrandHeader
+          title="Leave Request"
+          metaLabel="EMPLOYEE"
+          metaValue={employee.fullName}
+          extraMeta={`Period: ${period}`}
+          logoDataUrl={logoDataUrl}
+        />
+
+        <View style={s.tableBody}>
           {data.leaveRequests.length === 0 ? (
             <Text style={shared.emptyState}>No leave requests found for this period.</Text>
           ) : (

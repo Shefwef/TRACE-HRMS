@@ -30,8 +30,8 @@ export const styles = StyleSheet.create({
   headerBar: {
     backgroundColor: brand.primary,
     color: '#ffffff',
-    paddingVertical: 20,
-    paddingHorizontal: 36,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -39,23 +39,23 @@ export const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 20,
   },
   logo: {
-    width: 42,
-    height: 42,
+    width: 150,
+    height: 44,
     objectFit: 'contain',
   },
-  headerWordmark: {
-    color: '#ffffff',
-    fontSize: 9,
-    letterSpacing: 1.2,
-    marginBottom: 3,
+  headerDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: 'rgba(255,255,255,0.35)',
   },
   headerTitle: {
     color: '#ffffff',
-    fontSize: 18,
+    fontSize: 15,
     fontFamily: 'Helvetica-Bold',
+    letterSpacing: 0.3,
   },
   headerMeta: {
     alignItems: 'flex-end',
@@ -220,6 +220,52 @@ export const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderRadius: 6,
   },
+  // Summary table: two-column (label|value) blocks that mirror the Excel sheets
+  summaryHeadingBar: {
+    backgroundColor: brand.primary,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginTop: 12,
+    marginBottom: 0,
+  },
+  summaryHeadingText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  summaryTable: {
+    borderWidth: 1,
+    borderColor: brand.border,
+    borderTopWidth: 0,
+    marginBottom: 2,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 0.5,
+    borderBottomColor: brand.border,
+  },
+  summaryRowAlt: {
+    backgroundColor: '#FAFBFC',
+  },
+  summaryLabelCell: {
+    width: '38%',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    fontSize: 9,
+    color: brand.muted,
+    fontFamily: 'Helvetica-Bold',
+    borderRightWidth: 0.5,
+    borderRightColor: brand.border,
+  },
+  summaryValueCell: {
+    flex: 1,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    fontSize: 9,
+    color: brand.text,
+  },
 });
 
 export function statusBadgeStyle(status: string): { color: string; backgroundColor: string } {
@@ -246,20 +292,20 @@ export function BrandHeader(props: {
   metaLabel: string;
   metaValue: string;
   logoDataUrl: string;
+  extraMeta?: string;
 }) {
   return (
     <>
       <View style={styles.headerBar} fixed>
         <View style={styles.headerLeft}>
           {props.logoDataUrl ? <Image src={props.logoDataUrl} style={styles.logo} /> : null}
-          <View>
-            <Text style={styles.headerWordmark}>TRACE HRMS</Text>
-            <Text style={styles.headerTitle}>{props.title}</Text>
-          </View>
+          <View style={styles.headerDivider} />
+          <Text style={styles.headerTitle}>{props.title}</Text>
         </View>
         <View style={styles.headerMeta}>
           <Text style={styles.headerMetaLabel}>{props.metaLabel}</Text>
           <Text style={styles.headerMetaValue}>{props.metaValue}</Text>
+          {props.extraMeta ? <Text style={styles.headerMetaLabel}>{props.extraMeta}</Text> : null}
         </View>
       </View>
       <View style={styles.accentStripe} fixed />
@@ -310,6 +356,35 @@ export function Section({ title, children }: { title: string; children: ReactNod
     <>
       <Text style={styles.sectionTitle}>{title}</Text>
       {children}
+    </>
+  );
+}
+
+/** Two-column (label | value) summary block that mirrors an Excel summary sheet. */
+export function SummarySection({
+  heading,
+  rows,
+}: {
+  heading: string;
+  rows: [string, string | number][];
+}) {
+  return (
+    <>
+      <View style={styles.summaryHeadingBar}>
+        <Text style={styles.summaryHeadingText}>{heading}</Text>
+      </View>
+      <View style={styles.summaryTable}>
+        {rows.map(([label, value], i) => (
+          <View
+            key={label}
+            style={[styles.summaryRow, i % 2 === 1 ? styles.summaryRowAlt : {}]}
+            wrap={false}
+          >
+            <Text style={styles.summaryLabelCell}>{label}</Text>
+            <Text style={styles.summaryValueCell}>{String(value)}</Text>
+          </View>
+        ))}
+      </View>
     </>
   );
 }

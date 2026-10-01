@@ -1,5 +1,5 @@
-import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
-import { brand } from './theme';
+import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
+import { brand, BrandHeader, BrandFooter } from './theme';
 
 // ─── input types ──────────────────────────────────────────
 
@@ -29,50 +29,31 @@ function fmtDate(d: Date | null): string {
 }
 
 // ─── column layout (A4 landscape, 769pt usable) ───────────
+// Labels mirror the Excel sheet (EMPLOYEE_DIRECTORY_COLS in builders.ts).
 
 const COLS = [
-  { label: 'Emp ID',       w: '8%'  },
-  { label: 'Name',         w: '14%' },
-  { label: 'Email',        w: '18%' },
-  { label: 'Phone',        w: '9%'  },
-  { label: 'Department',   w: '11%' },
-  { label: 'Designation',  w: '12%' },
-  { label: 'Line Manager', w: '12%' },
-  { label: 'Joining Date', w: '8%'  },
-  { label: 'Exit Date',    w: '8%'  },
+  { label: 'Employee ID',   w: '8%'  },
+  { label: 'Employee Name', w: '14%' },
+  { label: 'Email',         w: '18%' },
+  { label: 'Phone Number',  w: '9%'  },
+  { label: 'Department',    w: '11%' },
+  { label: 'Designation',   w: '12%' },
+  { label: 'Line Manager',  w: '12%' },
+  { label: 'Joining Date',  w: '8%'  },
+  { label: 'Exit Date',     w: '8%'  },
 ];
 
 // ─── styles ───────────────────────────────────────────────
 
 const s = StyleSheet.create({
   page: {
+    paddingBottom: 60,
     fontSize: 9,
     color: brand.text,
     fontFamily: 'Helvetica',
     backgroundColor: '#ffffff',
   },
-  brandBlock: {
-    backgroundColor: '#2E86C1',
-    paddingVertical: 18,
-    paddingHorizontal: 32,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  brandLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  logo: { width: 38, height: 38, objectFit: 'contain' },
-  brandWordmark: { color: 'rgba(255,255,255,0.72)', fontSize: 7, letterSpacing: 1.2, marginBottom: 3 },
-  brandTitle: { color: '#fff', fontSize: 16, fontFamily: 'Helvetica-Bold' },
-  brandRight: { alignItems: 'flex-end' },
-  brandMetaLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 7, letterSpacing: 0.8, marginBottom: 2 },
-  brandMetaValue: { color: '#fff', fontSize: 10, fontFamily: 'Helvetica-Bold' },
-  brandGenerated: { color: 'rgba(255,255,255,0.55)', fontSize: 7, marginTop: 4 },
-  accentStripe: { height: 3, backgroundColor: '#7BB8DE' },
-  body: { paddingHorizontal: 28, paddingTop: 16, paddingBottom: 20 },
-  summary: { flexDirection: 'row', gap: 12, marginBottom: 12, marginTop: 4 },
-  summaryCard: { flex: 1, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 10, backgroundColor: '#fff' },
-  summaryLabel: { fontSize: 7, color: brand.soft, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 },
-  summaryValue: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: '#2E86C1' },
+  body: { paddingHorizontal: 28, paddingTop: 14, paddingBottom: 20 },
   table: { borderWidth: 1, borderColor: brand.border, borderRadius: 3 },
   thead: {
     flexDirection: 'row',
@@ -93,7 +74,6 @@ const s = StyleSheet.create({
   th: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: brand.muted, textTransform: 'uppercase', letterSpacing: 0.4 },
   td: { fontSize: 8, color: brand.text },
   tdMuted: { fontSize: 8, color: brand.soft },
-  inactive: { opacity: 0.55 },
 });
 
 // ─── component ────────────────────────────────────────────
@@ -102,37 +82,17 @@ export function EmployeeSummaryReport(input: EmployeeSummaryReportInput) {
   return (
     <Document title="Employee Summary" author="TRACE HRMS">
       <Page size="A4" orientation="landscape" style={s.page}>
-
-        {/* One-time brand block — not fixed */}
-        <View style={s.brandBlock}>
-          <View style={s.brandLeft}>
-            {input.logoDataUrl ? <Image src={input.logoDataUrl} style={s.logo} /> : null}
-            <View>
-              <Text style={s.brandWordmark}>TRACE HRMS</Text>
-              <Text style={s.brandTitle}>Employee Summary</Text>
-            </View>
-          </View>
-          <View style={s.brandRight}>
-            <Text style={s.brandMetaLabel}>COMPANY DIRECTORY</Text>
-            <Text style={s.brandMetaValue}>All Employees</Text>
-            <Text style={s.brandGenerated}>Generated {input.generatedAt}</Text>
-          </View>
-        </View>
-        <View style={s.accentStripe} />
+        <BrandHeader
+          title="Employee Summary"
+          metaLabel="COMPANY DIRECTORY"
+          metaValue="All Employees"
+          extraMeta={`Generated ${input.generatedAt}`}
+          logoDataUrl={input.logoDataUrl}
+        />
 
         <View style={s.body}>
-          {/* Summary card */}
-          <View style={s.summary}>
-            <View style={s.summaryCard}>
-              <Text style={s.summaryLabel}>Total Employees</Text>
-              <Text style={s.summaryValue}>{input.rows.length}</Text>
-            </View>
-            <View style={[s.summaryCard, { flex: 3 }]} />
-          </View>
-
-          {/* Table */}
           <View style={s.table}>
-            <View style={s.thead}>
+            <View style={s.thead} fixed>
               {COLS.map((c) => (
                 <Text key={c.label} style={[s.th, { width: c.w }]}>{c.label}</Text>
               ))}
@@ -152,6 +112,8 @@ export function EmployeeSummaryReport(input: EmployeeSummaryReportInput) {
             ))}
           </View>
         </View>
+
+        <BrandFooter generatedAt={input.generatedAt} />
       </Page>
     </Document>
   );

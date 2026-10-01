@@ -1,5 +1,5 @@
-import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
-import { brand, statusBadgeStyle } from './theme';
+import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
+import { brand, BrandHeader, BrandFooter, statusBadgeStyle } from './theme';
 
 // ─── input types ──────────────────────────────────────────
 
@@ -55,51 +55,36 @@ function fmtHours(n: number): string {
 }
 
 // ─── column layout (A4 landscape, 769pt usable) ───────────
+// Labels mirror the Excel sheet (ATTENDANCE_SUMMARY_COLS in builders.ts).
 
 const COLS = [
-  { label: 'Emp ID',       w: '7%'  },
-  { label: 'Name',         w: '11%' },
-  { label: 'Designation',  w: '9%'  },
-  { label: 'Date',         w: '8%'  },
-  { label: 'Day',          w: '4%'  },
-  { label: 'Clock In',     w: '6%'  },
-  { label: 'Clock Out',    w: '6%'  },
-  { label: 'Total Hrs',    w: '5%'  },
-  { label: 'OT Hrs',       w: '5%'  },
-  { label: 'Deficit Hrs',  w: '5%'  },
-  { label: 'Status',       w: '9%'  },
-  { label: 'Init. Loc.',   w: '10%' },
-  { label: 'Final Loc.',   w: '10%' },
-  { label: 'Off-site',     w: '5%'  },
+  { label: 'Employee ID',       w: '7%'  },
+  { label: 'Employee Name',     w: '11%' },
+  { label: 'Designation',       w: '9%'  },
+  { label: 'Date',              w: '8%'  },
+  { label: 'Day',               w: '4%'  },
+  { label: 'Clock In',          w: '6%'  },
+  { label: 'Clock Out',         w: '6%'  },
+  { label: 'Total Hours',       w: '5%'  },
+  { label: 'Overtime Hours',    w: '6%'  },
+  { label: 'Deficit Hours',     w: '6%'  },
+  { label: 'Attendance Status', w: '9%'  },
+  { label: 'Initial Location',  w: '8%'  },
+  { label: 'Final Location',    w: '8%'  },
+  { label: 'Off-site Workplace',w: '7%'  },
 ];
 
 // ─── local styles ──────────────────────────────────────────
 
 const s = StyleSheet.create({
   page: {
+    paddingBottom: 60,
     fontSize: 9,
     color: brand.text,
     fontFamily: 'Helvetica',
     backgroundColor: '#ffffff',
   },
-  brandBlock: {
-    backgroundColor: '#2E86C1',
-    paddingVertical: 18,
-    paddingHorizontal: 32,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  brandLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  logo: { width: 38, height: 38, objectFit: 'contain' },
-  brandWordmark: { color: 'rgba(255,255,255,0.72)', fontSize: 7, letterSpacing: 1.2, marginBottom: 3 },
-  brandTitle: { color: '#fff', fontSize: 16, fontFamily: 'Helvetica-Bold' },
-  brandRight: { alignItems: 'flex-end' },
-  brandMetaLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 7, letterSpacing: 0.8, marginBottom: 2 },
-  brandMetaValue: { color: '#fff', fontSize: 10, fontFamily: 'Helvetica-Bold' },
-  brandGenerated: { color: 'rgba(255,255,255,0.55)', fontSize: 7, marginTop: 4 },
-  accentStripe: { height: 3, backgroundColor: '#7BB8DE' },
-  body: { paddingHorizontal: 28, paddingTop: 16, paddingBottom: 20 },
+  body: { paddingHorizontal: 28, paddingTop: 14, paddingBottom: 20 },
   table: { borderWidth: 1, borderColor: brand.border, borderRadius: 3 },
   thead: {
     flexDirection: 'row',
@@ -125,55 +110,25 @@ const s = StyleSheet.create({
     fontSize: 6, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.3,
     alignSelf: 'flex-start',
   },
-  summary: { flexDirection: 'row', gap: 12, marginBottom: 12, marginTop: 4 },
-  summaryCard: { flex: 1, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 10, backgroundColor: '#fff' },
-  summaryLabel: { fontSize: 7, color: brand.soft, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 },
-  summaryValue: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: '#2E86C1' },
 });
 
 // ─── component ────────────────────────────────────────────
 
 export function AttendanceSummaryReport(input: AttendanceSummaryReportInput) {
-  const totalEmployees = input.employees.length;
-  const totalDataRows = input.employees.reduce((sum, e) => sum + e.rows.length, 0);
-
   return (
     <Document title={`Attendance Summary - ${input.period}`} author="TRACE HRMS">
       <Page size="A4" orientation="landscape" style={s.page}>
-
-        {/* One-time brand block — not fixed, appears only on page 1 */}
-        <View style={s.brandBlock}>
-          <View style={s.brandLeft}>
-            {input.logoDataUrl ? <Image src={input.logoDataUrl} style={s.logo} /> : null}
-            <View>
-              <Text style={s.brandWordmark}>TRACE HRMS</Text>
-              <Text style={s.brandTitle}>Attendance Summary</Text>
-            </View>
-          </View>
-          <View style={s.brandRight}>
-            <Text style={s.brandMetaLabel}>PERIOD</Text>
-            <Text style={s.brandMetaValue}>{input.period}</Text>
-            <Text style={s.brandGenerated}>Generated {input.generatedAt}</Text>
-          </View>
-        </View>
-        <View style={s.accentStripe} />
+        <BrandHeader
+          title="Attendance Summary"
+          metaLabel="PERIOD"
+          metaValue={input.period}
+          extraMeta={`Generated ${input.generatedAt}`}
+          logoDataUrl={input.logoDataUrl}
+        />
 
         <View style={s.body}>
-          {/* Summary cards */}
-          <View style={s.summary}>
-            <View style={s.summaryCard}>
-              <Text style={s.summaryLabel}>Employees</Text>
-              <Text style={s.summaryValue}>{totalEmployees}</Text>
-            </View>
-            <View style={s.summaryCard}>
-              <Text style={s.summaryLabel}>Total Records</Text>
-              <Text style={s.summaryValue}>{totalDataRows}</Text>
-            </View>
-          </View>
-
-          {/* Flat table */}
           <View style={s.table}>
-            <View style={s.thead}>
+            <View style={s.thead} fixed>
               {COLS.map((c) => (
                 <Text key={c.label} style={[s.th, { width: c.w }]}>{c.label}</Text>
               ))}
@@ -223,6 +178,8 @@ export function AttendanceSummaryReport(input: AttendanceSummaryReportInput) {
             )}
           </View>
         </View>
+
+        <BrandFooter generatedAt={input.generatedAt} />
       </Page>
     </Document>
   );
