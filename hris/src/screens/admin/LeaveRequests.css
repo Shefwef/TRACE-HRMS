@@ -156,7 +156,15 @@
 /* Reviewed tab: Employee · Category · Period · Duration · Status · Reviewed by · Details */
 .lreq-table-reviewed .lreq-thead,
 .lreq-table-reviewed .lreq-row {
-  grid-template-columns: minmax(200px, 2fr) minmax(120px, 1fr) minmax(180px, 1fr) 80px 100px minmax(140px, 1fr) 90px;
+  grid-template-columns: minmax(200px, 2fr) minmax(120px, 1fr) minmax(180px, 1fr) 100px 120px minmax(140px, 1fr) 90px;
+}
+/* Duration (col 4) and Status (col 5) — centre both header label and cell value */
+.lreq-table-reviewed .lreq-thead > :nth-child(4),
+.lreq-table-reviewed .lreq-row   > :nth-child(4),
+.lreq-table-reviewed .lreq-thead > :nth-child(5),
+.lreq-table-reviewed .lreq-row   > :nth-child(5) {
+  text-align: center;
+  justify-self: center;
 }
 
 .lreq-cat-badges {
