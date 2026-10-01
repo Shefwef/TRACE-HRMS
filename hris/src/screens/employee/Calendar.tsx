@@ -125,7 +125,7 @@ export function CalendarPage() {
         <ul>
           {holidays
             .filter((h) => new Date(h.date) >= new Date())
-            .slice(0, 5)
+            .slice(0, 6)
             .map((h) => (
               <li key={h.id}>
                 <div className="calpg-upcoming-tile">
