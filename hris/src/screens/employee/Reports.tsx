@@ -603,7 +603,7 @@ export function ReportsPage() {
     setBusy(key);
     try {
       const q = new URLSearchParams({ year: String(year), month: String(month), format: 'pdf' });
-      if (type === 'performance-leave-summary' && perfEmp) q.set('employeeId', perfEmp.id);
+      getParams(type).forEach((v, k) => q.set(k, v));
       const res = await fetch(`/api/reports/${type}?${q.toString()}`);
       if (!res.ok) {
         let msg = `Request failed (${res.status})`;
