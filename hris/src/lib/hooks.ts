@@ -1093,11 +1093,12 @@ export function useUpdateSettings() {
 // ─── Users (admin) ─────────────────────────────────
 
 export interface InviteEmployeePayload {
-  email: string;
+  /** Optional — API auto-generates a placeholder for STAFF when omitted. */
+  email?: string;
   firstName: string;
   lastName?: string;
   /** Role set to grant on creation. Must be non-empty. */
-  roles: ('SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE')[];
+  roles: ('SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE' | 'STAFF')[];
   department?: string;
   designation: string;
   employeeIdCode: string;
@@ -1123,7 +1124,7 @@ export function useInviteEmployee() {
 export interface UpdateEmployeePayload {
   fullName?: string;
   /** Full role set (multi-role model). Must be non-empty. */
-  roles?: ('SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE')[];
+  roles?: ('SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE' | 'STAFF')[];
   department?: string;
   designation?: string;
   employeeIdCode?: string;

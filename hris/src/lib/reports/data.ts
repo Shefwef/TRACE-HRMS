@@ -875,6 +875,7 @@ const ROLE_LABEL: Record<Role, string> = {
   HR: 'HR',
   LINE_MANAGER: 'Line Manager',
   EMPLOYEE: 'Employee',
+  STAFF: 'Staff',
 };
 
 const LOCATION_LABEL: Record<WorkLocationType, string> = {

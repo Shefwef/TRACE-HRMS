@@ -22,7 +22,7 @@ export async function GET(req: Request) {
 }
 
 const PatchSchema = z.object({
-  role: z.enum(['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE']),
+  role: z.enum(['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE', 'STAFF']),
   // Constrained to the compiled catalog so a hand-crafted request can't write
   // rows for permission keys that nothing ever reads.
   permission: z.string().refine((p) => (ALL_PERMISSIONS as readonly string[]).includes(p), {

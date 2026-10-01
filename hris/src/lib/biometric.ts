@@ -15,8 +15,8 @@ import { localDateOnly, localDayBounds, localDayKey, localDayOfWeek } from './wo
 /**
  * Minutes in a scheduled workday derived from the office window.
  * `workStartTime`/`workEndTime` are "HH:mm" strings in office-local time.
- * A 08:30 → 17:30 window yields 540 minutes (9 h) - the value used to
- * split worked time into overtime vs deficit.
+ * A 09:00 → 17:00 window yields 480 minutes (8 h) - the EMPLOYEE baseline.
+ * STAFF layers an extra 60 min on top via standardMinutesForRoles().
  */
 export function standardMinutesFromWindow(workStartTime: string, workEndTime: string): number {
   const [sh, sm] = workStartTime.split(':').map(Number);
@@ -25,6 +25,25 @@ export function standardMinutesFromWindow(workStartTime: string, workEndTime: st
   const endMin = eh * 60 + em;
   const diff = endMin - startMin;
   return diff > 0 ? diff : 0;
+}
+
+/** Extra minutes STAFF are expected to work on top of the office window
+ *  (30 min earlier start + 30 min later end = 60 extra minutes). */
+export const STAFF_EXTRA_MINUTES = 60;
+
+/**
+ * Standard worked-minutes-per-day for a user based on their roles.
+ * STAFF get `standardMinutesFromWindow(...) + STAFF_EXTRA_MINUTES`;
+ * everyone else gets the plain window.
+ */
+export function standardMinutesForRoles(
+  roles: readonly string[] | null | undefined,
+  workStartTime: string,
+  workEndTime: string,
+): number {
+  const base = standardMinutesFromWindow(workStartTime, workEndTime);
+  const isStaff = roles?.includes('STAFF') ?? false;
+  return isStaff ? base + STAFF_EXTRA_MINUTES : base;
 }
 
 /**
@@ -317,12 +336,18 @@ async function rebuildAttendanceDay(
 
   let standardMinutes = cachedStandardMinutes ?? 0;
   if (cachedStandardMinutes === undefined) {
-    const s = await prisma.systemSettings.upsert({
-      where: { id: 'singleton' },
-      update: {},
-      create: { id: 'singleton' },
-    });
-    standardMinutes = standardMinutesFromWindow(s.workStartTime, s.workEndTime);
+    const [s, u] = await Promise.all([
+      prisma.systemSettings.upsert({
+        where: { id: 'singleton' },
+        update: {},
+        create: { id: 'singleton' },
+      }),
+      prisma.user.findUnique({
+        where: { id: employeeId },
+        select: { roles: true },
+      }),
+    ]);
+    standardMinutes = standardMinutesForRoles(u?.roles ?? null, s.workStartTime, s.workEndTime);
   }
 
   const overtimeMinutes = clockOut
@@ -581,9 +606,18 @@ async function doRebuildAttendanceRange(
     update: {},
     create: { id: 'singleton' },
   });
-  const standardMinutes = standardMinutesFromWindow(settings.workStartTime, settings.workEndTime);
 
   const allEmployeeIds = [...new Set([...dayMap.values()].map((d) => d.employeeId))];
+  // Role-aware standard: STAFF get +60 min over the office window.
+  // Fetched once for the whole batch so we don't re-query per row below.
+  const roleRows = await prisma.user.findMany({
+    where: { id: { in: allEmployeeIds } },
+    select: { id: true, roles: true },
+  });
+  const standardByEmployee = new Map<string, number>(
+    roleRows.map((u) => [u.id, standardMinutesForRoles(u.roles, settings.workStartTime, settings.workEndTime)]),
+  );
+  const defaultStandard = standardMinutesFromWindow(settings.workStartTime, settings.workEndTime);
   const allDates = [...new Set([...dayMap.values()].map((d) => d.date.toISOString()))].map(
     (s) => new Date(s),
   );
@@ -650,6 +684,7 @@ async function doRebuildAttendanceRange(
       ? Math.max(0, Math.round((clockOut.getTime() - clockIn.getTime()) / 60_000))
       : 0;
 
+    const standardMinutes = standardByEmployee.get(employeeId) ?? defaultStandard;
     const overtimeMinutes = clockOut ? Math.max(0, totalWorkedMinutes - standardMinutes) : 0;
     const deficitMinutes  = clockOut ? Math.max(0, standardMinutes - totalWorkedMinutes) : 0;
 

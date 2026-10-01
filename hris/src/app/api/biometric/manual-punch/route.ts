@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db';
 import { requireAuth, err, parseBody } from '@/lib/api';
 import { checkPermission } from '@/lib/permissions';
 import { dayKeyToDateOnly, localTimeOnDayToUtc } from '@/lib/workday';
-import { standardMinutesFromWindow } from '@/lib/biometric';
+import { standardMinutesForRoles } from '@/lib/biometric';
 
 /**
  * HR/Admin override for a missed biometric punch. Writes an AttendanceRecord
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
 
   const employee = await prisma.user.findUnique({
     where: { id: input.employeeId },
-    select: { id: true, fullName: true, isActive: true },
+    select: { id: true, fullName: true, isActive: true, roles: true },
   });
   if (!employee) return err(404, 'NOT_FOUND', 'Employee not found.');
 
@@ -119,7 +119,8 @@ export async function POST(req: Request) {
     update: {},
     create: { id: 'singleton' },
   });
-  const standardMinutes = standardMinutesFromWindow(settings.workStartTime, settings.workEndTime);
+  // STAFF get +60 min over the window; other roles use the plain window.
+  const standardMinutes = standardMinutesForRoles(employee.roles, settings.workStartTime, settings.workEndTime);
   const overtimeMinutes = nextClockOut ? Math.max(0, totalWorkedMinutes - standardMinutes) : 0;
   const deficitMinutes  = nextClockOut ? Math.max(0, standardMinutes - totalWorkedMinutes) : 0;
 

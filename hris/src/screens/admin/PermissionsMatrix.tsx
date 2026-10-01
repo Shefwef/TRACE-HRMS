@@ -14,12 +14,13 @@ import './PermissionsMatrix.css';
 
 type RolePermission = { id: string; role: Role; permission: string; enabled: boolean };
 
-const ROLES: Role[] = ['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE'];
+const ROLES: Role[] = ['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE', 'STAFF'];
 const ROLE_LABELS: Record<Role, string> = {
   SUPER_ADMIN: 'Super Admin',
   HR: 'HR',
   LINE_MANAGER: 'Line Manager',
   EMPLOYEE: 'Employee',
+  STAFF: 'Staff',
 };
 
 export function PermissionsMatrix() {

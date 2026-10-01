@@ -26,9 +26,19 @@ export async function POST(req: Request) {
   if (invalid) return err(403, 'ROLE_ELEVATION_FORBIDDEN', invalid);
   const dedupedRoles = Array.from(new Set(input.roles));
   const primary = primaryRole(dedupedRoles);
+  const isStaff = dedupedRoles.includes('STAFF');
+
+  // STAFF may not have a corporate email - auto-generate a placeholder in a
+  // reserved internal domain so Clerk + the DB unique constraint stay happy.
+  // The welcome email is skipped later for these addresses so no bounce.
+  const email = input.email ?? `staff-${input.employeeIdCode.toLowerCase()}@trace.local`;
+  const isPlaceholderEmail = !input.email;
+  if (!isStaff && !input.email) {
+    return err(400, 'EMAIL_REQUIRED', 'Email is required for non-STAFF users.');
+  }
 
   // Pre-checks: email + employee ID must be unique in both our DB and Clerk.
-  const existingDb = await prisma.user.findUnique({ where: { email: input.email } });
+  const existingDb = await prisma.user.findUnique({ where: { email } });
   if (existingDb)
     return err(409, 'ALREADY_EXISTS', 'A user with this email already exists.');
 
@@ -42,7 +52,7 @@ export async function POST(req: Request) {
       `Employee ID "${input.employeeIdCode}" is already assigned to ${existingByCode.fullName}. Pick a different ID.`,
     );
 
-  const existingClerk = await clerk.users.getUserList({ emailAddress: [input.email] });
+  const existingClerk = await clerk.users.getUserList({ emailAddress: [email] });
   if (existingClerk.data.length > 0)
     return err(409, 'ALREADY_EXISTS', 'A Clerk user with this email already exists.');
 
@@ -50,7 +60,7 @@ export async function POST(req: Request) {
   const initialPassword = input.password ?? generatePassword();
 
   const clerkUser = await clerk.users.createUser({
-    emailAddress: [input.email],
+    emailAddress: [email],
     firstName: input.firstName,
     lastName: input.lastName || undefined,
     password: initialPassword,
@@ -87,7 +97,7 @@ export async function POST(req: Request) {
       data: {
         id: clerkUser.id,
         fullName: `${input.firstName}${input.lastName ? ' ' + input.lastName : ''}`.trim(),
-        email: input.email,
+        email,
         role: primary,
         roles: dedupedRoles,
         department: input.department || undefined,
@@ -137,49 +147,53 @@ export async function POST(req: Request) {
       targetType: 'user',
       targetId: clerkUser.id,
       metadata: {
-        email: input.email,
+        email,
+        placeholderEmail: isPlaceholderEmail,
         roles: dedupedRoles,
         department: input.department,
       },
     },
   });
 
-  // Send welcome email with sign-in credentials. Fire-and-forget so a mail
-  // provider hiccup never blocks the invite response - the credentials are
-  // still returned in the API response for the inviter to hand off manually
-  // if needed, and every attempt is captured in emailLog for audit.
-  const settings = await prisma.systemSettings.upsert({
-    where: { id: 'singleton' },
-    update: {},
-    create: { id: 'singleton' },
-  });
-  const signInUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/sign-in`;
-  const { subject, html, text } = welcomeInviteEmail(
-    {
-      employeeName: input.firstName,
-      loginEmail: input.email,
-      initialPassword,
-      signInUrl,
-      inviterName: actor.fullName,
-      designation: input.designation,
-    },
-    { senderName: settings.senderName },
-  );
-  void sendEmail({
-    to: [input.email],
-    subject,
-    html,
-    text,
-    referenceType: 'user_invite',
-    referenceId: clerkUser.id,
-  });
+  // Send welcome email only when a real email was supplied. Auto-generated
+  // placeholder addresses (STAFF without a corporate email) would bounce,
+  // so we skip the email call entirely and let the inviter hand off creds
+  // from the API response below.
+  if (!isPlaceholderEmail) {
+    const settings = await prisma.systemSettings.upsert({
+      where: { id: 'singleton' },
+      update: {},
+      create: { id: 'singleton' },
+    });
+    const signInUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/sign-in`;
+    const { subject, html, text } = welcomeInviteEmail(
+      {
+        employeeName: input.firstName,
+        loginEmail: email,
+        initialPassword,
+        signInUrl,
+        inviterName: actor.fullName,
+        designation: input.designation,
+      },
+      { senderName: settings.senderName },
+    );
+    void sendEmail({
+      to: [email],
+      subject,
+      html,
+      text,
+      referenceType: 'user_invite',
+      referenceId: clerkUser.id,
+    });
+  }
 
   return NextResponse.json(
     {
       ok: true,
       id: clerkUser.id,
-      email: input.email,
+      email,
       initialPassword,
+      emailSent: !isPlaceholderEmail,
     },
     { status: 201 }
   );

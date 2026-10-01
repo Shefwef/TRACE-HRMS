@@ -1,4 +1,4 @@
-export type Role = 'SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE';
+export type Role = 'SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE' | 'STAFF';
 
 export type LeaveType = 'CASUAL' | 'SICK' | 'REPLACEMENT';
 export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';

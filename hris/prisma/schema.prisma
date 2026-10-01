@@ -19,6 +19,9 @@ enum Role {
   HR
   LINE_MANAGER
   EMPLOYEE
+  // STAFF behaves like EMPLOYEE but has a 9-hour standard day instead of 8:
+  // their window starts 30 min before and ends 30 min after the office window.
+  STAFF
 }
 
 enum LeaveType {

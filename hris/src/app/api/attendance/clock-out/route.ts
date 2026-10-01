@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db';
 import { requireAuth, err, parseBody } from '@/lib/api';
 import { localDateOnly } from '@/lib/workday';
 import { closeOpenPeriodOnClockOut } from '@/lib/workLocation';
-import { standardMinutesFromWindow } from '@/lib/biometric';
+import { standardMinutesForRoles } from '@/lib/biometric';
 
 const Body = z
   .object({
@@ -61,11 +61,13 @@ export async function POST(req: Request) {
   const totalWorkedMinutes = Math.max(0, rawMinutes - totalBreakMinutes);
 
   // Standard day length is derived from the configured office window
-  // (workEndTime - workStartTime). A 09:00-17:00 window gives 480 minutes (8h).
-  // Overtime and deficit are measured against *worked* time vs that standard,
-  // so an 8h day is 0 overtime / 0 deficit regardless of what hours were kept.
+  // (workEndTime - workStartTime). STAFF layer an extra 60 min on top
+  // (30 min earlier start + 30 min later end). Overtime and deficit are
+  // measured against *worked* time vs that standard, so an exactly-standard
+  // day is 0 overtime / 0 deficit regardless of what hours were kept.
   // Keeps parity with biometric rebuild + manual punch so reports stay consistent.
-  const standardMinutes = standardMinutesFromWindow(settings.workStartTime, settings.workEndTime);
+  const employeeRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+  const standardMinutes = standardMinutesForRoles(employeeRoles, settings.workStartTime, settings.workEndTime);
   const overtimeMinutes = Math.max(0, totalWorkedMinutes - standardMinutes);
   const deficitMinutes  = Math.max(0, standardMinutes - totalWorkedMinutes);
 

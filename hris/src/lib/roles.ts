@@ -7,8 +7,10 @@
  */
 import type { Role } from '@prisma/client';
 
-/** Ranked highest -> lowest. Used to compute a display "primary" role. */
-export const ROLE_HIERARCHY: Role[] = ['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE'];
+/** Ranked highest -> lowest. Used to compute a display "primary" role.
+ *  STAFF sits below EMPLOYEE: if a user somehow holds both, EMPLOYEE wins
+ *  for display and the stricter EMPLOYEE permission set wins. */
+export const ROLE_HIERARCHY: Role[] = ['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE', 'STAFF'];
 
 /**
  * Which role, out of a user's set, should render as their "primary"?
@@ -42,13 +44,13 @@ export function canApproveLeave(u: { role: Role; roles?: Role[] | null }): boole
 /**
  * Which role sets the current actor can grant to another user.
  *   SUPER_ADMIN -> any role
- *   HR          -> HR + LINE_MANAGER + EMPLOYEE
- *   LINE_MANAGER / EMPLOYEE -> nothing
+ *   HR          -> HR + LINE_MANAGER + EMPLOYEE + STAFF
+ *   LINE_MANAGER / EMPLOYEE / STAFF -> nothing
  */
 export function assignableRoles(actor: { role: Role; roles?: Role[] | null }): Role[] {
   if (hasRole(actor, 'SUPER_ADMIN'))
-    return ['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE'];
-  if (hasRole(actor, 'HR')) return ['HR', 'LINE_MANAGER', 'EMPLOYEE'];
+    return ['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE', 'STAFF'];
+  if (hasRole(actor, 'HR')) return ['HR', 'LINE_MANAGER', 'EMPLOYEE', 'STAFF'];
   return [];
 }
 

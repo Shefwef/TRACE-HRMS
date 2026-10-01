@@ -171,14 +171,16 @@ export const UpdateSettingsSchema = z.object({
 export type UpdateSettingsInput = z.infer<typeof UpdateSettingsSchema>;
 
 export const InviteEmployeeSchema = z.object({
-  email: z.email(),
+  // Email is optional - STAFF users may not have one, in which case the
+  // invite route auto-generates a placeholder like staff-<code>@trace.local.
+  email: z.email().optional(),
   firstName: z.string().min(1).max(80),
   lastName: z.string().max(80).optional(),
   /** One or more roles to grant on creation. Must be non-empty. */
   roles: z
-    .array(z.enum(['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE']))
+    .array(z.enum(['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE', 'STAFF']))
     .min(1)
-    .max(4),
+    .max(5),
   department: z.string().max(120).optional(),
   designation: z.string().min(1).max(120),
   employeeIdCode: z.string().min(1).max(50),
@@ -201,9 +203,9 @@ export const UpdateEmployeeSchema = z.object({
   fullName: z.string().min(2).max(160).optional(),
   /** Full role set. If provided, must contain at least one role. */
   roles: z
-    .array(z.enum(['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE']))
+    .array(z.enum(['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE', 'STAFF']))
     .min(1)
-    .max(4)
+    .max(5)
     .optional(),
   department: z.string().max(120).optional(),
   designation: z.string().max(120).optional(),

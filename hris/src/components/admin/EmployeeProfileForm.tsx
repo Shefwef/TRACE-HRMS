@@ -3,13 +3,14 @@ import { Field, TextInput } from '../ui/Field';
 import { AvatarUpload } from '../ui/AvatarUpload';
 import './InviteEmployeeModal.css';
 
-export type Role = 'SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE';
+export type Role = 'SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE' | 'STAFF';
 
 const ROLE_LABEL: Record<Role, string> = {
   SUPER_ADMIN: 'Super Admin',
   HR: 'HR',
   LINE_MANAGER: 'Line Manager',
   EMPLOYEE: 'Employee',
+  STAFF: 'Staff',
 };
 
 export interface ProfileFormValues {

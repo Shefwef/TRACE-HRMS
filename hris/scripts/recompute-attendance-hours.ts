@@ -10,7 +10,7 @@
  * Only touches records whose stored values disagree with the recomputed values.
  */
 import { PrismaClient } from '@prisma/client';
-import { standardMinutesFromWindow } from '../src/lib/biometric';
+import { standardMinutesForRoles, standardMinutesFromWindow, STAFF_EXTRA_MINUTES } from '../src/lib/biometric';
 
 const prisma = new PrismaClient();
 
@@ -23,10 +23,12 @@ async function main() {
     update: {},
     create: { id: 'singleton' },
   });
-  const standardMinutes = standardMinutesFromWindow(settings.workStartTime, settings.workEndTime);
+  const baseStandard  = standardMinutesFromWindow(settings.workStartTime, settings.workEndTime);
+  const staffStandard = baseStandard + STAFF_EXTRA_MINUTES;
   console.log(
     `Office window: ${settings.workStartTime} - ${settings.workEndTime}  ` +
-    `(standard = ${standardMinutes} min = ${(standardMinutes / 60).toFixed(2)}h)\n`,
+    `(employees = ${baseStandard} min / ${(baseStandard / 60).toFixed(2)}h, ` +
+    `staff = ${staffStandard} min / ${(staffStandard / 60).toFixed(2)}h)\n`,
   );
 
   // Only closed days have deterministic overtime/deficit.
@@ -34,7 +36,7 @@ async function main() {
     where: { clockOutTime: { not: null } },
     select: {
       id: true,
-      employee: { select: { fullName: true, employeeIdCode: true } },
+      employee: { select: { fullName: true, employeeIdCode: true, roles: true } },
       date: true,
       totalWorkedMinutes: true,
       overtimeMinutes: true,
@@ -45,6 +47,11 @@ async function main() {
 
   let updated = 0, same = 0;
   for (const r of records) {
+    const standardMinutes = standardMinutesForRoles(
+      r.employee.roles,
+      settings.workStartTime,
+      settings.workEndTime,
+    );
     const expectedOt  = Math.max(0, r.totalWorkedMinutes - standardMinutes);
     const expectedDef = Math.max(0, standardMinutes - r.totalWorkedMinutes);
     if (expectedOt === r.overtimeMinutes && expectedDef === r.deficitMinutes) {
@@ -52,10 +59,11 @@ async function main() {
       continue;
     }
     updated += 1;
+    const tag = r.employee.roles.includes('STAFF') ? '[STAFF]' : '       ';
     const name = (r.employee.employeeIdCode ?? '').padEnd(14) + ' ' + r.employee.fullName.padEnd(32);
     console.log(
-      `${r.date.toISOString().slice(0, 10)}  ${name}  ` +
-      `worked=${r.totalWorkedMinutes}m  ` +
+      `${r.date.toISOString().slice(0, 10)} ${tag} ${name}  ` +
+      `worked=${r.totalWorkedMinutes}m  std=${standardMinutes}m  ` +
       `OT ${r.overtimeMinutes}→${expectedOt}  DEF ${r.deficitMinutes}→${expectedDef}`,
     );
     if (apply) {

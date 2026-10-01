@@ -23,20 +23,20 @@ import { Modal } from '../../components/ui/Modal';
 import { cx, fmtDate } from '../../lib/utils';
 import './EmployeeProfile.css';
 
-type AppRole = 'SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE';
+type AppRole = 'SUPER_ADMIN' | 'HR' | 'LINE_MANAGER' | 'EMPLOYEE' | 'STAFF';
 
 const ROLE_LABEL: Record<AppRole, string> = {
-  SUPER_ADMIN: 'Super Admin', HR: 'HR', LINE_MANAGER: 'Line Manager', EMPLOYEE: 'Employee',
+  SUPER_ADMIN: 'Super Admin', HR: 'HR', LINE_MANAGER: 'Line Manager', EMPLOYEE: 'Employee', STAFF: 'Staff',
 };
 const ROLE_BADGE: Record<AppRole, 'info' | 'replacement' | 'success' | 'default' | 'warning'> = {
-  SUPER_ADMIN: 'success', HR: 'replacement', LINE_MANAGER: 'warning', EMPLOYEE: 'default',
+  SUPER_ADMIN: 'success', HR: 'replacement', LINE_MANAGER: 'warning', EMPLOYEE: 'default', STAFF: 'info',
 };
 
 function assignableRoles(actor: { role: string; roles?: string[] | null }): AppRole[] {
   const roles = actor.roles?.length ? actor.roles : [actor.role];
   if (roles.includes('SUPER_ADMIN'))
-    return ['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE'];
-  if (roles.includes('HR')) return ['HR', 'LINE_MANAGER', 'EMPLOYEE'];
+    return ['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE', 'STAFF'];
+  if (roles.includes('HR')) return ['HR', 'LINE_MANAGER', 'EMPLOYEE', 'STAFF'];
   return [];
 }
 

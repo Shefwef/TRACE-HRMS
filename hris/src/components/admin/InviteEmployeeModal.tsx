@@ -16,8 +16,8 @@ interface Props {
 
 function invitableRoles(actorRole: string | undefined): Role[] {
   if (actorRole === 'SUPER_ADMIN')
-    return ['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE'];
-  if (actorRole === 'HR') return ['HR', 'LINE_MANAGER', 'EMPLOYEE'];
+    return ['SUPER_ADMIN', 'HR', 'LINE_MANAGER', 'EMPLOYEE', 'STAFF'];
+  if (actorRole === 'HR') return ['HR', 'LINE_MANAGER', 'EMPLOYEE', 'STAFF'];
   return [];
 }
 
@@ -53,8 +53,14 @@ export function InviteEmployeeModal({ open, onClose }: Props) {
     setTimeout(reset, 300);
   }
 
+  // STAFF users may not have a corporate email — if left blank, the API
+  // auto-generates a placeholder (staff-<code>@trace.local) and skips the
+  // welcome email so no bounce / spam is generated.
+  const isStaffOnly = values.roles.length === 1 && values.roles[0] === 'STAFF';
+
   function submit() {
-    if (!values.email || !values.firstName || !values.designation || !values.employeeIdCode) return;
+    if (!values.firstName || !values.designation || !values.employeeIdCode) return;
+    if (!isStaffOnly && !values.email) return;
     if (!values.joiningDate) {
       setError('Joining date is required - it drives the annual leave cycle.');
       return;
@@ -66,7 +72,7 @@ export function InviteEmployeeModal({ open, onClose }: Props) {
     setError(null);
     invite.mutate(
       {
-        email: values.email.trim(),
+        email: values.email.trim() || undefined,
         firstName: values.firstName.trim(),
         lastName: values.lastName.trim() || undefined,
         roles: values.roles,
@@ -95,7 +101,7 @@ export function InviteEmployeeModal({ open, onClose }: Props) {
   }
 
   const canSubmit =
-    values.email && values.firstName && values.designation && values.employeeIdCode &&
+    (isStaffOnly || values.email) && values.firstName && values.designation && values.employeeIdCode &&
     values.joiningDate && values.roles.length > 0 && !invite.isPending;
 
   return (
