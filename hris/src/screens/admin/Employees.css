@@ -21,7 +21,6 @@
   display: flex;
   gap: 4px;
   border-bottom: 1px solid var(--color-border-default);
-  overflow-x: auto;
 }
 .emp-tab {
   display: inline-flex; align-items: center; gap: 8px;
