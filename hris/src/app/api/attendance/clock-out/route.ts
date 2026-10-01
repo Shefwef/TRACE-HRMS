@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { requireAuth, err, parseBody } from '@/lib/api';
-import { localDateOnly, localDayKey, localTimeOnDayToUtc } from '@/lib/workday';
+import { localDateOnly } from '@/lib/workday';
 import { closeOpenPeriodOnClockOut } from '@/lib/workLocation';
+import { standardMinutesFromWindow } from '@/lib/biometric';
 
 const Body = z
   .object({
@@ -59,13 +60,14 @@ export async function POST(req: Request) {
   const rawMinutes = Math.round((now.getTime() - record.clockInTime.getTime()) / 60000);
   const totalWorkedMinutes = Math.max(0, rawMinutes - totalBreakMinutes);
 
-  // Overtime = time worked past the office end-of-day (settings.workEndTime),
-  // not "worked beyond 8h". Someone clocking out at 6:30 PM when workEndTime
-  // is 17:30 gets exactly 1h of overtime regardless of arrival time.
-  const workEndUtc = localTimeOnDayToUtc(localDayKey(now), settings.workEndTime);
-  const overtimeMinutes = now > workEndUtc
-    ? Math.round((now.getTime() - workEndUtc.getTime()) / 60_000)
-    : 0;
+  // Standard day length is derived from the configured office window
+  // (workEndTime - workStartTime). A 09:00-17:00 window gives 480 minutes (8h).
+  // Overtime and deficit are measured against *worked* time vs that standard,
+  // so an 8h day is 0 overtime / 0 deficit regardless of what hours were kept.
+  // Keeps parity with biometric rebuild + manual punch so reports stay consistent.
+  const standardMinutes = standardMinutesFromWindow(settings.workStartTime, settings.workEndTime);
+  const overtimeMinutes = Math.max(0, totalWorkedMinutes - standardMinutes);
+  const deficitMinutes  = Math.max(0, standardMinutes - totalWorkedMinutes);
 
   const location = await prisma.$transaction(async (tx) => {
     if (openBreak) {
@@ -87,6 +89,7 @@ export async function POST(req: Request) {
         totalBreakMinutes,
         totalWorkedMinutes,
         overtimeMinutes,
+        deficitMinutes,
         source: input?.source ?? record.source,
       },
     });
@@ -99,6 +102,7 @@ export async function POST(req: Request) {
         metadata: {
           totalWorkedMinutes,
           overtimeMinutes,
+          deficitMinutes,
           totalBreakMinutes,
           endedAtLocation: closed.endedAt,
           offsiteAutoClosed: closed.autoClosed,
@@ -112,7 +116,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     ok: true,
     at: now.toISOString(),
-    summary: { totalWorkedMinutes, overtimeMinutes, totalBreakMinutes },
+    summary: { totalWorkedMinutes, overtimeMinutes, deficitMinutes, totalBreakMinutes },
     // The card uses this to warn "you were still marked off-site" on clock-out.
     location: { endedAt: location.endedAt, autoClosed: location.autoClosed },
   });
