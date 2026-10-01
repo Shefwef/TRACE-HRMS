@@ -16,24 +16,12 @@ export async function GET(req: Request) {
   const roles = user.roles.length > 0 ? user.roles : [user.role];
   const isHrOrAdmin = roles.includes('HR') || roles.includes('SUPER_ADMIN');
   const isLineManager = roles.includes('LINE_MANAGER');
-
-  let employeeIdFilter: string[] | undefined;
-  if (!isHrOrAdmin) {
-    if (isLineManager) {
-      const me = await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { reports: { select: { id: true } } },
-      });
-      employeeIdFilter = [user.id, ...(me?.reports.map((r) => r.id) ?? [])];
-    } else {
-      employeeIdFilter = [user.id];
-    }
-  }
-
+  // canEditAll / canEditTeam are returned so the client can show/hide edit UI.
+  // View access is unrestricted — everyone sees the full board. Edit permissions are enforced separately
+  // per task via canEditEntry() on the client and canEditEmployee() on the server.
   const entries = await prisma.dailyScrumEntry.findMany({
     where: {
       date: dateOnly,
-      ...(employeeIdFilter ? { employeeId: { in: employeeIdFilter } } : {}),
       // Only show entries for employees currently in the scrum roster.
       // Excluded / soft-deleted / deactivated people are hidden even if
       // their old entries are still in the DB (a cleanup action in the
