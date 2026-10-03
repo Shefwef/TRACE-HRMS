@@ -52,7 +52,7 @@ export interface UseVoiceInput {
   supported: boolean;
   listening: boolean;
   error: string | null;
-  start: (onFinalTranscript: (text: string) => void) => void;
+  start: (onFinalTranscript: (text: string) => void) => Promise<void>;
   stop: () => void;
 }
 
@@ -79,11 +79,32 @@ export function useVoiceInput(options?: { lang?: string }): UseVoiceInput {
     };
   }, []);
 
-  const start = useCallback((onFinal: (text: string) => void) => {
+  const start = useCallback(async (onFinal: (text: string) => void) => {
     const Ctor = getRecognitionCtor();
     if (!Ctor) {
       setError('Voice input is not supported in this browser.');
       return;
+    }
+    // Chrome's SpeechRecognition in recent versions silently returns
+    // `not-allowed` when the mic hasn't been explicitly granted via
+    // getUserMedia first - even if the site permission shows "Allowed".
+    // We request access, immediately release the track (we only need
+    // the permission to propagate), then hand off to SpeechRecognition.
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+      } catch (e) {
+        const err = e as { name?: string; message?: string };
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          setError('Microphone permission denied. Check browser site settings AND Windows → Privacy → Microphone.');
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          setError('No microphone detected on this device.');
+        } else {
+          setError(`Microphone unavailable: ${err.name ?? err.message ?? 'unknown error'}`);
+        }
+        return;
+      }
     }
     // Belt-and-braces: if a previous session is still open, abort it first.
     if (recRef.current) {

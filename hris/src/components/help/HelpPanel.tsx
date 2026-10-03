@@ -118,12 +118,12 @@ export function HelpPanel() {
     setError(null);
   }
 
-  function toggleMic() {
+  async function toggleMic() {
     if (voice.listening) {
       voice.stop();
       return;
     }
-    voice.start((transcript) => {
+    await voice.start((transcript) => {
       // Fire straight through to send() without routing via the input field,
       // so the user never sees the raw transcript sitting in the textarea.
       void send(transcript);
