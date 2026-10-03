@@ -263,6 +263,44 @@
 }
 .help-send:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* Voice input mic button, rendered only when Web Speech API is supported. */
+.help-mic {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+.help-mic:hover:not(:disabled) {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-primary);
+}
+.help-mic:disabled { opacity: 0.5; cursor: not-allowed; }
+.help-mic-on {
+  background: var(--color-danger);
+  color: #fff;
+  border-color: var(--color-danger);
+  animation: help-mic-pulse 1.4s ease-in-out infinite;
+}
+@keyframes help-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-danger) 55%, transparent); }
+  50%      { box-shadow: 0 0 0 8px color-mix(in srgb, var(--color-danger) 0%, transparent); }
+}
+
+.help-voice-error {
+  padding: 6px 16px 10px;
+  font-size: 12px;
+  color: var(--color-danger);
+  background: var(--color-bg-canvas);
+}
+
 .help-footer {
   padding: 10px var(--space-6);
   border-top: 1px solid var(--color-border-default);

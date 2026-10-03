@@ -1,7 +1,8 @@
 'use client';
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bot, X, Send, MessageCircle, RefreshCw } from 'lucide-react';
+import { Bot, X, Send, MessageCircle, RefreshCw, Mic, MicOff } from 'lucide-react';
+import { useVoiceInput } from '@/lib/useVoiceInput';
 import './HelpPanel.css';
 
 interface ChatMsg {
@@ -51,6 +52,10 @@ export function HelpPanel() {
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // Voice input: converts speech to text and auto-submits as a Tracy message.
+  // The intermediate transcription is NEVER shown in the input - we go
+  // straight from mic recording to a user message in the chat log.
+  const voice = useVoiceInput();
 
   // Floating widget - do NOT lock body scroll; the app underneath stays usable.
 
@@ -111,6 +116,18 @@ export function HelpPanel() {
   function resetChat() {
     setMessages([GREETING]);
     setError(null);
+  }
+
+  function toggleMic() {
+    if (voice.listening) {
+      voice.stop();
+      return;
+    }
+    voice.start((transcript) => {
+      // Fire straight through to send() without routing via the input field,
+      // so the user never sees the raw transcript sitting in the textarea.
+      void send(transcript);
+    });
   }
 
   return (
@@ -214,24 +231,42 @@ export function HelpPanel() {
                 <textarea
                   ref={inputRef}
                   className="help-input"
-                  placeholder="Ask TRACY about TRACE HRMS…"
+                  placeholder={voice.listening ? 'Listening…' : 'Ask TRACY about TRACE HRMS…'}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   rows={1}
+                  disabled={voice.listening}
                 />
+                {voice.supported && (
+                  <button
+                    type="button"
+                    className={`help-mic ${voice.listening ? 'help-mic-on' : ''}`}
+                    onClick={toggleMic}
+                    disabled={sending}
+                    aria-label={voice.listening ? 'Stop recording' : 'Ask by voice'}
+                    title={voice.listening ? 'Stop recording' : 'Ask by voice'}
+                  >
+                    {voice.listening ? <MicOff size={16} /> : <Mic size={16} />}
+                  </button>
+                )}
                 <button
                   className="help-send"
                   type="submit"
-                  disabled={!input.trim() || sending}
+                  disabled={!input.trim() || sending || voice.listening}
                   aria-label="Send"
                 >
                   <Send size={16} />
                 </button>
               </form>
 
+              {voice.error && (
+                <div className="help-voice-error">{voice.error}</div>
+              )}
+
               <footer className="help-footer">
                 TRACY only answers about TRACE HRMS or HR-information-system concepts.
+                {voice.supported && ' Tap the mic to ask by voice.'}
               </footer>
             </motion.aside>
         )}

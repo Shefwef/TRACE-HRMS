@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth, parseBody, err } from '@/lib/api';
-import { CHATBOT_SYSTEM_PROMPT } from '@/lib/chatKb';
+import { buildChatbotSystemPrompt } from '@/lib/chatKb';
+import { prisma } from '@/lib/db';
 
 const Body = z.object({
   messages: z
@@ -58,10 +59,23 @@ export async function POST(req: Request) {
   const [input, badReq] = await parseBody(req, Body);
   if (badReq) return badReq;
 
+  // Pull the live office window + leave defaults so Tracy's answers reflect
+  // the current Admin → Settings values rather than a hardcoded 9-to-5. If
+  // the lookup fails we silently fall through to the static defaults in
+  // buildChatbotSystemPrompt().
+  const settings = await prisma.systemSettings
+    .findUnique({ where: { id: 'singleton' } })
+    .catch(() => null);
+  const systemPrompt = buildChatbotSystemPrompt({
+    workStartTime: settings?.workStartTime ?? '09:00',
+    workEndTime: settings?.workEndTime ?? '17:00',
+    standardHoursPerDay: settings?.standardHoursPerDay ?? 8,
+  });
+
   try {
     const requestBody = JSON.stringify({
       systemInstruction: {
-        parts: [{ text: CHATBOT_SYSTEM_PROMPT }],
+        parts: [{ text: systemPrompt }],
       },
       contents: input.messages.map((m) => ({
         role: m.role === 'assistant' ? 'model' : 'user',

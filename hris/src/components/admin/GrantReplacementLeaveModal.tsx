@@ -1,12 +1,13 @@
 'use client';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Coffee } from 'lucide-react';
-import { useGrantReplacementLeave } from '@/lib/hooks';
+import { useGrantReplacementLeave, useSettings } from '@/lib/hooks';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Field, TextArea, TextInput } from '../ui/Field';
 import { cx } from '../../lib/utils';
+import { workWindowSlots } from '@/lib/leave';
 import './GrantReplacementLeaveModal.css';
 
 interface Props {
@@ -19,6 +20,11 @@ type Slot = 'MORNING' | 'AFTERNOON';
 
 export function GrantReplacementLeaveModal({ open, onClose, employee }: Props) {
   const grant = useGrantReplacementLeave();
+  const { data: settings } = useSettings();
+  const windows = useMemo(
+    () => workWindowSlots(settings?.workStartTime ?? '09:00', settings?.workEndTime ?? '17:00'),
+    [settings?.workStartTime, settings?.workEndTime],
+  );
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isHalfDay, setIsHalfDay] = useState(false);
@@ -187,7 +193,7 @@ export function GrantReplacementLeaveModal({ open, onClose, employee }: Props) {
                 onClick={() => setHalfDaySlot('MORNING')}
               >
                 <span className="grl-slot-label">Morning</span>
-                <span className="grl-slot-window">9:00 AM - 1:00 PM</span>
+                <span className="grl-slot-window">{windows.morningHalf}</span>
               </button>
               <button
                 type="button"
@@ -195,7 +201,7 @@ export function GrantReplacementLeaveModal({ open, onClose, employee }: Props) {
                 onClick={() => setHalfDaySlot('AFTERNOON')}
               >
                 <span className="grl-slot-label">Afternoon</span>
-                <span className="grl-slot-window">1:00 PM - 5:00 PM</span>
+                <span className="grl-slot-window">{windows.afternoonHalf}</span>
               </button>
             </div>
           )}

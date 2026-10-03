@@ -7,6 +7,7 @@ import {
   useBalance,
   useSubmitLeaveBundle,
   useHolidays,
+  useSettings,
   type LeaveType,
   type LeaveDayAllocation,
   type LeaveSlot,
@@ -15,6 +16,7 @@ import { useStore } from '@/lib/store';
 import { Button } from '../../components/ui/Button';
 import { Field, TextInput, TextArea } from '../../components/ui/Field';
 import { cx, fmtDate } from '../../lib/utils';
+import { workWindowSlots, type WorkWindowSlots } from '@/lib/leave';
 import './ApplyLeave.css';
 
 // ─── Types ─────────────────────────────────────────────────
@@ -80,11 +82,19 @@ export function ApplyLeavePage() {
   const router = useRouter();
   const { data: balance, isLoading: balanceLoading } = useBalance();
   const { data: holidayList = [] } = useHolidays();
+  const { data: settings } = useSettings();
   const submit = useSubmitLeaveBundle();
   const addToast = useStore((s) => s.addToast);
 
   // Fast lookup for weekend + public-holiday exclusion.
   const holidays = useMemo(() => new Set(holidayList.map((h) => h.date)), [holidayList]);
+
+  // Half-day slot labels follow the admin's office window from Settings so
+  // "Morning" / "Afternoon" always display real-time times (e.g. 09:00-13:00).
+  const windows = useMemo<WorkWindowSlots>(
+    () => workWindowSlots(settings?.workStartTime ?? '09:00', settings?.workEndTime ?? '17:00'),
+    [settings?.workStartTime, settings?.workEndTime],
+  );
 
   const [casual, setCasual]           = useState<TypeState>({ ...emptyState });
   const [sick, setSick]               = useState<TypeState>({ ...emptyState });
@@ -218,6 +228,7 @@ export function ApplyLeavePage() {
             durationSelected={casualDuration}
             balanceLoading={balanceLoading}
             holidays={holidays}
+            windows={windows}
           />
           <TypeCard
             type="SICK"
@@ -227,6 +238,7 @@ export function ApplyLeavePage() {
             durationSelected={sickDuration}
             balanceLoading={balanceLoading}
             holidays={holidays}
+            windows={windows}
           />
           <TypeCard
             type="REPLACEMENT"
@@ -236,6 +248,7 @@ export function ApplyLeavePage() {
             durationSelected={replDuration}
             balanceLoading={balanceLoading}
             holidays={holidays}
+            windows={windows}
           />
 
           <section className="card aply-details">
@@ -368,7 +381,7 @@ export function ApplyLeavePage() {
 // ─── Type card (Casual / Sick / Replacement) ───────────────
 
 function TypeCard({
-  type, state, setState, balance, durationSelected, balanceLoading, holidays,
+  type, state, setState, balance, durationSelected, balanceLoading, holidays, windows,
 }: {
   type: LeaveType;
   state: TypeState;
@@ -377,6 +390,7 @@ function TypeCard({
   durationSelected: number;
   balanceLoading: boolean;
   holidays: Set<string>;
+  windows: WorkWindowSlots;
 }) {
   const meta = TYPE_META[type];
   const remaining = balance - durationSelected;
@@ -468,6 +482,7 @@ function TypeCard({
                   date={d}
                   slot={state.overrides[d] ?? 'FULL'}
                   onChange={(slot) => updateOverride(d, slot)}
+                  windows={windows}
                 />
               ))}
             </div>
@@ -485,10 +500,11 @@ function TypeCard({
 
 // ─── One day row inside a type card ────────────────────────
 
-function DayRow({ date, slot, onChange }: {
+function DayRow({ date, slot, onChange, windows }: {
   date: string;
   slot: LeaveSlot;
   onChange: (slot: LeaveSlot) => void;
+  windows: WorkWindowSlots;
 }) {
   const isHalf = slot !== 'FULL';
   return (
@@ -528,7 +544,7 @@ function DayRow({ date, slot, onChange }: {
             />
             <div>
               <strong>Morning</strong>
-              <span>8:30 am - 1:00 pm</span>
+              <span>{windows.morningHalf}</span>
             </div>
           </label>
           <label className={cx('aply-half-option', slot === 'HALF_AFTERNOON' && 'aply-half-option-on')}>
@@ -540,7 +556,7 @@ function DayRow({ date, slot, onChange }: {
             />
             <div>
               <strong>Afternoon</strong>
-              <span>2:00 pm - 5:30 pm</span>
+              <span>{windows.afternoonHalf}</span>
             </div>
           </label>
         </div>

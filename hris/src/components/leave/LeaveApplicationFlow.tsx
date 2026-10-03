@@ -15,7 +15,7 @@ import {
   useUsers,
   type Balance,
 } from '@/lib/hooks';
-import { computeDurationDays, standardMinutesFromWindow } from '@/lib/leave';
+import { computeDurationDays, standardMinutesFromWindow, workWindowSlots } from '@/lib/leave';
 import { Button } from '../ui/Button';
 import { Field, TextArea, TextInput } from '../ui/Field';
 import { cx, fmtDate, leaveTypeLabel } from '../../lib/utils';
@@ -40,6 +40,15 @@ export function LeaveApplicationFlow({ open, onClose }: Props) {
   const standardMinutes = settings
     ? standardMinutesFromWindow(settings.workStartTime, settings.workEndTime)
     : 480;
+  // Office window and its midpoint drive the default timeFrom/timeTo and the
+  // "specific time slot" sub-range so a 09:00-17:00 configuration splits at
+  // 13:00 while a 08:30-17:30 configuration splits at 13:00 as well — but a
+  // 10:00-18:00 window correctly splits at 14:00. Keeps every leave-flow
+  // default aligned with Settings instead of a hardcoded 13:00.
+  const windows = useMemo(
+    () => workWindowSlots(settings?.workStartTime ?? '09:00', settings?.workEndTime ?? '17:00'),
+    [settings?.workStartTime, settings?.workEndTime],
+  );
 
   const admins = useMemo(
     () => allUsers.filter((u) => u.role === 'HR' || u.role === 'SUPER_ADMIN'),
@@ -58,8 +67,10 @@ export function LeaveApplicationFlow({ open, onClose }: Props) {
   const [isHalfDay, setIsHalfDay] = useState(false);
   const [halfDaySlot, setHalfDaySlot] = useState<HalfDaySlot>('MORNING');
   const [useTimeRange, setUseTimeRange] = useState(false);
-  const [timeFrom, setTimeFrom] = useState('09:00');
-  const [timeTo, setTimeTo] = useState('13:00');
+  // Picker defaults track Settings so a 09:00-17:00 office splits at 13:00,
+  // a 08:30-17:30 office at 13:00, and a 10:00-18:00 office at 14:00.
+  const [timeFrom, setTimeFrom] = useState(windows.fullDay ? (settings?.workStartTime ?? '09:00') : '09:00');
+  const [timeTo, setTimeTo] = useState(windows.midpoint);
   const [reason, setReason] = useState('');
   const [description, setDescription] = useState('');
   const [attachment, setAttachment] = useState<File | null>(null);
@@ -110,8 +121,8 @@ export function LeaveApplicationFlow({ open, onClose }: Props) {
     setIsHalfDay(false);
     setHalfDaySlot('MORNING');
     setUseTimeRange(false);
-    setTimeFrom('09:00');
-    setTimeTo('13:00');
+    setTimeFrom(settings?.workStartTime ?? '09:00');
+    setTimeTo(windows.midpoint);
     setReason('');
     setDescription('');
     setAttachment(null);

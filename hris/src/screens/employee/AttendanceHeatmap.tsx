@@ -156,7 +156,7 @@ export function AttendanceHeatmap({
           <h3>Working-hour heatmap</h3>
           <p className="muted">
             When you were on the clock this week. A block turns green after more than
-            30 minutes of that hour has been worked. Standard shift is 9:00 AM to 5:00 PM.
+            30 minutes of that hour has been worked. Standard shift is {fmt12(startHour)} to {fmt12(endHour)}.
           </p>
         </div>
         <div className="ahm-legend">
