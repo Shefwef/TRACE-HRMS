@@ -30,9 +30,11 @@ const prisma = new PrismaClient();
 
 /** PDF names → DB canonical names. */
 const NAME_ALIAS: Record<string, string> = {
-  'ASM Saifullah':         'Abu Saleh Muhammad Saifullah',
-  'Recardo SA Halder':     'Recardo Saurav Antor Halder',
-  'Shefayat E Shams Adib': 'Shefayat E Shams',
+  'ASM Saifullah':            'Abu Saleh Muhammad Saifullah',
+  'Recardo SA Halder':        'Recardo Saurav Antor Halder',
+  'Shefayat E Shams Adib':    'Shefayat E Shams',
+  'Mahamudul Hasan':          'Md Mahamudul Hasan',
+  'Muftehedul Islam Mithul':  'Md. Muftehedul Islam Mithul',
 };
 
 interface EntrySeed {
@@ -788,7 +790,402 @@ const WED_30: DaySeed = {
   ],
 };
 
-const ALL_DAYS: DaySeed[] = [SUN_27, MON_28, TUE_29, WED_30];
+// ─── Oct 1 (Thursday) ────────────────────────────────────────────────
+const THU_01: DaySeed = {
+  date: '2026-10-01',
+  entries: [
+    {
+      personPdfName: 'ASM Saifullah',
+      completed: [
+        'Pick up ISO Auditor from Baridhara DOHS (Done)',
+        'Contribute to the ISO Audit process (Done)',
+      ],
+      today: [
+        'Review and finalize Counterfeit Product PPT',
+        'Online meeting with Fishtech to share Gap Assessment findings',
+        'Review updating documents on Teams and Sharepoint',
+      ],
+    },
+    {
+      personPdfName: 'Mimma Afrin',
+      completed: [
+        'Facilitate auditor for stage-1 QMS audit',
+        'Rearrange lab and project related files in Teams (Continue)',
+        'Seat with fahmida apa regarding teams and sharepoint documents (pending)',
+        'Seek travel approval for BITID lab visit with expert in chattogram (2 oct to 4 oct)',
+      ],
+      today: [
+        'Prepare Action plan for audit Findings',
+        'Update Gap assessment report of Fishtech lab and share',
+        'Meeting with Fishtech lab officials regarding assessment findings',
+      ],
+    },
+    {
+      personPdfName: 'Nabeel Khan',
+      completed: [
+        'Oversee sharing of Minutes of the Meeting to be shared with BRCP-1',
+        'Reviewed draft Inception Report',
+        'Requested time for meeting with Technical Committee: Scheduled for Monday',
+        'Demo content development for SRS workshop: met with K-13',
+        'Youtube video shooting plan',
+        'Shared revised agreement with OrangeBD',
+      ],
+      today: [
+        'Review draft Demo Module from K-13',
+        'Follow-up with BRCP-1 for TC Meeting modalities',
+        'Follow-up with OBD regarding agreement signing',
+        'Prepare detailed task list and revise the detailed workplan',
+        'Follow-up with IRW Participants for feedback on IR',
+      ],
+    },
+    {
+      personPdfName: 'Recardo SA Halder',
+      completed: [
+        'TRS Inception report and implementation plan - Samrat Sir and Swarna apu (not started)',
+        'Payment initiations (car bill, Calude) - done',
+        'Prepare TDS Payment Sheet - Participant Allowance - done',
+        'Send Bills to Orange BD for Invoicing - done',
+        'Update proposal tracker (contd)',
+        'Send Akebul Vai tax docs - done',
+        'Revise Attendance Sheet - SD 59 for documentation - done',
+        'Return extra hand cash to Saifullah Vai / Fahmida - done',
+        'Send requested personal data to Fahmida - done',
+        'Bank beneficiary adding - Shiva, Sujan, Julker, Yasin',
+      ],
+      today: [
+        'TRS Inception report and implementation plan - Samrat Sir and Swarna apu - done',
+        'Update Proposal Tracker - contd',
+        'Study TRS docs and literature review - contd',
+        'Payment initiation (if any) - none required',
+        'Venue booking for SRS workshop SD-59 - done',
+      ],
+    },
+    {
+      personPdfName: 'Rubayat E Shams Anik',
+      completed: [
+        'TARAPS Inception Report Drafting (with Mahanaz Apu)',
+        'Learn regarding the FCDO meeting on (Technical Assistance Facility for Economic Governance Reforms in Bangladesh)',
+        'Social Media Posting - (Inception SD-59, BFSA Meeting)',
+        'Create Tracker for coordinating Proposal submission and Project implementation',
+        'ID card design finalization',
+        'Meeting with SD-59 Content Editing Team (Tanvir Kabir Bhai) with Nabeel bhai',
+      ],
+      today: [
+        'TARAPS Inception Report Drafting (with Mahanaz Apu)',
+        'Intern Onboarding',
+        'Social Media Posting - (BFSA Meeting)',
+        'Content Demo Development Coordination with Tanvir Bhai',
+        'Sports Ministry Proposal Update & Followup',
+        'Pursue LinkedIn verification (take docs from Saifullah bhai)',
+        'Discussion on Counterfeit presentation',
+        'Assigning tasks',
+        'SM Post - Shiva Apu & Anik',
+        'SM Post - FullStack Developer',
+        'SM Post - Research Interns',
+      ],
+    },
+    {
+      personPdfName: 'Ahmed Julker Nine',
+      completed: [
+        'Meeting Minutes of the SD 59; Inception Report Finalization event',
+        'Inception report send out to the participants',
+        'Developing Counterfeit Product PPT',
+        'TARAPS Project Priority listing (with Anik Bhai if Needed)',
+        'CV Sorting (Graphic Designer & Social Media Manager)',
+        'Reminder text send out to the participants for feedback on inception report (tomorrow)',
+      ],
+      today: [
+        'Presentation Finalization for Paragon Group',
+        'TARAPS Project Priority listing (with Anik Bhai if Needed)',
+        'CV Sorting (Graphic Designer & Social Media Manager)',
+        'Reminder text send out to the participants for feedback on inception report',
+      ],
+    },
+    {
+      personPdfName: 'Tahsina Shiva',
+      completed: [
+        'Prepared presentation ppt for senior FSD',
+        'HRMS - overall QA & Feedback',
+        'ISO Audit meeting',
+        'CV sorting - social media manager',
+        'Prepared Company ID of all TRACE employee',
+      ],
+      today: [
+        'New Joinee Onboarding',
+        'TRACE website update',
+        'Sit with senior FSD - orientation, tasks assign and others',
+        'SD-59 SRS review and feedback (if any)',
+      ],
+    },
+    {
+      personPdfName: 'Fahmida Akter',
+      completed: [
+        'Contract Amendments',
+        'Rejection Mail to Lab Quality Management Interns',
+        'Rejection Mail to Admin & Finance Executive Candidates',
+        'Sharepoint document organising',
+        'Sitting arrangements for Naved, Mahamudul, Riya & Mithul',
+        'Payment & reimbursement requests',
+        'Employment Agreement - Tabassum Sirajum Munira',
+        'Asset acknowledgement form',
+      ],
+      today: [
+        'Preparing service agreement for Laptop vendor',
+        'CV sorting for Social Media Manager & Graphics Designer (Assistance needed from Julker Bhai)',
+        'Contract generation for Riya Biswas, Mahamudul, Naved',
+        'Asset Labeling to new laptops',
+        'Welcoming new joineers',
+        'Reviewing admin SOP (How to buy things, approval process)',
+        'Replying to Aamra Pro & Zenorin',
+        'Sharepoint document organising',
+        'TRACE Orientation presentation review and update',
+        'Payment & reimbursement requests',
+        'Reference Check - Towfiq (Lab Quality Management Intern)',
+      ],
+    },
+    {
+      personPdfName: 'Shefayat E Shams Adib',
+      completed: [
+        'Worked through and addressed all feedback items raised by Shiva Apu on the Daily Tracker (Daily Scrum) module',
+        'Updated the PDF format for Reports and report summaries based on the latest round of feedback',
+        'Implemented the refreshed Homepage design and styling updates upon discussion with Shiva Apu',
+        'Performed full thorough end-to-end QA across the entire HRMS and fixed bugs surfaced during the pass',
+        'Deployed the updated build after clearing all QA-surfaced issues',
+        'Synced with Shiva Apu on go-live readiness and consolidated pending action items into the pre-meeting checklist',
+        "Finalized all pre-meeting deliverables for tomorrow's 3 PM meeting",
+        'Prepared presentation materials and supporting documentation for the meeting',
+        'Performed a dry-run walkthrough of the HRMS end-to-end with Shiva Apu to confirm demo readiness',
+        'Completed remaining bug fixes surfaced during the dry-run walkthrough',
+        'Synced with Shiva Apu on the meeting agenda and talking points for tomorrow',
+      ],
+      today: [
+        'Complete final file preparations for the 3 PM meeting',
+        'Rehearse the presentation walkthrough with Shiva Apu one final time before the meeting',
+        'Attend and present in the 3 PM meeting',
+        'Capture all feedback and action items raised during the meeting',
+        'Work on the feedback raised in the meeting upon discussion with Shiva Apu',
+        'Perform Performance QA on the system',
+        'Deploy post-meeting fixes and update the plan accordingly',
+      ],
+    },
+    {
+      personPdfName: 'Mahanaz Akter Lopa',
+      completed: [
+        'Attended Content Development Team Meeting with Anik and Nabeel bhai',
+        'Prepared a demo for content part of e-learning module 1',
+        'Attended a meeting with Fuad Sir',
+        'Prepare inception report on TARAPS with Anik bhai',
+      ],
+      today: [
+        'Will try to complete the first version of inception report on TARAPS',
+        'May need to work on e-learning module based on feedback from Tanvir bhai',
+        'Team meeting with Fuad sir (11:00 am)',
+      ],
+    },
+    {
+      personPdfName: 'Mahamudul Hasan',
+      completed: [],
+      today: [
+        'Set up email',
+        'Set up Microsoft 365 (including cloud)',
+        'Get your fingerprints registered on the punch machine',
+        'Write a short bio for website',
+        'Get added to TRACE whatsapp group',
+        'Update your linkedin bio by the end of the day',
+        'Add signature in the outlook',
+      ],
+    },
+    {
+      personPdfName: 'Naved Afnan',
+      completed: [],
+      today: [
+        'Set up email',
+        'Set up Microsoft 365 (including cloud)',
+        'Get your fingerprints registered on the punch machine',
+        'Write a short bio for website',
+        'Get added to TRACE whatsapp group',
+        'Update your linkedin bio by the end of the day',
+        'Add signature in the outlook',
+      ],
+    },
+  ],
+};
+
+// ─── Oct 4 (Sunday) ──────────────────────────────────────────────────
+const SUN_04: DaySeed = {
+  date: '2026-10-04',
+  entries: [
+    {
+      personPdfName: 'ASM Saifullah',
+      completed: [
+        'Review and finalize Counterfeit Product PPT (Reviewed and Finalized by Fuad vai)',
+        'Online meeting with Fishtech to share Gap Assessment findings (Explained findings and shared Action plan template)',
+        'Review updating documents on Teams and Sharepoint (Reviewed and Updated)',
+        'Consulted Mr. Komal regarding VAT return submission',
+      ],
+      today: [
+        'Update proposal/project tracker',
+        'Work with Mr. Komal and Recardo vai to submit VAT return',
+        'Coordinate with Genex on existing tender opportunities',
+      ],
+    },
+    {
+      personPdfName: 'Nabeel Khan',
+      completed: [
+        'Follow-up with BRCP-1 for TC Meeting modalities',
+        'Follow-up with OBD regarding agreement signing',
+        'Follow-up with IRW Participants for feedback on IR',
+        'Review SRS through T. Shiva',
+        'Prepare detailed task list and revise the detailed workplan',
+      ],
+      today: [
+        'Review Content List',
+        'Follow-up with BRCP-1 for TC Meeting modalities',
+        'Share draft Demo Module with internal team',
+        'Finalize Module Structure for Demo, define scope',
+      ],
+    },
+    {
+      personPdfName: 'Recardo SA Halder',
+      completed: [
+        'TRS Inception report and implementation plan - Samrat Sir and Swarna apu - done',
+        'Update Proposal Tracker - contd',
+        'Study TRS docs and literature review - contd',
+        'Payment initiation (if any) - none required',
+        'Venue booking for SRS workshop SD-59 - done',
+      ],
+      today: [
+        'SD-59 SRS workshop logistical plan',
+        'SRS workshop budget estimation',
+        'Reimbursement payments',
+        'Disbursing venue rent to BFTI',
+        'Manage logistics for the workshop',
+      ],
+    },
+    {
+      personPdfName: 'Rubayat E Shams Anik',
+      completed: [],
+      today: [
+        'TARAPS Inception Report Drafting (with Mahanaz Apu)',
+        'Intern Onboarding',
+        'Social Media Posting - (BFSA Meeting)',
+        'Content Demo Development Coordination with Tanvir Bhai',
+        'Sports Ministry Proposal Update & Followup',
+        'Pursue LinkedIn verification (take docs from Saifullah bhai)',
+        'Discussion on Counterfeit presentation',
+        'Assigning tasks',
+        'SM Post - Shiva Apu & Anik',
+        'SM Post - FullStack Developer',
+        'SM Post - Research Interns',
+      ],
+    },
+    {
+      personPdfName: 'Ahmed Julker Nine',
+      completed: [
+        'Presentation Finalization for Paragon Group',
+        'TARAPS Project Priority listing (with Anik Bhai if Needed)',
+        'CV Sorting (Graphic Designer & Social Media Manager)',
+        'Reminder text send out to the participants for feedback on inception report',
+      ],
+      today: [
+        'TARAPS Project Priority listing (with Anik Bhai if Needed)',
+        'CV Sorting (Graphic Designer & Social Media Manager)',
+      ],
+    },
+    {
+      personPdfName: 'Tahsina Shiva',
+      completed: [
+        'BRCP-59 SRS study and minor feedback (dependency on feedback from BRCP)',
+        'New joinee onboarding formalities',
+        'TRACE CMS update',
+        'Orientation session with Mithul bhai',
+        'Coordinate with OBD regarding tech doc',
+        'HRMS feat QA',
+      ],
+      today: [
+        'BRCP-59 SRS related tasks with relevant people',
+        'HRMS system demonstration and feedback collection',
+        'Sit with Fuad bhai & Mithul bhai regarding the Handover process planning',
+        'Server specification finalization with mithul bhai',
+        'TRACE CMS update',
+        'CV sorting for social media manager & GD',
+      ],
+    },
+    {
+      personPdfName: 'Fahmida Akter',
+      completed: [
+        'Contract generation for Riya Biswas, Mahamudul, Naved',
+        'Asset Labeling to new laptops',
+        'Welcoming new joineers',
+        'Replying to Zenorin',
+        'Sharepoint document organising',
+        'Reference Check - Towfiq (Lab Quality Management Intern)',
+      ],
+      today: [
+        'Preparing service agreement for Laptop vendor',
+        'CV sorting for Social Media Manager & Graphics Designer (Assistance needed from Julker Bhai)',
+        'Asset Labeling to assets',
+        'Reviewing admin SOP (How to buy things, approval process)',
+        'Replying to Aamra Pro',
+        'Sharepoint document organising',
+        'TRACE Orientation presentation review and update',
+        'Payment & reimbursement requests',
+      ],
+    },
+    {
+      personPdfName: 'Shefayat E Shams Adib',
+      completed: [
+        'Received update that the 3 PM meeting was postponed to next Sunday and realigned the day\'s priorities accordingly',
+        'Completed the new role integration into the HRMS (schema, permissions, access controls, and UI flows)',
+        'Performed QA on the new role integration and verified access controls across all modules',
+        'Addressed pending feedback items from Shiva Apu',
+        'Started the performance optimization pass across the system and identified key bottlenecks',
+        'Resolved the top-priority performance bottlenecks and verified improvements across modules',
+        'Deployed the updated build after clearing QA-surfaced issues from the new role integration',
+        'Performed cross-module QA with the new role in place',
+        "Consulted with Shiva Apu on the revised plan ahead of next Sunday's meeting",
+        'Prepared the working checklist for the landing page revamping',
+      ],
+      today: [
+        'Start the landing page revamp - implement the refreshed layout, hero section, and overall visuals',
+        'Work through the remaining feedback items from Shiva Apu on the system',
+        'Continue Performance QA across the system and address any remaining bottlenecks',
+        'Perform full end-to-end QA including the new landing page',
+        'Fix any bugs surfaced during the QA pass',
+        'Sync with Shiva Apu on the landing page review and refine based on feedback',
+        "Prepare the latest stable build and demo materials ahead of Sunday's meeting",
+      ],
+    },
+    {
+      personPdfName: 'Mahanaz Akter Lopa',
+      completed: [
+        'Completed around 80% the first version of inception report on TARAPS',
+        'Had a short meeting with Anik bhai on TARAPS',
+      ],
+      today: [
+        'Complete the first version of TARAPS with Anik bhai',
+        'Will show the first version of TARAPS to Fuad sir',
+        'Need to sign up and go through a ITC course for e-learning module',
+      ],
+    },
+    {
+      personPdfName: 'Muftehedul Islam Mithul',
+      completed: [
+        'Joining and Introduction',
+        'Take orientation from shiva apu',
+        'Getting access to necessary accounts',
+        'Computer file backup',
+      ],
+      today: [
+        'Ubuntu installation and development environment setup',
+        'Attendance machine integration R&D',
+        'Planning for server and website migration plan',
+      ],
+    },
+  ],
+};
+
+const ALL_DAYS: DaySeed[] = [SUN_27, MON_28, TUE_29, WED_30, THU_01, SUN_04];
 
 // ─── Runner ──────────────────────────────────────────────────────────
 
